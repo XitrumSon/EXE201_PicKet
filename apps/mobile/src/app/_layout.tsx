@@ -20,6 +20,10 @@ import { DeviceLockProvider } from "@/features/security/device-lock";
 import { ReminderCoordinator } from "@/features/notifications/reminder-coordinator";
 import { GuestFinanceProvider } from "@/core/local/guest-finance-context";
 import { NavigationShell } from "@/core/ui/navigation-shell";
+import { AppAppearanceProvider } from "@/features/settings/appearance-provider";
+import * as SplashScreen from "expo-splash-screen";
+
+void SplashScreen.preventAutoHideAsync();
 
 function ProviderTree({ children }: { children: React.ReactNode }) {
   return (
@@ -40,9 +44,9 @@ function SessionProviders({ children }: { children: React.ReactNode }) {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
+      <AppAppearanceProvider><AuthProvider>
         <SessionReadyTree />
-      </AuthProvider>
+      </AuthProvider></AppAppearanceProvider>
     </SafeAreaProvider>
   );
 }

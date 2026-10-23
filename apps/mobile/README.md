@@ -165,3 +165,13 @@ npx expo-doctor
 
 `release:preflight` chỉ đạt khi đã cung cấp endpoint production public HTTPS;
 việc nó thất bại với cấu hình emulator local là hành vi mong đợi.
+
+## Settings foundation (SET-01–03)
+
+Progress and evidence: [implementation report](../../docs/plans/MOBILE_SETTINGS_IMPLEMENTATION_20261023.md).
+The development-only `/settings-preview` route exercises theme/language storage,
+semantic colors and offline vi/en formatting. Rebuild the native development app
+after installing Localization/SystemUI; an older APK cannot load these modules.
+Production entry remains disabled until the screen migration is verified.
+Run `npm run test:settings` to validate the foundation. Code 7 AAB was built before
+this increment and does not include it.
