@@ -25,7 +25,7 @@ export function gradeQuiz(lesson: Lesson, answers: number[]) {
   return { correct: answers.filter((answer,i) => answer === lesson.questions[i].correctIndex).length,
     total: lesson.questions.length, explanations: answers.map((answer,i) => lesson.questions[i].choices[answer].explanation) };
 }
-export type Completion = { owner: string; lessonId: string; version: number; xp: number };
+export type Completion = { owner: string; lessonId: string; version: number; xp: number; completedAt?: string; reviewedOffsets?: number[] };
 export function recordCompletion(previous: Completion[], owner: string, lessonId: string, version: number): Completion[] {
   if (!owner || !lessonId || !Number.isSafeInteger(version) || version < 1) throw new Error("Invalid completion identity");
   if (previous.some(row => row.owner === owner && row.lessonId === lessonId && row.version === version)) return [...previous];
