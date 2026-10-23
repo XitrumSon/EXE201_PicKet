@@ -1,0 +1,1261 @@
+{
+  "schemaVersion": 1,
+  "curriculumId": "picket.financial.vi.v1",
+  "locale": "vi-VN",
+  "authoredAt": "2026-10-23",
+  "status": "authored-not-independent-review",
+  "reviewedAtSemantics": "Author source-check date, not external or independent approval.",
+  "audience": "Adults 18+, original educational examples; no individualized financial advice.",
+  "sourceUse": "Source concepts inform the objectives. All scenarios, arithmetic, explanations and Picket interactions are original; no quotations, no imported US/EU legal rights.",
+  "publicationGate": {
+    "publishable": false,
+    "required": [
+      "Independent financial-content review",
+      "Vietnamese editorial and accessibility review",
+      "Vietnam-relevant legal/safety review for borrowing and digital safety",
+      "Pilot comprehension and Android font/TalkBack/offline checks",
+      "Approved English translation before claiming bilingual curriculum"
+    ]
+  },
+  "sourceRegistry": [
+    {
+      "id": "oecd",
+      "url": "https://www.oecd.org/content/dam/oecd/en/publications/reports/2022/01/financial-competence-framework-for-adults-in-the-european-union_614b8b97/510f133c-en.pdf",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "spending",
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_spending_tracker_2018-11_ADA.pdf",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "bills",
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_bill_calendar_tool_2018-11_ADA.pdf",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "cashflow",
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_cash_flow_budget_tool_2018-11_ADA.pdf",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "income",
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_income_benefits_tool_2018-11_ADA.pdf",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "saving",
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_savings_plan_tool_2018-11_ADA.pdf",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "goals",
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_SMART-goals_tool_2018-11.pdf",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "priority",
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_prioritizing-bills_tool.pdf",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "loans",
+      "url": "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_auto_loans_tool_2018-11_ADA.pdf",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "adjust",
+      "url": "https://files.consumerfinance.gov/f/documents/cfbp_your-money-your-goals_adjust_cash_flow_tool_2018-11_ADA.pdf",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "emergency",
+      "url": "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "cost",
+      "url": "https://www.consumerfinance.gov/ask-cfpb/what-is-a-truth-in-lending-disclosure-for-an-auto-loan-en-787/",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "otp",
+      "url": "https://www.bocongan.gov.vn/bai-viet/xuat-hien-thu-doan-lua-dao-moi-khi-mua-hang-online-1790562304",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "trial",
+      "url": "https://consumer.ftc.gov/articles/getting-and-out-free-trials-auto-renewals-and-negative-option-subscriptions",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    },
+    {
+      "id": "payment-safety",
+      "url": "https://vcc.gov.vn/default.aspx?category_id=9343771e-96be-48b5-a35d-b8ea9bc1aa93&do=detail&id=04a6bd22-786c-4d56-983c-923cce86ec7c&page=news",
+      "accessedAt": "2026-10-23",
+      "validation": "Opened and read as primary source; educational concepts only."
+    }
+  ],
+  "lessons": [
+    {
+      "lessonId": "picket.vi.financial.v1.01",
+      "chapterId": "chapter-01",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Chuyển ví không phải chi thêm",
+      "competencyId": "cashflow.internal-transfer",
+      "objective": "Phân biệt chuyển tiền giữa ví của mình với thu nhập và chi tiêu; nêu rõ phạm vi đang xem.",
+      "body": "Một số dư có thể nằm ở nhiều nơi: tiền mặt, tài khoản ngân hàng hoặc ví điện tử. Chuyển tiền giữa những nơi bạn sở hữu làm thay đổi chỗ giữ tiền. Để biết mình đã tiêu bao nhiêu, hãy hỏi tiền có rời khỏi toàn bộ phạm vi đang theo dõi để thanh toán một khoản hay chưa. Tên nút chuyển khoản trong ứng dụng ngân hàng chưa đủ cho câu trả lời: chuyển cho cửa hàng là thanh toán, còn chuyển sang tài khoản khác của chính mình có thể là chuyển ví.\n\nVí dụ minh họa: Hòa có 600.000đ tiền mặt và 1.400.000đ trong ngân hàng. Hòa rút 200.000đ, không mất phí. Sau đó tiền mặt là 800.000đ, ngân hàng còn 1.200.000đ. Tổng trước và sau đều là 2.000.000đ. Nếu ghi lần rút này thành khoản chi rồi lại ghi các lần mua bằng tiền mặt, Hòa sẽ đếm chi tiêu hai lần. Nếu ngân hàng thu thêm 3.000đ phí rút tiền, chỉ 3.000đ phí là khoản chi trong ví dụ; 200.000đ vẫn chỉ đổi nơi giữ.\n\nPhạm vi giúp giải thích điều tưởng như mâu thuẫn. Khi chỉ xem ngân hàng, đúng là có 200.000đ đi ra khỏi ví đó. Khi xem cả hai ví, số tiền này có một phía đi ra và một phía đi vào nên triệt tiêu nhau. Vì thế một báo cáo dòng tiền theo ví có thể khác báo cáo chi tiêu toàn bộ. Không cần chọn một báo cáo là sai; cần đọc nhãn và biết những ví nào đang được cộng. Ví ngoài phạm vi cũng cần được ghi chú rõ thay vì tự coi mọi khoản ra là mua sắm.\n\nTrong Picket, hãy rà ví nguồn, ví đích, số tiền và phí trước khi xác nhận. Việc tạo mục tiêu tiết kiệm bằng nhãn cũng không tự làm tiền biến mất. Một giao dịch chuyển thực tế chỉ nên được ghi một lần theo hai phía liên kết. Nếu lỡ nhập thành thu và chi riêng, hãy kiểm tra trước khi sửa để không xóa khoản mua thật cùng ngày. Bạn có thể học hoàn toàn bằng số liệu minh họa; không cần rút hoặc chuyển tiền thật để chứng minh đã hiểu. Điều cần nhớ là cùng một số tiền có thể đổi vị trí mà tổng tiền không tăng hoặc giảm.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "600.000 + 1.400.000 = 2.000.000; sau chuyển: 800.000 + 1.200.000 = 2.000.000. Phí 3.000 nếu có làm tổng còn 1.997.000.",
+        "arithmeticChecks": [
+          {
+            "expression": "600000+1400000",
+            "expected": 2000000
+          },
+          {
+            "expression": "600000+200000",
+            "expected": 800000
+          },
+          {
+            "expression": "1400000-200000",
+            "expected": 1200000
+          },
+          {
+            "expression": "2000000-3000",
+            "expected": 1997000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Rút 200.000đ không phí từ ngân hàng sang tiền mặt của mình. Chi tiêu toàn bộ tăng bao nhiêu?",
+          "choices": [
+            {
+              "text": "200.000đ",
+              "explanation": "Đây là số tiền đổi chỗ, chưa phải mua hàng."
+            },
+            {
+              "text": "0đ",
+              "explanation": "Đúng: tổng hai ví không giảm."
+            },
+            {
+              "text": "400.000đ",
+              "explanation": "Cộng hai phía làm đếm cùng số tiền hai lần."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Chỉ xem ví ngân hàng trong ví dụ, 200.000đ có phải tiền ra khỏi phạm vi đó?",
+          "choices": [
+            {
+              "text": "Không, vì chuyển ví luôn bằng không",
+              "explanation": "Quy tắc tổng bằng không chỉ áp dụng khi có đủ hai phía trong phạm vi."
+            },
+            {
+              "text": "Có, nhưng chưa phải chi tiêu toàn bộ",
+              "explanation": "Đúng: ví ngân hàng giảm, ví tiền mặt tăng."
+            },
+            {
+              "text": "Là thu nhập mới",
+              "explanation": "Ngân hàng giảm nên không có thu nhập mới."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Rút 200.000đ và trả thêm phí 3.000đ. Khoản chi do thao tác này là?",
+          "choices": [
+            {
+              "text": "203.000đ",
+              "explanation": "203.000đ là tiền ra khỏi ngân hàng, gồm cả phần chuyển sang tiền mặt."
+            },
+            {
+              "text": "200.000đ",
+              "explanation": "200.000đ vẫn thuộc sở hữu của bạn."
+            },
+            {
+              "text": "3.000đ",
+              "explanation": "Đúng: phí là phần rời tổng tài sản trong tình huống."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Xem một giao dịch chuyển ví có sẵn hoặc giải lại ví dụ, không chuyển tiền thật.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://www.oecd.org/content/dam/oecd/en/publications/reports/2022/01/financial-competence-framework-for-adults-in-the-european-union_614b8b97/510f133c-en.pdf"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.02",
+      "chapterId": "chapter-01",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Ghi đúng trước khi phân loại",
+      "competencyId": "cashflow.confirmed-records",
+      "objective": "Kiểm tra số tiền và dấu thu/chi, tránh bản ghi trùng và phân biệt dữ liệu thiếu với chi bằng không.",
+      "body": "Một danh sách giao dịch hữu ích cần phản ánh những gì thực sự xảy ra. Bắt đầu bằng ngày, số tiền, ví và loại thu hoặc chi. Danh mục giúp tìm lại và so sánh, nhưng một tên danh mục rất đẹp không sửa được số tiền bị nhập sai. Khi quét hóa đơn, hãy coi kết quả là bản nháp cần đối chiếu. Máy có thể đọc nhầm dấu chấm, dòng tổng hoặc tiền khách đưa. Ảnh phong cảnh không phải bằng chứng cho một giao dịch; không nên đoán số tiền từ ảnh đó.\n\nMai có ba khoản chi đã kiểm tra: ăn trưa 45.000đ, đi xe 25.000đ và mua vở 30.000đ. Tổng là 100.000đ. Mai lưu ảnh hóa đơn bữa trưa vào chính giao dịch đó; tổng vẫn là 100.000đ, không tăng thành 145.000đ. Nếu ứng dụng tải ảnh chậm, trạng thái ảnh đang xử lý khác với trạng thái giao dịch đã lưu. Khi quay lại, cần xem bản ghi nào đã có trước khi nhấn lưu thêm lần nữa. Một ảnh đính kèm và một khoản chi là hai loại thông tin, không phải hai khoản tiền.\n\nPhân loại nên phục vụ câu hỏi của bạn. Vở dùng đi học có thể thuộc học tập; cùng món vở mua tặng người khác có thể thuộc quà tặng. Đừng chỉ dựa vào tên cửa hàng để kết luận mục đích. Có thể để khoản chưa rõ vào nhóm cần xem lại, rồi bổ sung sau khi nhớ được bối cảnh. Khi nhiều người trả chung, chỉ ghi phần của mình hoặc dùng quy tắc chia khoản nhất quán; tránh lúc ghi cả hóa đơn, lúc ghi phần cá nhân mà không ghi chú.\n\nCuối một khoảng thời gian, hãy so danh sách với số dư hoặc chứng từ bạn còn giữ. Nếu quên ghi hai ngày, hãy đánh dấu thiếu thông tin thay vì nói hai ngày đó chi bằng không. Một khoản chênh chưa giải thích không tự trở thành thu nhập. Có thể dừng ở mức biết rằng dữ liệu chưa đầy đủ, rồi rà thêm khi thuận tiện. Trong Picket, chỉ dùng khoản đã xác nhận cho bài học lấy dữ liệu thật; bạn có thể chọn ví dụ minh họa nếu không muốn sử dụng thông tin cá nhân. Mục tiêu của ghi chép là làm quyết định rõ hơn, không phải tạo một bảng hoàn hảo hay bắt bạn nhớ mọi chi tiết ngay từ đầu.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "45.000 + 25.000 + 30.000 = 100.000đ; ảnh bữa trưa đính kèm không tạo khoản chi 45.000đ thứ hai.",
+        "arithmeticChecks": [
+          {
+            "expression": "45000+25000+30000",
+            "expected": 100000
+          },
+          {
+            "expression": "100000+45000",
+            "expected": 145000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Mai thêm ảnh vào giao dịch ăn trưa đã lưu. Tổng ba khoản nên là?",
+          "choices": [
+            {
+              "text": "100.000đ",
+              "explanation": "Đúng: đính kèm không tạo thêm chi tiêu."
+            },
+            {
+              "text": "145.000đ",
+              "explanation": "Bạn đã cộng trùng bữa trưa."
+            },
+            {
+              "text": "55.000đ",
+              "explanation": "Bạn đã bỏ một khoản chi thực tế."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Không có bản ghi vào thứ Ba vì quên nhập. Kết luận phù hợp?",
+          "choices": [
+            {
+              "text": "Chắc chắn không chi",
+              "explanation": "Thiếu bản ghi không chứng minh không phát sinh."
+            },
+            {
+              "text": "Chưa biết có chi hay không",
+              "explanation": "Đúng: cần giữ trạng thái chưa đủ dữ liệu."
+            },
+            {
+              "text": "Dùng mức cao nhất của tháng làm số thật",
+              "explanation": "Ước lượng không được biến thành giao dịch đã xảy ra."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "OCR đọc tổng 450.000đ nhưng hóa đơn ghi 45.000đ. Làm gì?",
+          "choices": [
+            {
+              "text": "Giữ số máy đọc vì máy khách quan",
+              "explanation": "OCR vẫn có thể nhận sai ký tự."
+            },
+            {
+              "text": "Lưu cả hai số thành hai khoản",
+              "explanation": "Một lần mua không tạo ra hai khoản chỉ vì hai cách đọc."
+            },
+            {
+              "text": "Đối chiếu và sửa bản nháp trước khi xác nhận",
+              "explanation": "Đúng: số trên bản nháp phải được kiểm tra."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Rà một giao dịch hoặc ví dụ về ngày, ví, số tiền và khả năng nhập trùng.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_spending_tracker_2018-11_ADA.pdf"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.03",
+      "chapterId": "chapter-02",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Nhu cầu và mong muốn cần bối cảnh",
+      "competencyId": "planning.contextual-priorities",
+      "objective": "Giải thích một ưu tiên bằng hoàn cảnh, thời điểm và phương án thay thế, không phán xét từ tên món hàng.",
+      "body": "Nhu cầu thường liên quan đến sinh hoạt, sức khỏe, học tập hoặc trách nhiệm bạn phải đáp ứng. Mong muốn thường có phần lựa chọn linh hoạt hơn. Ranh giới này phụ thuộc hoàn cảnh chứ không nằm cố định trong tên món hàng. Internet có thể phục vụ học trực tuyến hoặc chỉ một dịch vụ giải trí bổ sung. Một chuyến xe công nghệ có thể giúp người đang chấn thương đến nơi an toàn. Vì vậy bài học không gán nhãn con người tốt hay xấu từ khoản chi, cũng không yêu cầu cắt mọi niềm vui.\n\nHãy thử ba câu hỏi: nếu hoãn thì hậu quả gì, cần đáp ứng trước ngày nào, có cách khác phù hợp không? Phương án rẻ hơn chỉ là lựa chọn khi thực tế đáp ứng được nhu cầu. Đi bộ không luôn thay được phương tiện trong đêm mưa hoặc khi đường không an toàn. Mua gói rẻ hơn cũng không hữu ích nếu thiếu chức năng bạn cần cho công việc. Một khoản có thể gồm phần thiết yếu và phần nâng cấp; bạn được quyền giải thích cách tách thay vì phải chọn một nhãn cho toàn bộ.\n\nTrong tình huống giả lập, Phương còn 1.500.000đ trước kỳ thu nhập. Phương dự kiến dành 900.000đ cho tiền ở và 400.000đ cho thực phẩm. Sau hai khoản, còn 200.000đ. Tai nghe mới giá 350.000đ sẽ vượt phần còn lại 150.000đ nếu không có thay đổi khác. Phép tính không nói Phương là người thiếu kỷ luật; nó cho thấy cần hoãn, đổi phương án hoặc xác nhận thêm nguồn tiền. Nếu tai nghe cũ hỏng và công việc cần dùng ngay, bối cảnh thay đổi nhưng phép tính vẫn phải được giải quyết.\n\nBạn có thể đặt một khoản linh hoạt cho sở thích theo khả năng riêng. Không có một tỷ lệ ngân sách duy nhất phù hợp mọi người. Người đang phải hỗ trợ gia đình hoặc có chi phí sức khỏe cao có thể có ít lựa chọn hơn; gọi đó là yếu kém không giúp tạo tiền. Trong Picket, nhãn ưu tiên chỉ hỗ trợ suy nghĩ, không khóa lưu giao dịch và không tự quyết định thay bạn. Khi chưa rõ hoàn cảnh, câu trả lời tốt là hỏi thêm. Hãy thử ghi một câu lý do ngắn cho lựa chọn của mình; bạn có thể thay đổi lý do khi trách nhiệm, sức khỏe hoặc thời điểm thay đổi.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "1.500.000 − 900.000 − 400.000 = 200.000đ; 350.000 − 200.000 = 150.000đ còn thiếu cho lựa chọn này.",
+        "arithmeticChecks": [
+          {
+            "expression": "1500000-900000-400000",
+            "expected": 200000
+          },
+          {
+            "expression": "350000-200000",
+            "expected": 150000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Thấy giao dịch xe công nghệ, có đủ để kết luận đây là mong muốn không?",
+          "choices": [
+            {
+              "text": "Có, xe công nghệ luôn không cần thiết",
+              "explanation": "Nhãn cố định bỏ qua sức khỏe và hoàn cảnh."
+            },
+            {
+              "text": "Không, cần biết bối cảnh và phương án an toàn",
+              "explanation": "Đúng: cùng dịch vụ có mục đích khác nhau."
+            },
+            {
+              "text": "Có, vì giá cao hơn xe buýt",
+              "explanation": "Giá thấp không đảm bảo phương án thay thế phù hợp."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Phương giữ nguyên hai khoản đã dự kiến. Mua tai nghe 350.000đ thì thiếu bao nhiêu?",
+          "choices": [
+            {
+              "text": "150.000đ",
+              "explanation": "Đúng: giá 350.000đ trừ phần còn 200.000đ."
+            },
+            {
+              "text": "200.000đ",
+              "explanation": "200.000đ là phần còn trước mua."
+            },
+            {
+              "text": "350.000đ",
+              "explanation": "Đã có 200.000đ, không thiếu toàn bộ giá."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Tai nghe hỏng, cần cho công việc. Điều nào hợp lý nhất?",
+          "choices": [
+            {
+              "text": "Nhãn nhu cầu tự tạo thêm tiền",
+              "explanation": "Nhãn không thay đổi số dư."
+            },
+            {
+              "text": "Bỏ qua mọi khoản tới hạn",
+              "explanation": "Hậu quả của nghĩa vụ vẫn tồn tại."
+            },
+            {
+              "text": "Đánh giá phương án đáp ứng công việc và tính lại phần thiếu",
+              "explanation": "Đúng: bối cảnh và khả năng chi trả đều cần được xem."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Chọn một ví dụ hoặc khoản có sẵn, viết lý do có thể hoãn hay cần ưu tiên.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_prioritizing-bills_tool.pdf"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.04",
+      "chapterId": "chapter-02",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Lập kế hoạch theo ngày tiền về",
+      "competencyId": "planning.irregular-income",
+      "objective": "Lập lịch thu chi có xét ngày đến hạn và tách khoản thu chưa chắc chắn.",
+      "body": "Tổng thu nhập trong tháng không kể hết câu chuyện. Một khoản tiền đến sau ngày trả tiền nhà không giúp thanh toán đúng hạn vào hôm trước. Người làm tự do, bán hàng nhỏ hoặc nhận tiền hỗ trợ theo đợt có thể cần lập kế hoạch theo từng kỳ tiền về. Hãy bắt đầu từ số tiền hiện có, rồi thêm những khoản thu đã xác nhận ngày và số tiền. Các khoản mới được hứa hoặc phụ thuộc công việc chưa hoàn tất nên để riêng như giả định, không coi đã nằm trong ví.\n\nNam có 1.200.000đ đầu tuần. Ngày thứ tư phải trả 800.000đ tiền phòng, ngày thứ sáu dự kiến cần 300.000đ cho thực phẩm. Một khách hàng hứa trả 1.000.000đ vào chủ nhật nhưng chưa xác nhận. Trước khoản thu đó, Nam chỉ còn 100.000đ sau hai khoản chi. Nếu phát sinh thêm chi phí 200.000đ vào thứ bảy thì thiếu 100.000đ trong kịch bản không nhận thêm tiền. Đưa khoản hứa trả vào đầu tuần sẽ che mất khoảng thiếu này dù tổng cuối tuần trông có vẻ dư.\n\nNgân sách trong hoàn cảnh đó có thể gồm phần chắc chắn và phần tùy tiền thực nhận. Đừng tự chia thu nhập tốt nhất năm cho các tuần rồi coi tuần nào cũng có mức đó. Có thể nhìn nhiều kỳ để nhận ra biến động, nhưng số trung bình không phải lời bảo đảm. Khi tiền về ít hơn dự kiến, hãy rà các khoản linh hoạt và chủ động hỏi bên nhận thanh toán về lựa chọn có thật. Không tự coi việc dời hạn là đã được đồng ý; cũng không bỏ nhu cầu ăn uống hoặc sức khỏe chỉ để làm bảng cân đối đẹp.\n\nTrong Picket, xem lịch các ngày trước kỳ thu nhập tiếp theo giúp bạn đặt hạn mức phù hợp hơn một nhãn tháng chung chung. Hóa đơn đã trả phải được đánh dấu và đối chiếu để không trừ lần nữa. Nếu cần sửa kế hoạch, sửa giả định của tương lai; giao dịch đã xảy ra vẫn giữ đúng ngày thực tế. Bạn không cần tiết lộ mức lương để học bài này: có thể dùng ví dụ của Nam. Kết quả tốt là biết ngày nào cần chú ý, khoản nào chắc chắn và câu hỏi nào phải xác minh, chứ không phải buộc thu nhập thất thường trở nên đều đặn trên màn hình.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "1.200.000 − 800.000 − 300.000 = 100.000đ; thêm chi 200.000đ trước tiền về tạo mức −100.000đ.",
+        "arithmeticChecks": [
+          {
+            "expression": "1200000-800000-300000",
+            "expected": 100000
+          },
+          {
+            "expression": "100000-200000",
+            "expected": -100000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Khách chưa xác nhận trả 1.000.000đ chủ nhật. Nên biểu diễn thế nào?",
+          "choices": [
+            {
+              "text": "Tiền mặt đã có từ thứ hai",
+              "explanation": "Ngày và độ chắc chắn bị thay đổi sai."
+            },
+            {
+              "text": "Khoản thu giả định, tách khỏi số dư thực",
+              "explanation": "Đúng: có thể so kịch bản nhận và chưa nhận."
+            },
+            {
+              "text": "Thu nhập chắc chắn mỗi tuần",
+              "explanation": "Một lời hứa không chứng minh lịch lặp lại."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Trước chủ nhật, Nam chi thêm 200.000đ sau hai nghĩa vụ. Số dư kịch bản là?",
+          "choices": [
+            {
+              "text": "900.000đ",
+              "explanation": "Con số này giả định tiền khách đã về."
+            },
+            {
+              "text": "100.000đ",
+              "explanation": "100.000đ là trước chi bổ sung."
+            },
+            {
+              "text": "Âm 100.000đ",
+              "explanation": "Đúng: 100.000đ trừ 200.000đ."
+            }
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Tháng có tổng thu lớn hơn tổng chi nhưng vẫn hụt giữa tháng. Vì sao?",
+          "choices": [
+            {
+              "text": "Ngày thu có thể sau ngày cần trả",
+              "explanation": "Đúng: lịch dòng tiền quan trọng bên cạnh tổng kỳ."
+            },
+            {
+              "text": "Phép cộng không áp dụng được cho tiền",
+              "explanation": "Phép cộng vẫn đúng, cần thêm trục thời gian."
+            },
+            {
+              "text": "Chỉ cần đổi danh mục là đủ tiền",
+              "explanation": "Đổi nhãn không tạo tiền."
+            }
+          ],
+          "correctIndex": 0
+        }
+      ],
+      "optionalAction": {
+        "text": "Xem hoặc viết lịch ba khoản tới hạn và khoản thu tiếp theo bằng dữ liệu minh họa.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_cash_flow_budget_tool_2018-11_ADA.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_income_benefits_tool_2018-11_ADA.pdf"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.05",
+      "chapterId": "chapter-03",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Quỹ dự phòng khác khoản đã biết trước",
+      "competencyId": "resilience.emergency-vs-planned",
+      "objective": "Phân biệt sự cố chưa dự kiến với chi phí theo lịch và chọn mục tiêu dự phòng phù hợp hoàn cảnh.",
+      "body": "Tiền dự phòng giúp bạn có thêm lựa chọn khi gặp một việc bất ngờ. Ví dụ có thể là đồ dùng thiết yếu hỏng hoặc gián đoạn thu nhập. Tiền dành cho khoản biết trước, như học phí kỳ tới hay phí gia hạn hàng năm, có vai trò khác: đó là chuẩn bị theo lịch. Hai loại đều có ích. Phân biệt chúng giúp bạn không nghĩ rằng mình liên tục gặp sự cố khi thực ra một khoản thường niên chưa được đưa vào kế hoạch. Không cần phán xét khi phải dùng tiền đã dành; hãy nhìn điều gì thực sự xảy ra.\n\nDung có 2.000.000đ, gồm 1.200.000đ dành cho học phí và 800.000đ dự phòng. Học phí đến hạn là 1.200.000đ, trả xong Dung còn 800.000đ. Nếu ngay sau đó thiết bị học tập cần sửa bất ngờ 500.000đ, Dung còn 300.000đ. Việc trả học phí không phải một lần rút quỹ dự phòng theo cách phân chia này. Số tiền dự phòng cũng không phải số tiền có thêm ngoài 2.000.000đ; đó là một phần của tổng đang có. Gắn nhãn cùng một khoản vào hai quỹ không khiến nó phục vụ đồng thời hai lần thanh toán.\n\nMức dự phòng phù hợp phụ thuộc nhu cầu, người phụ thuộc, độ ổn định thu nhập và những hỗ trợ thực sự có thể tiếp cận. Một mục tiêu khởi đầu nhỏ có thể dễ thực hiện hơn một con số lớn khiến bạn bỏ cuộc. Bài này không yêu cầu mọi người giữ một số tháng giống nhau và không hứa rằng đạt một mức nào đó sẽ an toàn trước mọi biến cố. Nếu hiện chưa còn tiền sau nhu cầu cơ bản, hãy nhận diện giới hạn đó; không cần vay tiền chỉ để tạo số dư mang tên dự phòng.\n\nHãy cân nhắc nơi giữ tiền mà bạn hiểu phí, khả năng rút và mức độ tiếp cận khi cần, thay vì chạy theo một mức sinh lời được hứa. Không đưa toàn bộ tiền cần sớm vào lựa chọn mà bạn không hiểu hoặc không rút được đúng lúc. Trong Picket, bạn có thể xem nhãn mục tiêu và số dư riêng để tránh nhầm. Sau một lần dùng dự phòng, chỉ lập lại kế hoạch khi có điều kiện; không cần tự phạt bằng việc bỏ chi phí thiết yếu. Một bước học có thể chỉ là liệt kê khoản biết trước và việc bất ngờ, không yêu cầu gửi tiền hay mua sản phẩm tài chính.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "2.000.000 − 1.200.000 = 800.000đ; 800.000 − 500.000 = 300.000đ.",
+        "arithmeticChecks": [
+          {
+            "expression": "2000000-1200000",
+            "expected": 800000
+          },
+          {
+            "expression": "800000-500000",
+            "expected": 300000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Học phí có lịch rõ kỳ tới nên được xem là gì trong bài?",
+          "choices": [
+            {
+              "text": "Sự cố không thể dự kiến",
+              "explanation": "Đã biết ngày và số tiền nên có thể lập kế hoạch."
+            },
+            {
+              "text": "Khoản cần chuẩn bị theo lịch",
+              "explanation": "Đúng: khác sự cố chưa dự kiến."
+            },
+            {
+              "text": "Thu nhập mới",
+              "explanation": "Đây là tiền phải trả, không phải thu."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Dung trả học phí và sửa thiết bị như ví dụ. Còn bao nhiêu?",
+          "choices": [
+            {
+              "text": "300.000đ",
+              "explanation": "Đúng: đã trừ đủ cả hai khoản thực tế."
+            },
+            {
+              "text": "800.000đ",
+              "explanation": "Đây là số trước khi sửa thiết bị."
+            },
+            {
+              "text": "1.500.000đ",
+              "explanation": "Đã bỏ qua học phí trong phép tính."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Hiện không dư sau nhu cầu cơ bản. Lựa chọn nào phù hợp nhất?",
+          "choices": [
+            {
+              "text": "Vay để đạt một nhãn quỹ đẹp",
+              "explanation": "Vay làm phát sinh nghĩa vụ, không tự tạo an toàn."
+            },
+            {
+              "text": "Coi mình thất bại",
+              "explanation": "Thiếu nguồn lực không phải đánh giá phẩm chất."
+            },
+            {
+              "text": "Ghi nhận giới hạn và xem lại mục tiêu khi điều kiện đổi",
+              "explanation": "Đúng: mục tiêu cần phù hợp hoàn cảnh thực tế."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Tách hai ví dụ thành khoản có lịch và sự cố bất ngờ; chưa cần chuyển tiền.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.06",
+      "chapterId": "chapter-03",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Chia mục tiêu thành bước có thể đổi",
+      "competencyId": "saving.realistic-goal",
+      "objective": "Tính phần còn thiếu và mức dành theo kỳ, biết điều chỉnh thời hạn khi hoàn cảnh đổi.",
+      "body": "Một mục tiêu rõ thường có số tiền, lý do và thời điểm bạn muốn đạt. Nó vẫn là kế hoạch có thể sửa. Nếu giá thay đổi hoặc thu nhập giảm, điều chỉnh thời hạn không xóa đi những bước đã làm. Trước khi tính, hãy kiểm tra đã có bao nhiêu tiền thực sự dành cho mục tiêu này. Một khoản đã để cho tiền nhà không nên đồng thời được tính là tiền mua máy tính, trừ khi bạn chủ động đổi phân bổ và hiểu hậu quả cho tiền nhà.\n\nTú muốn dành 3.000.000đ cho một khóa học sau sáu kỳ thu nhập. Tú đã có 600.000đ cho mục tiêu đó. Còn thiếu 2.400.000đ; nếu chia đều sáu kỳ thì mỗi kỳ là 400.000đ. Đây là phép chia để hiểu nhịp độ, không phải mệnh lệnh phải dành đủ bất kể hoàn cảnh. Nếu thực tế chỉ có thể dành 300.000đ mỗi kỳ, tám kỳ mới đủ phần còn thiếu theo giả định giá không đổi và không có lãi. Không cần tự thêm lợi nhuận tương lai chưa chắc chắn để làm thời hạn trông đạt được.\n\nKhi một kỳ phải ưu tiên nhu cầu khác, hãy tính lại trên số thực có, tránh vừa cộng khoản dự định vừa cộng khoản đã chuyển. Tiền vào ví tiết kiệm của chính mình vẫn là chuyển ví ở phạm vi tổng; mục tiêu thể hiện bạn muốn dùng tiền vào việc gì. Nếu chỉ cập nhật thanh tiến độ mà không có tiền tương ứng, cần ghi rõ đó là ghi nhận kế hoạch hay điều chỉnh dữ liệu. Một thanh đầy không chứng minh bạn đủ tiền thanh toán khi các khoản khác cùng cần đến số dư đó.\n\nTrong Picket, có thể chọn thực hành xem lại mục tiêu có sẵn hoặc chỉ giải ví dụ. Không cần mở một khoản tiết kiệm thật để hoàn thành bài, không cần chứng minh bằng ảnh tài khoản. Một lời nhắc tự chọn có thể giúp bạn quay lại kế hoạch, nhưng bỏ qua không làm mất kiến thức đã học. Khi so hai phương án, hãy ghi rõ điều đang đổi: thời gian, số tiền mỗi kỳ hoặc phạm vi mục tiêu. Tránh kết luận rằng ai hoàn thành nhanh hơn là quản lý tiền giỏi hơn; nguồn lực và trách nhiệm của mỗi người khác nhau. Bước nhỏ có ích khi bạn hiểu được nó và vẫn đáp ứng các nhu cầu quan trọng hiện tại.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "(3.000.000 − 600.000) / 6 = 400.000đ/kỳ; 2.400.000 / 300.000 = 8 kỳ.",
+        "arithmeticChecks": [
+          {
+            "expression": "3000000-600000",
+            "expected": 2400000
+          },
+          {
+            "expression": "2400000/6",
+            "expected": 400000
+          },
+          {
+            "expression": "2400000/300000",
+            "expected": 8
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Tú đã có 600.000đ, mục tiêu 3.000.000đ. Còn thiếu?",
+          "choices": [
+            {
+              "text": "3.600.000đ",
+              "explanation": "Đã cộng thay vì trừ phần có sẵn."
+            },
+            {
+              "text": "2.400.000đ",
+              "explanation": "Đúng: mục tiêu trừ tiền thực đã dành."
+            },
+            {
+              "text": "600.000đ",
+              "explanation": "Đây là số có, không phải phần thiếu."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Chỉ dành được 300.000đ mỗi kỳ cho phần thiếu. Cần mấy kỳ theo giả định bài?",
+          "choices": [
+            {
+              "text": "6",
+              "explanation": "Sáu kỳ chỉ tạo 1.800.000đ."
+            },
+            {
+              "text": "10",
+              "explanation": "Mười kỳ là chia toàn bộ mục tiêu, bỏ qua 600.000đ đã có."
+            },
+            {
+              "text": "8",
+              "explanation": "Đúng: 2.400.000 chia 300.000 bằng tám."
+            }
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Một kỳ cần dùng tiền cho thuốc. Nên làm gì với mục tiêu?",
+          "choices": [
+            {
+              "text": "Cập nhật số thực và tính lại thời hạn",
+              "explanation": "Đúng: kế hoạch phục vụ hoàn cảnh, không ngược lại."
+            },
+            {
+              "text": "Giữ tiến độ giả cho đẹp",
+              "explanation": "Tiến độ không khớp tiền làm quyết định sau khó hơn."
+            },
+            {
+              "text": "Bỏ thuốc để không đứt tiến độ",
+              "explanation": "Nhu cầu sức khỏe không nên bị thay thế bằng điểm tiến độ."
+            }
+          ],
+          "correctIndex": 0
+        }
+      ],
+      "optionalAction": {
+        "text": "Viết một mục tiêu giả lập với số đã có, phần thiếu và hai lựa chọn thời hạn.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_savings_plan_tool_2018-11_ADA.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_SMART-goals_tool_2018-11.pdf"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.07",
+      "chapterId": "chapter-04",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Số dư chưa phải tiền có thể dành ra",
+      "competencyId": "forecast.obligations-and-scope",
+      "objective": "Tách số dư hiện tại, nghĩa vụ tương lai và mức dự phòng khi xem một kịch bản.",
+      "body": "Số dư trả lời bạn đang có bao nhiêu tiền trong phạm vi được xem. Nó không tự trả lời bao nhiêu tiền có thể dành cho một quyết định mới. Có những khoản chưa trừ khỏi ví nhưng sắp cần thanh toán. Bạn cũng có thể muốn giữ một phần để xử lý bất ngờ. Khi đọc một con số, hãy tìm mốc thời gian, những ví được tính và các khoản đã hoặc chưa nằm trong đó. Nếu một ví ngoại tệ chưa có tỷ giá phù hợp, đừng cộng thẳng số của nó với số VND.\n\nVy có 4.000.000đ trong các ví VND đang xem. Trước kỳ thu tiếp theo, Vy đã xác nhận tiền phòng 1.500.000đ và chi thực phẩm dự kiến 700.000đ. Vy muốn giữ 500.000đ làm khoảng dự phòng. Theo đúng các đầu vào đó, phần còn sau nghĩa vụ và phần dành lại là 1.300.000đ. Phép tính không nói số dư ngân hàng hiện đã giảm xuống 1.300.000đ. Nó phân biệt tiền hiện có với phần đang được cân nhắc cho quyết định mới. Khoản dự phòng là phân bổ của cùng số dư, không phải một khoản chi đã thực hiện.\n\nNếu tiền phòng đã trả và giao dịch đó đã trừ vào số dư 4.000.000đ, bạn không nên trừ nó lần nữa. Cần đối chiếu trạng thái hóa đơn và bản ghi thanh toán trước khi xem lịch. Tương tự, ảnh hóa đơn chưa xác nhận không được tự tạo một nghĩa vụ mới ngoài khoản đã ghi. Chuyển giữa hai ví trong phạm vi không tăng tổng tiền để dành. Các quy tắc này giúp tránh một báo cáo quá lạc quan hoặc quá bi quan vì đếm cùng khoản nhiều lần.\n\nCon số 1.300.000đ vẫn phụ thuộc vào danh sách đã đủ chưa. Vy có thể quên chi phí đi lại hoặc có một khoản thu chưa chắc chắn. Hãy xem kết quả như một câu trả lời có điều kiện, kèm điều cần kiểm tra thêm. Trong Picket, khi chưa xác nhận lịch, tốt hơn là nói chưa đủ dữ liệu thay vì khẳng định bạn được phép tiêu một mức cụ thể. Bạn có thể tự chọn thay đổi giả định và xem kết quả, nhưng ứng dụng không quyết định thay bạn. Thực hành của bài là rà một nghĩa vụ và hỏi nó đã trả hay chưa; không cần cung cấp thông tin tài khoản ngân hàng cho bất kỳ dịch vụ mới nào.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "4.000.000 − 1.500.000 − 700.000 − 500.000 = 1.300.000đ theo đầu vào đã nêu.",
+        "arithmeticChecks": [
+          {
+            "expression": "4000000-1500000-700000-500000",
+            "expected": 1300000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "1.300.000đ trong ví dụ có ý nghĩa gì?",
+          "choices": [
+            {
+              "text": "Số dư ngân hàng chắc chắn ngay lúc này",
+              "explanation": "Ngân hàng chưa tự trừ các khoản tương lai và phân bổ dự phòng."
+            },
+            {
+              "text": "Phần còn có điều kiện sau các khoản đã nêu",
+              "explanation": "Đúng: cần giữ nguyên giả định và phạm vi để đọc số."
+            },
+            {
+              "text": "Tiền ứng dụng vừa tạo thêm",
+              "explanation": "Tính toán không tạo thêm tiền."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Tiền phòng đã nằm trong giao dịch trừ số dư hiện tại. Trừ thêm hóa đơn đó gây gì?",
+          "choices": [
+            {
+              "text": "Đếm nghĩa vụ hai lần",
+              "explanation": "Đúng: cần đối chiếu trạng thái thanh toán."
+            },
+            {
+              "text": "Tăng độ chính xác",
+              "explanation": "Trừ trùng làm dự kiến thấp sai."
+            },
+            {
+              "text": "Tạo thu nhập mới",
+              "explanation": "Không có nguồn thu mới nào."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Có ví 100 USD và ví 4.000.000 VND nhưng chưa có tỷ giá. Nên?",
+          "choices": [
+            {
+              "text": "Cộng thành 4.000.100 VND",
+              "explanation": "Khác đơn vị nên không cộng trực tiếp."
+            },
+            {
+              "text": "Coi USD bằng không mà không báo",
+              "explanation": "Bỏ âm thầm làm người dùng hiểu sai phạm vi."
+            },
+            {
+              "text": "Hiển thị riêng và nói rõ chưa tổng hợp chéo tiền tệ",
+              "explanation": "Đúng: giới hạn phải hiện rõ."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Rà một khoản tới hạn hoặc ví dụ để đánh dấu đã trả/chưa trả, không tạo thanh toán thật.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_bill_calendar_tool_2018-11_ADA.pdf"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.08",
+      "chapterId": "chapter-04",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Kịch bản giúp hỏi, không đoán chắc tương lai",
+      "competencyId": "forecast.scenario-and-coverage",
+      "objective": "So hai kịch bản cùng giả định và giải thích vì sao thiếu dữ liệu không cho phép khẳng định dự báo.",
+      "body": "Một kịch bản trả lời câu hỏi nếu những điều này xảy ra thì số tiền sẽ thay đổi thế nào. Dự báo cố gắng ước lượng điều có thể xảy ra từ dữ liệu và phương pháp cụ thể. Cả hai đều có giới hạn, nhưng không nên dùng hai tên thay nhau để tạo cảm giác chắc chắn. Khi bạn nhập giá một món định mua rồi xem chênh lệch, đó trước hết là phép tính có điều kiện. Nó không chứng minh người dùng sẽ thật sự mua, cũng không chứng minh mọi khoản thu chi khác đã được biết.\n\nAn có 2.000.000đ. Trong bảy ngày, An xác nhận một khoản thu 1.000.000đ và nghĩa vụ 1.500.000đ. Nếu không có khoản nào khác, cuối kỳ còn 1.500.000đ. Nếu mua món đồ 600.000đ trong kỳ với các điều kiện giữ nguyên, còn 900.000đ. Chênh lệch giữa hai phương án là 600.000đ. Đây không phải khẳng định An sẽ có chính xác 900.000đ tuần tới. Nếu khoản thu đến chậm hoặc còn chi chưa nhập, kết quả thực tế khác; cần xem thêm số dư theo từng ngày chứ không chỉ ngày cuối.\n\nDữ liệu thưa dễ làm câu chuyện sai. Không ghi giao dịch vào ba ngày không có nghĩa là ba ngày đều chi bằng không. Nếu chỉ theo dõi một ví, báo cáo cũng không biết mọi khoản ở ví khác. Một mô hình phức tạp không tự lấp được khoảng trống này bằng sự thật. Cách hữu ích là hỏi mức độ ghi đủ, nêu mốc đồng bộ và cho phép bạn sửa lịch đã biết. Các khoảng thấp và cao do đổi giả định chỉ là các kịch bản; không gọi là xác suất tin cậy đã kiểm chứng nếu chưa đo và hiệu chuẩn trên dữ liệu phù hợp.\n\nTrong Picket, thử một lựa chọn không nên tự tạo giao dịch hoặc sửa ngân sách thật. Chỉ khi bạn chủ động xác nhận một sự việc đã xảy ra mới dùng luồng ghi chép tương ứng. Khi thiếu lịch sử, bài vẫn dùng số minh họa để giải thích công thức mà không bịa một ngày hết tiền. Bạn có thể chọn chưa kết luận và bổ sung đầu vào sau. Thực hành tốt là nói được câu điều kiện trước con số: nếu lịch đúng và không còn khoản nào khác, kết quả là bao nhiêu. Câu đó giúp bạn kiểm tra quyết định và nhìn ra điều còn chưa biết.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Không mua: 2.000.000 + 1.000.000 − 1.500.000 = 1.500.000đ. Mua: 1.500.000 − 600.000 = 900.000đ.",
+        "arithmeticChecks": [
+          {
+            "expression": "2000000+1000000-1500000",
+            "expected": 1500000
+          },
+          {
+            "expression": "1500000-600000",
+            "expected": 900000
+          },
+          {
+            "expression": "1500000-900000",
+            "expected": 600000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "So hai phương án chỉ khác giá món đồ 600.000đ. Chênh lệch cuối kỳ?",
+          "choices": [
+            {
+              "text": "600.000đ",
+              "explanation": "Đúng: các giả định khác giữ nguyên."
+            },
+            {
+              "text": "900.000đ",
+              "explanation": "Đây là số còn của phương án mua."
+            },
+            {
+              "text": "1.500.000đ",
+              "explanation": "Đây là số còn của phương án không mua."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Ba ngày không ghi dữ liệu. Có thể kết luận chi tiêu bằng không?",
+          "choices": [
+            {
+              "text": "Có vì biểu đồ trống",
+              "explanation": "Biểu đồ trống có thể do chưa nhập."
+            },
+            {
+              "text": "Chưa thể kết luận",
+              "explanation": "Đúng: cần biết độ phủ ghi chép."
+            },
+            {
+              "text": "Có nếu AI trả lời tự tin",
+              "explanation": "Độ tự tin của lời văn không thay bằng chứng."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Thử giá trên màn hình kịch bản nên làm gì với giao dịch thật?",
+          "choices": [
+            {
+              "text": "Tạo khoản chi tự động",
+              "explanation": "Thử phương án chưa phải mua thật."
+            },
+            {
+              "text": "Sửa ngân sách để vừa kết quả",
+              "explanation": "Điều chỉnh âm thầm làm mất ý nghĩa kế hoạch."
+            },
+            {
+              "text": "Giữ nguyên, chỉ mô phỏng cho tới thao tác xác nhận riêng",
+              "explanation": "Đúng: thử nghiệm và ghi nhận thực tế là hai bước khác nhau."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Giải hai kịch bản minh họa và viết một điều có thể khiến kết quả khác.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://files.consumerfinance.gov/f/documents/cfbp_your-money-your-goals_adjust_cash_flow_tool_2018-11_ADA.pdf",
+        "https://www.oecd.org/content/dam/oecd/en/publications/reports/2022/01/financial-competence-framework-for-adults-in-the-european-union_614b8b97/510f133c-en.pdf"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.09",
+      "chapterId": "chapter-05",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Nhìn tổng chi phí trước khoản trả nhỏ",
+      "competencyId": "borrowing.total-cost",
+      "objective": "Tính tổng phải trả từ lịch và phí; phân biệt lãi suất quảng cáo với toàn bộ chi phí của ví dụ.",
+      "body": "Một khoản vay không chỉ có tiền gốc. Bạn cần biết số tiền thực nhận, lịch trả, tổng lãi và các loại phí có thể phát sinh. Một mức trả từng kỳ nhỏ không tự chứng minh khoản vay rẻ hơn. Muốn so hai lựa chọn cần cùng hiểu số tiền được sử dụng, số kỳ, thời điểm và điều kiện. Nếu thông tin chưa đủ, câu trả lời đúng có thể là chưa so được, thay vì chọn mức phần trăm nhìn thấp nhất trên một dòng quảng cáo.\n\nTrong hợp đồng giả lập A, Linh nhận 3.000.000đ và trả ba kỳ, mỗi kỳ 1.080.000đ. Có thêm phí 60.000đ trả riêng lúc bắt đầu. Tổng tiền trả là 3.300.000đ; phần vượt tiền nhận là 300.000đ. Hợp đồng giả lập B cũng cho nhận đủ 3.000.000đ, trả ba kỳ 1.110.000đ và không có phí khác: tổng 3.330.000đ. Theo đúng các điều kiện đã cho, A thấp hơn 30.000đ về tổng số tiền. Đây là so sánh số học, không phải giới thiệu bên cho vay hay kết luận tính hợp pháp của bất kỳ sản phẩm nào.\n\nĐọc kỹ phí có được khấu trừ ngay khỏi tiền nhận hay trả riêng. Hai cách có thể làm số tiền thực dùng khác nhau dù cùng gọi là vay 3.000.000đ. Kiểm tra thêm phí trả chậm, điều kiện trả trước và khoản dịch vụ kèm theo. Đừng tự suy ra lãi suất năm từ phép chia đơn giản khi lịch trả và số dư gốc thay đổi theo kỳ. Cũng không nên gắn tên một chỉ số nước ngoài vào một phép tính chưa đúng định nghĩa. Trong bài này chúng ta chỉ tính tổng các khoản tiền đã được nêu rõ.\n\nTrước quyết định thật, bạn cần thông tin hợp đồng áp dụng tại Việt Nam và có thể hỏi người có chuyên môn phù hợp nếu điều khoản khó hiểu. Nguồn quốc tế ở cuối bài hỗ trợ cách nhìn chi phí, không thay thế luật Việt Nam và không tạo quyền hay thời hạn pháp lý ở đây. Bạn không cần nhập khoản vay thật hoặc bấm đăng ký để hoàn thành. Trong Picket, hãy phân biệt dữ liệu mô phỏng với nghĩa vụ đã có; chỉ ghi lịch thật khi đã kiểm tra. Nếu bị thúc ép ký khi còn câu hỏi chưa được trả lời, việc dừng để xác minh giúp giữ quyền chủ động của bạn.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "A: 3 × 1.080.000 + 60.000 = 3.300.000đ, chi phí 300.000đ. B: 3 × 1.110.000 = 3.330.000đ; chênh 30.000đ.",
+        "arithmeticChecks": [
+          {
+            "expression": "3*1080000+60000",
+            "expected": 3300000
+          },
+          {
+            "expression": "3300000-3000000",
+            "expected": 300000
+          },
+          {
+            "expression": "3*1110000",
+            "expected": 3330000
+          },
+          {
+            "expression": "3330000-3300000",
+            "expected": 30000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Tổng phải trả của A theo ví dụ?",
+          "choices": [
+            {
+              "text": "3.240.000đ",
+              "explanation": "Đã bỏ phí trả riêng 60.000đ."
+            },
+            {
+              "text": "3.300.000đ",
+              "explanation": "Đúng: cộng ba kỳ và phí."
+            },
+            {
+              "text": "3.060.000đ",
+              "explanation": "Đã bỏ phần lớn các khoản trả theo kỳ."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Chỉ biết lãi suất quảng cáo của hai hợp đồng. Đã chọn được rẻ hơn chưa?",
+          "choices": [
+            {
+              "text": "Chưa, cần lịch, tiền thực nhận và phí",
+              "explanation": "Đúng: một chỉ số chưa thể hiện toàn bộ tiền phải trả."
+            },
+            {
+              "text": "Rồi, cứ chọn số nhỏ",
+              "explanation": "Phí và cách tính có thể khác."
+            },
+            {
+              "text": "Rồi, chọn bên hứa giải ngân nhanh",
+              "explanation": "Tốc độ không cho biết chi phí."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Nguồn CFPB nói về công bố TILA tại Mỹ. Áp dụng thế nào trong bài Việt Nam?",
+          "choices": [
+            {
+              "text": "Coi đó là luật Việt Nam",
+              "explanation": "Nguồn nước ngoài không trở thành luật Việt Nam."
+            },
+            {
+              "text": "Hứa mọi hợp đồng Việt Nam cùng biểu mẫu",
+              "explanation": "Chưa có bằng chứng cho kết luận đó."
+            },
+            {
+              "text": "Chỉ tham khảo khái niệm chi phí, kiểm điều khoản và luật áp dụng riêng",
+              "explanation": "Đúng: phân biệt khái niệm với yêu cầu pháp lý từng nơi."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "So hai bảng tiền giả lập; ghi một câu hỏi về phí còn thiếu, không đăng ký vay.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://www.consumerfinance.gov/ask-cfpb/what-is-a-truth-in-lending-disclosure-for-an-auto-loan-en-787/",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_auto_loans_tool_2018-11_ADA.pdf"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.10",
+      "chapterId": "chapter-05",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Lịch trả quan trọng như tổng tiền",
+      "competencyId": "borrowing.repayment-timing",
+      "objective": "Nhận ra thiếu hụt trước ngày thu nhập và kiểm tra điều kiện trước khi đổi lịch hoặc vay bù.",
+      "body": "Sau khi hiểu tổng chi phí, hãy đặt từng khoản trả lên lịch cùng thu nhập và nhu cầu sinh hoạt. Một hợp đồng có tổng thấp hơn vẫn có thể gây áp lực nếu các kỳ trả không phù hợp ngày bạn có tiền. Điều này không tự khiến một lựa chọn khác tốt hơn; nó cho bạn thêm tiêu chí cần kiểm tra. Số dư cuối tháng dương không bảo đảm mọi ngày trong tháng đều đủ tiền. Đặc biệt với thu nhập theo dự án, ngày khách hứa trả và ngày tiền thực về có thể khác nhau.\n\nBình có 900.000đ đầu kỳ. Ngày mười phải trả một khoản theo hợp đồng 700.000đ. Trước ngày mười lăm, Bình cần 300.000đ cho nhu cầu thiết yếu. Thu nhập 1.200.000đ dự kiến về ngày mười lăm. Trước ngày thu, phép tính là 900.000 − 700.000 − 300.000 = âm 100.000đ. Đến khi tiền về đủ và không có khoản khác, còn 1.100.000đ. Chỉ nhìn số cuối kỳ sẽ bỏ qua thiếu hụt 100.000đ trước đó. Đổi ngày trên ứng dụng không tự đổi ngày đến hạn trong hợp đồng.\n\nNếu thấy khoảng thiếu, hãy xác minh ngày thu và hỏi bên liên quan về lựa chọn thực tế trước hạn. Mọi thay đổi lịch cần được xác nhận, gồm phí và ảnh hưởng của nó. Trả một khoản phí gia hạn không nhất thiết làm giảm tiền gốc; phải đọc cách ghi nhận của chính hợp đồng. Vay mới để bù kỳ cũ có thể thêm nghĩa vụ, nên cần nhìn lịch tổng của tất cả khoản chứ không chỉ một kỳ đang gấp. Bài học không chọn sản phẩm vay hoặc khuyên bỏ một khoản thiết yếu để trả bằng mọi giá.\n\nTrong Picket, lịch nhắc chỉ giúp nhớ; dấu hoàn thành phải khớp một khoản thanh toán thật đã được xác nhận. Nếu số tiền đã nằm trong giao dịch, đừng nhập thêm lần nữa từ lời nhắc. Có thể dùng ghi chú cho điều chưa rõ và quay lại sau. Khi nhận cảnh báo, bạn được quyền xem công thức và phạm vi thay vì chấp nhận một câu kết luận tuyệt đối. Thực hành bài này chỉ yêu cầu đánh dấu một ngày thiếu trong ví dụ và nghĩ một câu hỏi cần xác minh. Không cần cung cấp số hợp đồng, giấy tờ cá nhân hay thực hiện khoản trả thật để học được cách đọc lịch.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "Trước thu: 900.000 − 700.000 − 300.000 = −100.000đ. Sau thu: −100.000 + 1.200.000 = 1.100.000đ.",
+        "arithmeticChecks": [
+          {
+            "expression": "900000-700000-300000",
+            "expected": -100000
+          },
+          {
+            "expression": "-100000+1200000",
+            "expected": 1100000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Trước ngày mười lăm, Bình thiếu bao nhiêu theo ví dụ?",
+          "choices": [
+            {
+              "text": "Không thiếu vì cuối kỳ dương",
+              "explanation": "Tiền chưa về không trả được nhu cầu đến trước."
+            },
+            {
+              "text": "100.000đ",
+              "explanation": "Đúng: đầu vào cho mức âm 100.000đ."
+            },
+            {
+              "text": "1.100.000đ",
+              "explanation": "1.100.000đ là số sau khoản thu."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Bình sửa ngày nhắc trong Picket. Hạn hợp đồng có tự đổi không?",
+          "choices": [
+            {
+              "text": "Có",
+              "explanation": "Ứng dụng không sửa thỏa thuận với bên cho vay."
+            },
+            {
+              "text": "Có nếu tắt thông báo",
+              "explanation": "Tắt nhắc không đổi nghĩa vụ."
+            },
+            {
+              "text": "Không, phải được bên liên quan xác nhận",
+              "explanation": "Đúng: cần xác nhận thay đổi và điều kiện thực tế."
+            }
+          ],
+          "correctIndex": 2
+        },
+        {
+          "prompt": "Đóng phí gia hạn có chắc giảm tiền gốc không?",
+          "choices": [
+            {
+              "text": "Không, cần đọc cách phân bổ trong hợp đồng",
+              "explanation": "Đúng: phí và gốc có thể là hai khoản khác nhau."
+            },
+            {
+              "text": "Chắc chắn giảm đủ bằng phí",
+              "explanation": "Không có dữ kiện để khẳng định."
+            },
+            {
+              "text": "Chắc chắn xóa nợ",
+              "explanation": "Gia hạn không có nghĩa xóa nghĩa vụ."
+            }
+          ],
+          "correctIndex": 0
+        }
+      ],
+      "optionalAction": {
+        "text": "Đánh dấu khoảng thiếu trong lịch giả lập và viết câu hỏi về ngày trả hoặc phí.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_cash_flow_budget_tool_2018-11_ADA.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_income_benefits_tool_2018-11_ADA.pdf",
+        "https://files.consumerfinance.gov/f/documents/cfpb_your-money-your-goals_auto_loans_tool_2018-11_ADA.pdf"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.11",
+      "chapterId": "chapter-06",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Dừng một nhịp trước yêu cầu OTP",
+      "competencyId": "safety.otp-and-phishing",
+      "objective": "Nhận ra yêu cầu chuyển tiền hoặc chia sẻ bí mật đáng ngờ và xác minh qua kênh chính thức độc lập.",
+      "body": "Một người biết tên hoặc chi tiết đơn hàng của bạn chưa chắc là người có quyền yêu cầu thao tác tài khoản. Kẻ giả mạo có thể dùng thông tin đúng để kể một câu chuyện gấp: phải xác minh ngay, nhận hoàn tiền hoặc tránh bị khóa. Khi câu chuyện thúc bạn bỏ bước kiểm tra, hãy dừng. Việc xuất hiện tên thương hiệu trên tin nhắn hay một logo quen không đủ để chứng minh kênh đó thật. Bài này tập trung vào cách xử lý yêu cầu, không yêu cầu bạn phân biệt mọi thủ thuật bằng mắt.\n\nVí dụ hoàn toàn giả lập: một người gọi nói hoàn 250.000đ cho Hà nhưng yêu cầu Hà chuyển trước 50.000đ và đọc mã OTP. Hà đang có 1.000.000đ. Nếu chuyển 50.000đ, số dư còn 950.000đ, chứ chưa thành 1.200.000đ vì khoản hoàn 250.000đ chỉ là lời hứa. Không có phép tính nào xác nhận người gọi đáng tin. Cách an toàn trong tình huống là ngừng thao tác, tự mở ứng dụng hoặc kênh chăm sóc chính thức mà Hà biết để kiểm tra. Không dùng ngay đường liên kết hay số gọi lại do người đó cung cấp.\n\nKhông gửi OTP, mật khẩu hay thông tin đăng nhập cho người gọi hoặc người nhắn tin. Mã xác thực chỉ nên được dùng trong thao tác do chính bạn chủ động thực hiện ở kênh chính thức đã kiểm tra, sau khi hiểu nội dung đang xác nhận. Không cài ứng dụng, cấp quyền điều khiển thiết bị hoặc quét mã lạ theo chỉ dẫn hoàn tiền. Nếu đã thao tác và nghi bị lừa, dừng giao dịch; liên hệ ngân hàng qua kênh chính thức để được hướng dẫn bảo vệ tài khoản, giữ bằng chứng và trình báo cơ quan Công an. Không bảo đảm tiền chắc chắn được lấy lại.\n\nTrong Picket, bài thực hành dùng tình huống mô phỏng. Ứng dụng không cần OTP ngân hàng, ảnh thẻ hoặc mật khẩu để chấm câu trả lời. Không nhập một mã thật vào ô học tập và không gửi ảnh màn hình chứa bí mật. Khi nhận yêu cầu khẩn, có thể tự hỏi: ai khởi đầu liên hệ, tôi đang xác nhận điều gì, có thể xác minh độc lập bằng cách nào? Việc dừng để hỏi không phải lỗi của bạn. Nếu đã mắc bẫy, tập trung các bước bảo vệ và hỗ trợ; đừng để xấu hổ làm chậm việc báo cho đơn vị có khả năng xử lý.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "1.000.000 − 50.000 = 950.000đ; 250.000đ được hứa chưa phải thu nhập đã nhận. Giả định nhận và chuyển mới cho 1.200.000đ, không dùng để đánh giá độ tin cậy.",
+        "arithmeticChecks": [
+          {
+            "expression": "1000000-50000",
+            "expected": 950000
+          },
+          {
+            "expression": "1000000-50000+250000",
+            "expected": 1200000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Người gọi biết đúng đơn hàng và đòi OTP để hoàn tiền. Nên?",
+          "choices": [
+            {
+              "text": "Đọc mã vì họ biết thông tin",
+              "explanation": "Biết thông tin không chứng minh danh tính và quyền truy cập."
+            },
+            {
+              "text": "Dừng và xác minh bằng kênh chính thức độc lập",
+              "explanation": "Đúng: không chia sẻ bí mật theo yêu cầu người gọi."
+            },
+            {
+              "text": "Chỉ đọc nửa mã",
+              "explanation": "Vẫn làm lộ thông tin, không tạo cách xác minh an toàn."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Hà chuyển 50.000đ, khoản hoàn chưa về. Số dư từ 1.000.000đ còn?",
+          "choices": [
+            {
+              "text": "950.000đ",
+              "explanation": "Đúng: chỉ ghi tiền thực đã ra."
+            },
+            {
+              "text": "1.200.000đ",
+              "explanation": "Đã tính khoản hứa như tiền nhận thật."
+            },
+            {
+              "text": "1.250.000đ",
+              "explanation": "Vừa cộng tiền chưa về vừa bỏ khoản đã chuyển."
+            }
+          ],
+          "correctIndex": 0
+        },
+        {
+          "prompt": "Đã bấm liên kết và nghi lộ thông tin. Phản ứng phù hợp?",
+          "choices": [
+            {
+              "text": "Chờ vì báo sẽ xấu hổ",
+              "explanation": "Chậm xử lý có thể làm tăng rủi ro."
+            },
+            {
+              "text": "Chuyển thêm tiền để lấy lại",
+              "explanation": "Lời hứa lấy lại tiền có thể tiếp tục là bẫy."
+            },
+            {
+              "text": "Dừng, liên hệ ngân hàng chính thức, giữ bằng chứng và trình báo",
+              "explanation": "Đúng: ưu tiên bảo vệ; không có bảo đảm thu hồi."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Đọc kịch bản và viết kênh xác minh độc lập; tuyệt đối không dùng OTP hoặc liên kết lạ thật.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://www.bocongan.gov.vn/bai-viet/xuat-hien-thu-doan-lua-dao-moi-khi-mua-hang-online-1790562304",
+        "https://vcc.gov.vn/default.aspx?category_id=9343771e-96be-48b5-a35d-b8ea9bc1aa93&do=detail&id=04a6bd22-786c-4d56-983c-923cce86ec7c&page=news"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    },
+    {
+      "lessonId": "picket.vi.financial.v1.12",
+      "chapterId": "chapter-06",
+      "version": 1,
+      "locale": "vi-VN",
+      "title": "Dùng thử và khoảng chờ trước khi mua",
+      "competencyId": "safety.renewals-and-deliberate-buying",
+      "objective": "Nhận diện ngày gia hạn, kiểm trạng thái hủy và so quyết định mua có điều kiện mà không phán xét sở thích.",
+      "body": "Dùng thử miễn phí có thể chuyển thành gói trả tiền nếu bạn không hủy theo điều kiện đã đồng ý. Trước khi bắt đầu, hãy tìm giá sau dùng thử, chu kỳ, ngày gia hạn và cách hủy thực tế. Một nhãn miễn phí không nói hết các điều kiện. Nếu chưa hiểu, bạn có thể chưa đăng ký. Tương tự, xóa biểu tượng ứng dụng khỏi điện thoại không tự chứng minh một gói đăng ký đã hủy; cần xem trạng thái tại nơi quản lý gói và giữ xác nhận nếu có.\n\nVí dụ giả lập: Yến đang trả 79.000đ mỗi tháng cho dịch vụ A và 49.000đ cho dịch vụ B. Tổng theo tháng là 128.000đ. Nếu cả hai giữ nguyên giá, hoạt động đủ mười hai tháng và không có phí khác, tổng là 1.536.000đ. Yến cũng đang xem một món đồ giá 450.000đ, dự kiến dùng sáu lần. Giá chia số lần là 75.000đ mỗi lần theo dự định đó; chưa chứng minh Yến chắc chắn dùng đủ sáu lần. Các con số giúp nhìn quy mô và giả định, không tự ra quyết định thay Yến.\n\nMột khoảng chờ tự chọn trước món mua linh hoạt có thể cho bạn thời gian so với kế hoạch, đọc điều kiện và xem nhu cầu còn phù hợp không. Có thể ghi lại món định mua rồi quay lại vào thời điểm bạn chọn. Đây là mẹo suy nghĩ, không phải thời hạn pháp lý được bảo đảm, cũng không áp dụng cứng cho thuốc hay nhu cầu cấp thiết. Hết khoảng chờ, mua hoặc không mua đều có thể hợp lý tùy điều kiện. Không cần giữ một chuỗi ngày nhịn mua để chứng minh bạn biết quản lý tiền.\n\nTrong Picket, đánh dấu một khoản định kỳ cần xem lại không có nghĩa dịch vụ bên ngoài đã hủy. Nếu muốn hủy thật, hãy tự thực hiện ở kênh chính thức và xác nhận kết quả trước khi sửa lịch tương lai. Một khoản đã bị thu vẫn là sự việc cần ghi đúng; yêu cầu hoàn tiền chưa được duyệt không nên ghi là tiền đã về. Nhắc trước gia hạn chỉ bật khi bạn chọn và cần tránh nhắc trùng. Thực hành bài này có thể chỉ là rà hai ví dụ hoặc viết câu hỏi về điều kiện dùng thử. Không cần đăng ký gói, mua món đồ hay cung cấp thẻ để hoàn thành bài; mục tiêu là giữ lựa chọn của bạn rõ ràng.",
+      "workedExample": {
+        "currency": "VND",
+        "description": "79.000 + 49.000 = 128.000đ/tháng; 128.000 × 12 = 1.536.000đ/năm theo giả định; 450.000 / 6 = 75.000đ/lần dự kiến.",
+        "arithmeticChecks": [
+          {
+            "expression": "79000+49000",
+            "expected": 128000
+          },
+          {
+            "expression": "128000*12",
+            "expected": 1536000
+          },
+          {
+            "expression": "450000/6",
+            "expected": 75000
+          }
+        ]
+      },
+      "questions": [
+        {
+          "prompt": "Xóa ứng dụng khỏi điện thoại có đủ chứng minh gói đã hủy?",
+          "choices": [
+            {
+              "text": "Có, luôn tự hủy",
+              "explanation": "Xóa app và hủy đăng ký là hai thao tác khác nhau."
+            },
+            {
+              "text": "Không, cần kiểm trạng thái nơi quản lý đăng ký",
+              "explanation": "Đúng: cần xác nhận tại kênh quản lý chính thức."
+            },
+            {
+              "text": "Có nếu không mở app",
+              "explanation": "Không sử dụng không tự thay điều kiện thanh toán."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Hai gói giữ nguyên giá trong 12 tháng như ví dụ. Tổng?",
+          "choices": [
+            {
+              "text": "128.000đ",
+              "explanation": "Đây là tổng một tháng."
+            },
+            {
+              "text": "1.536.000đ",
+              "explanation": "Đúng: 128.000 nhân mười hai."
+            },
+            {
+              "text": "450.000đ",
+              "explanation": "Đây là giá món đồ khác, không phải hai gói."
+            }
+          ],
+          "correctIndex": 1
+        },
+        {
+          "prompt": "Picket đánh dấu cần xem lại gói B. Có thể coi đã ngừng tính phí chưa?",
+          "choices": [
+            {
+              "text": "Có ngay khi đánh dấu",
+              "explanation": "Ghi chú trong Picket không điều khiển dịch vụ bên ngoài."
+            },
+            {
+              "text": "Có sau một ngày chờ bất kỳ",
+              "explanation": "Khoảng chờ tự chọn không làm thay đổi hợp đồng."
+            },
+            {
+              "text": "Chưa, phải hủy và xác nhận ở nhà cung cấp/kênh quản lý",
+              "explanation": "Đúng: chỉ cập nhật lịch khi biết kết quả thực tế."
+            }
+          ],
+          "correctIndex": 2
+        }
+      ],
+      "optionalAction": {
+        "text": "Rà giá/ngày gia hạn trên một ví dụ hoặc gói có sẵn; có thể bỏ qua, không đăng ký thêm.",
+        "requiresSpending": false,
+        "maySkip": true,
+        "evidence": "self-reported-or-local-review"
+      },
+      "sources": [
+        "https://consumer.ftc.gov/articles/getting-and-out-free-trials-auto-renewals-and-negative-option-subscriptions"
+      ],
+      "reviewedAt": "2026-10-23",
+      "reviewType": "author-source-and-arithmetic-check",
+      "independentReviewedAt": null,
+      "status": "authored-not-independent-review"
+    }
+  ]
+}
