@@ -63,10 +63,24 @@ Map<String, dynamic> preferencesPatch(Object? value) {
       'persona': 80,
       'goal': 120,
       'currency_code': 3,
+      'theme_mode': 6,
+      'language_mode': 16,
+      'color_scheme_id': 64,
     },
     booleans: {'hide_balance'},
   );
   final currency = patch['currency_code'];
+  final theme = patch['theme_mode'];
+  final language = patch['language_mode'];
+  final scheme = patch['color_scheme_id'];
+  if ((theme != null && !{'system', 'light', 'dark'}.contains(theme)) ||
+      (language is String &&
+          language != 'system' &&
+          !RegExp(r'^[a-z]{2,3}(-[A-Z]{2})?$').hasMatch(language)) ||
+      (scheme is String &&
+          !RegExp(r'^[a-z][a-z0-9_-]{0,63}$').hasMatch(scheme))) {
+    throw const FormatException('Invalid appearance preference.');
+  }
   if (currency is String) {
     final normalized = currency.toUpperCase();
     if (!RegExp(r'^[A-Z]{3}$').hasMatch(normalized)) {

@@ -28,6 +28,9 @@ export interface CurrentProfile {
   goal: string;
   currencyCode: CurrencyCode;
   hideBalance: boolean;
+  themeMode?: "system" | "light" | "dark" | null;
+  languageMode?: string | null;
+  colorSchemeId?: string | null;
 }
 
 export interface CurrentProfileResponse {
@@ -59,6 +62,9 @@ export interface PreferencesPatch {
   goal?: string;
   currency_code?: CurrencyCode;
   hide_balance?: boolean;
+  theme_mode?: "system" | "light" | "dark";
+  language_mode?: string;
+  color_scheme_id?: string;
 }
 
 export interface UpdateResult {
