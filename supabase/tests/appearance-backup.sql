@@ -34,6 +34,14 @@ begin
  exception when check_violation then null;
  end;
  if public.current_profile()->>'themeMode' is distinct from 'dark' then raise exception 'Invalid restore mutated preferences'; end if;
+ begin
+  perform public.save_normalized_finance(revision,jsonb_set(payload,'{preferences,colorSchemeId}','true'));
+  raise exception 'Invalid scheme type was accepted';
+ exception when invalid_parameter_value then null;
+ end;
+ revision:=public.save_normalized_finance(revision,jsonb_set(payload,'{preferences,themeMode}','null'));
+ if public.current_profile()->>'themeMode' is not null then raise exception 'Explicit null did not clear theme'; end if;
+ if public.current_profile()->>'languageMode' is distinct from 'en' then raise exception 'Partial restore erased language'; end if;
  if (select count(*) from public.user_preferences)<>1 then raise exception 'Owner leak'; end if;
 end $$;
 reset role;

@@ -118,6 +118,20 @@ void _validatePayload(Map<String, dynamic> data) {
       data['preferences'] is! Map) {
     throw const FormatException('Invalid finance payload.');
   }
+  final preferences = data['preferences'] as Map;
+  final theme = preferences['themeMode'];
+  final language = preferences['languageMode'];
+  final scheme = preferences['colorSchemeId'];
+  if ((theme != null && !{'system', 'light', 'dark'}.contains(theme)) ||
+      (language != null &&
+          (language is! String ||
+              (language != 'system' &&
+                  !RegExp(r'^[a-z]{2,3}(-[A-Z]{2})?$').hasMatch(language)))) ||
+      (scheme != null &&
+          (scheme is! String ||
+              !RegExp(r'^[a-z][a-z0-9_-]{0,63}$').hasMatch(scheme)))) {
+    throw const FormatException('Invalid backup appearance preference.');
+  }
   for (final limit in arrayLimits.entries) {
     final value = data[limit.key];
     if (value is! List || value.length > limit.value) {
