@@ -17,3 +17,4 @@ export function formatVnd(value: number): string {
     maximumFractionDigits: 0,
   }).format(value);
 }
+export * from "./learning";

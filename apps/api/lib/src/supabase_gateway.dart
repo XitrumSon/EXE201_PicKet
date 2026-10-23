@@ -13,6 +13,7 @@ import 'package:picket_api/src/category_contract.dart';
 import 'package:picket_api/src/entitlement_contract.dart';
 import 'package:picket_api/src/finance_contract.dart';
 import 'package:picket_api/src/keepsake_contract.dart';
+import 'package:picket_api/src/learning_contract.dart';
 import 'package:picket_api/src/ocr_job_contract.dart';
 import 'package:picket_api/src/profile_contract.dart';
 import 'package:picket_api/src/receipt_contract.dart';
@@ -54,6 +55,54 @@ class SupabaseGateway {
       throw const GatewayException(HttpStatus.unauthorized, 'Unauthorized');
     }
     return body['id'] as String;
+  }
+
+  Future<LearningAttemptResult> submitLearningAttempt(
+    String accessToken,
+    LearningAttemptRequest request,
+    String idempotencyKey,
+  ) async {
+    await authenticate(accessToken);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/submit_learning_attempt'),
+          headers: _headers(accessToken),
+          body: jsonEncode(request.toRpcJson(idempotencyKey)),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    try {
+      return LearningAttemptResult.fromJson(jsonDecode(response.body));
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid learning response.',
+      );
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> listLearningProgress(String token) async {
+    final owner = await authenticate(token);
+    final response = await _client
+        .get(
+          _uri('/rest/v1/learning_progress', {
+            'select': 'lesson_id,content_version,xp,completed_at',
+            'user_id': 'eq.$owner',
+            'order': 'completed_at.desc,lesson_id.asc',
+            'limit': '1000',
+          }),
+          headers: _headers(token),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final body = jsonDecode(response.body);
+    if (body is! List || body.any((row) => row is! Map)) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid learning progress.',
+      );
+    }
+    return body.map((row) => Map<String, dynamic>.from(row as Map)).toList();
   }
 
   Future<FinanceSnapshotEnvelope> loadSnapshot(String accessToken) async {

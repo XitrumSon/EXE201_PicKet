@@ -30,5 +30,23 @@ export function createLearningProgressStore(storage: { read(owner: string): Prom
     try { await operation; } finally { if (queues.get(owner) === operation) queues.delete(owner); }
     return load(owner);
   }
-  return { load, complete };
+  async function mergeVerified(owner:string,value:unknown) {
+    validateOwner(owner);
+    if(!Array.isArray(value)||value.length>1000)throw new Error("Invalid cloud learning progress");
+    const incoming:Completion[]=value.map(row=>{
+      if(!row||typeof row.completed_at!=="string"||!Number.isFinite(Date.parse(row.completed_at)))throw new Error("Invalid cloud completion");
+      return {owner,lessonId:row.lesson_id,version:row.content_version,xp:row.xp};
+    });
+    parseProgress({version:1,completed:incoming},owner);
+    const operation=(queues.get(owner)??Promise.resolve()).catch(()=>undefined).then(async()=>{
+      const previous=parseProgress(await storage.read(owner),owner);
+      let completed=previous.completed;
+      for(const row of incoming)completed=recordCompletion(completed,owner,row.lessonId,row.version);
+      await storage.write(owner,{version:1,completed});
+    });
+    queues.set(owner,operation);
+    try{await operation;}finally{if(queues.get(owner)===operation)queues.delete(owner);}
+    return load(owner);
+  }
+  return { load, complete, mergeVerified };
 }

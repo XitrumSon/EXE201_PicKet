@@ -1,4 +1,7 @@
 import type {
+  SubmitLearningAttempt,
+  LearningAttemptResult,
+  LearningProgressResponse,
   ApiHealth,
   AdminOverview,
   AdminUserActionRequest,
@@ -266,6 +269,20 @@ export class PicketApiClient {
       headers: this.jsonAuthHeaders(accessToken),
       body: JSON.stringify(patch),
       signal,
+    });
+  }
+
+  learningProgress(accessToken: string, signal?: AbortSignal): Promise<LearningProgressResponse> {
+    return this.request<LearningProgressResponse>("/v1/learning-progress", {
+      headers: this.authHeaders(accessToken), signal,
+    });
+  }
+
+  submitLearningAttempt(accessToken: string, request: SubmitLearningAttempt, idempotencyKey: string, signal?: AbortSignal): Promise<LearningAttemptResult> {
+    if (!idempotencyKey.trim()) throw new ApiError("Missing idempotency key",400);
+    return this.request<LearningAttemptResult>("/v1/lesson-attempts", {
+      method:"POST", headers:{...this.jsonAuthHeaders(accessToken),"Idempotency-Key":idempotencyKey},
+      body:JSON.stringify(request),signal,
     });
   }
 
