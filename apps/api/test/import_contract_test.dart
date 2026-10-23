@@ -30,6 +30,31 @@ Map<String, dynamic> validExport() => {
 };
 
 void main() {
+  test('appearance restore rejects invalid fields before any write', () {
+    for (final preferences in [
+      {'themeMode': 'neon'},
+      {'languageMode': '../en'},
+      {'colorSchemeId': true},
+      {'themeMode': 42},
+    ]) {
+      final value = validExport();
+      (value['data'] as Map<String, dynamic>)['preferences'] = preferences;
+      expect(
+        () => FinanceImportEnvelope.fromJson(value),
+        throwsFormatException,
+      );
+    }
+  });
+  test('appearance restore keeps nullable and future-compatible defaults', () {
+    final value = validExport();
+    (value['data'] as Map<String, dynamic>)['preferences'] = {
+      'themeMode': null,
+      'languageMode': 'fr',
+      'colorSchemeId': 'forest',
+    };
+    final result = FinanceImportEnvelope.fromJson(value);
+    expect((result.data['preferences'] as Map)['languageMode'], 'fr');
+  });
   test('validates export without mutating data', () {
     final result = FinanceImportEnvelope.fromJson(validExport());
     expect(result.summary.toJson()['wallets'], 1);
