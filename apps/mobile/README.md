@@ -42,6 +42,27 @@ vì vậy development build là luồng chuẩn; không dùng Expo Go làm tiêu
 
 Cá nhân → Ứng dụng → Kiểm tra cập nhật. Footer lấy versionName/versionCode thực từ Android, không lấy phiên bản server. APK được kiểm tra hash, kích thước, package, phiên bản và chữ ký trước khi mở xác nhận Android. Không cần gỡ app; bản trước 1.0.3 cần một lần cài đè bootstrap. Google Play và sideload là hai kênh riêng; cài qua ADB không chứng nhận luồng cập nhật qua UI đã nghiệm thu.
 
+## Build AAB cho Google Play
+
+Đặt `PICKET_PLAY_BUILD=1` ở cả bước prebuild và Gradle. Biến này loại module
+cài APK `picket-app-updates`, chặn quyền cài APK/hiển thị đè và thay nút cập nhật
+bằng liên kết Google Play. Endpoint trong `.env.local` phải là production HTTPS.
+
+Chạy trong `apps/mobile`:
+
+```powershell
+$env:PICKET_PLAY_BUILD='1'
+$env:NODE_ENV='production'
+npm run release:preflight
+npx expo prebuild --platform android --clean --no-install
+```
+
+Sau đó build `:app:bundleRelease` với upload keystore đã cấu hình. Trên Windows,
+dùng ổ subst và `scripts/windows-release.init.gradle` như hướng dẫn build release
+bên dưới. AAB nằm ở `android/app/build/outputs/bundle/release/app-release.aab`.
+Kiểm tra manifest cuối không có `REQUEST_INSTALL_PACKAGES` hoặc
+`SYSTEM_ALERT_WINDOW` trước khi upload. Mỗi lần upload mới phải tăng versionCode.
+
 ## Google Play Billing
 
 Màn Hồ sơ mở màn `Gói Picket và thanh toán`, tải bốn subscription từ Google
@@ -175,3 +196,19 @@ after installing Localization/SystemUI; an older APK cannot load these modules.
 Production entry remains disabled until the screen migration is verified.
 Run `npm run test:settings` to validate the foundation. Code 7 AAB was built before
 this increment and does not include it.
+
+The development-only `/learning-preview` now includes persistent 7/30-day review
+tasks. Repeated reviews do not grant lesson XP again. Old undated completions
+remain readable; they do not acquire an invented completion date.
+
+The development-only `/cashflow-preview` stores owner-scoped schedules in the
+encrypted offline cache. It supports recurrence, optional end dates, enable/
+disable, 7/30-day explicit scenarios and a separate assumed purchase. Amounts on
+this screen are integer minor units. Opening balance is an explicit assumption;
+the screen does not infer ledger completeness or post any transaction.
+
+Experimental F1 trailing-median implementations in Expo and Dart share fixtures
+under `packages/finance-fixtures/variable-spending-v1.json`. They require every
+day of the preceding 28-day window to be explicitly complete; unknown days cause
+abstention. They are not a calibrated forecast and are not enabled on real ledger
+data pending the quality adapter and backtest gates.
