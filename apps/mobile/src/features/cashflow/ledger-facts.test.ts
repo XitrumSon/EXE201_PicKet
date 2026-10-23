@@ -24,3 +24,18 @@ test("future edits cannot leak into historical facts and cross currency transfer
   assert.deepEqual(buildLedgerFacts(input).excluded,[{id:"transfer",reason:"edited-after-origin"}]);
   assert.throws(()=>buildLedgerFacts({...base,entries:[transfer],confirmations:[confirmed],wallets:[wallet("cash"),{...wallet("bank"),currencyCode:"USD"}],selectedAccountIds:["cash"]}));
 });
+test("refunds remain actual inflows, deleted records are omitted and self transfers reject",()=>{
+  const refund={...transfer,id:"refund",kind:"refund",destinationAccountId:null};
+  const input={...base,entries:[refund,{...transfer,id:"deleted",deletedAt:earlier}],confirmations:[{...confirmed,transactionId:"refund"}]};
+  const before=JSON.stringify(input);
+  assert.equal(buildLedgerFacts(input).balance,2100);
+  assert.deepEqual(buildLedgerFacts(input).includedTransactionIds,["refund"]);
+  assert.equal(JSON.stringify(input),before);
+  assert.throws(()=>buildLedgerFacts({...base,entries:[{...transfer,destinationAccountId:"cash"}],confirmations:[confirmed]}));
+});
+test("unknown confirmation, future confirmation and invalid snapshot scope fail visibly",()=>{
+  assert.equal(buildLedgerFacts({...base,entries:[transfer],confirmations:[{...confirmed,confirmedAt:"2026-10-25T00:00:00Z"}]}).quality,"incomplete");
+  assert.throws(()=>buildLedgerFacts({...base,asOf:"2026-02-30T00:00:00Z"}));
+  assert.throws(()=>buildLedgerFacts({...base,selectedAccountIds:["cash","cash"]}));
+  assert.throws(()=>buildLedgerFacts({...base,entries:[transfer,transfer],confirmations:[confirmed]}));
+});
