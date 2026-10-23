@@ -1,8 +1,10 @@
-export type AppLanguage = "vi" | "en";
+import { languages, languageCodes, type AppLanguage } from "./languages";
+export type { AppLanguage } from "./languages";
 export function normalizeLanguage(locale?: string | null): AppLanguage {
-  return /^en(?:[-_]|$)/i.test(locale ?? "") ? "en" : "vi";
+  const base = locale?.toLowerCase().split(/[-_]/)[0];
+  return languageCodes.find(code => code === base) ?? "vi";
 }
-export const localeFor = (language: AppLanguage) => language === "vi" ? "vi-VN" : "en-US";
+export const localeFor = (language: AppLanguage) => languages[language].locale;
 export function formatMoney(amount: number, language: AppLanguage, currency: string): string {
   if (!Number.isFinite(amount) || !/^[A-Z]{3}$/.test(currency)) throw new Error("Invalid money value");
   return new Intl.NumberFormat(localeFor(language), { style: "currency", currency }).format(amount);

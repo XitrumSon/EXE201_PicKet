@@ -6,8 +6,8 @@ import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { I18nextProvider } from "react-i18next";
 import { createAppI18n } from "@/core/i18n/instance";
-import { darkTheme, lightTheme } from "@/core/theme/themes";
-import { createSettingsStore, resolveAppearance, type DeviceSettings } from "./device-settings";
+import { colorSchemes, resolveColorScheme } from "@/core/theme/color-schemes";
+import { createSettingsStore, resolveAppearance, type AppearanceDefaults, type DeviceSettings } from "./device-settings";
 
 const settingsKey = "picket_device_appearance_v1";
 const store = createSettingsStore({ read: () => SecureStore.getItemAsync(settingsKey), write: value => SecureStore.setItemAsync(settingsKey, value) });
@@ -15,6 +15,7 @@ function useAppearanceState() {
   const scheme = useColorScheme();
   const [locale, setLocale] = useState(() => Localization.getLocales()[0]?.languageTag ?? "vi");
   const [settings, setSettings] = useState<DeviceSettings>({ version: 1 });
+  const [accountDefaults, setAccountDefaults] = useState<AppearanceDefaults>({});
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
   const [revision, setRevision] = useState(0);
@@ -34,8 +35,8 @@ function useAppearanceState() {
     const listener = AppState.addEventListener("change", state => { if (state === "active") setLocale(Localization.getLocales()[0]?.languageTag ?? "vi"); });
     return () => listener.remove();
   }, []);
-  const appearance = resolveAppearance(settings, {}, { theme: scheme === "dark" ? "dark" : "light", locale });
-  const colors = appearance.theme === "dark" ? darkTheme : lightTheme;
+  const appearance = resolveAppearance(settings, accountDefaults, { theme: scheme === "dark" ? "dark" : "light", locale });
+  const colors = colorSchemes[resolveColorScheme(settings.colorSchemeId ?? accountDefaults.colorSchemeId ?? undefined)][appearance.theme];
   useEffect(() => {
     void i18n.changeLanguage(appearance.language);
   }, [appearance.language, i18n]);
@@ -53,7 +54,7 @@ function useAppearanceState() {
     pending.current = operation;
     try { await operation; } finally { if (alive.current && pending.current === operation) setSaving(false); }
   }
-  return { settings, ready, error, saving, update,
+  return { settings, ready, error, saving, update, setAccountDefaults,
     retry: () => setRevision(value => value + 1), ...appearance, colors, i18n };
 }
 type AppearanceValue = ReturnType<typeof useAppearanceState>;

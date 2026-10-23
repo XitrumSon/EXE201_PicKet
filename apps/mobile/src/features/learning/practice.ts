@@ -20,10 +20,16 @@ export function reviewDueDays(completedDay: string) {
   const start = day(completedDay).getTime();
   return [7,30].map(offset => new Date(start+offset*86400000).toISOString().slice(0,10));
 }
+export function weekStartForDay(value:string) {
+  const date=day(value);
+  date.setUTCDate(date.getUTCDate()-(date.getUTCDay()+6)%7);
+  return date.toISOString().slice(0,10);
+}
 type PracticeIdentity = { owner: string; weekStart: string; action: "review-records" };
 export type PracticeEvent = PracticeIdentity & { skipped: boolean; xp: number };
 export function completeWeeklyPractice(previous: PracticeEvent[], identity: PracticeIdentity, skipped: boolean): PracticeEvent[] {
   if (!/^[A-Za-z0-9_-]{1,200}$/.test(identity.owner) || day(identity.weekStart).getUTCDay() !== 1 || identity.action !== "review-records") throw new Error("Invalid weekly practice");
-  if (previous.some(row => row.owner === identity.owner && row.weekStart === identity.weekStart && row.action === identity.action)) return [...previous];
+  const existing=previous.find(row => row.owner === identity.owner && row.weekStart === identity.weekStart && row.action === identity.action);
+  if(existing) return existing.skipped && !skipped ? previous.map(row=>row===existing ? {...row,skipped:false,xp:10} : row) : [...previous];
   return [...previous,{...identity,skipped,xp:skipped ? 0 : 10}];
 }

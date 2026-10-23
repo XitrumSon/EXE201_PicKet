@@ -11,6 +11,10 @@ export interface StorePurchaseForVerification {
 }
 
 const subscriptionIds = new Set<string>(PICKET_SUBSCRIPTION_IDS);
+export function canStartPlayPurchase(platform:string,connected:boolean,status:unknown):boolean {
+  return platform==="android" && connected && !!status && typeof status==="object" &&
+    (status as {newPurchasesEnabled?:unknown}).newPurchasesEnabled===true;
+}
 
 export function isPicketSubscriptionId(
   value: string,

@@ -1,4 +1,5 @@
 import type {
+  BillingAvailability,
   SubmitLearningAttempt,
   LearningAttemptResult,
   LearningProgressResponse,
@@ -276,6 +277,9 @@ export class PicketApiClient {
     return this.request<LearningProgressResponse>("/v1/learning-progress", {
       headers: this.authHeaders(accessToken), signal,
     });
+  }
+  billingAvailability(accessToken:string,signal?:AbortSignal):Promise<BillingAvailability> {
+    return this.request<BillingAvailability>("/v1/billing/availability",{headers:this.authHeaders(accessToken),signal});
   }
 
   submitLearningAttempt(accessToken: string, request: SubmitLearningAttempt, idempotencyKey: string, signal?: AbortSignal): Promise<LearningAttemptResult> {
