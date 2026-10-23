@@ -1,4 +1,6 @@
-import { colors, radii } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
+import { radii } from "@/core/ui/mobile-palette";
 import {
   PICKET_SUBSCRIPTION_IDS,
   type Entitlements,
@@ -10,7 +12,6 @@ import {
   getAvailablePurchases,
   type ProductSubscription,
   type Purchase,
-  useIAP,
 } from "expo-iap";
 import { Redirect, router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
@@ -28,8 +29,11 @@ import { picketApi } from "@/core/api/client";
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { useAuth } from "@/features/auth/auth-context";
+import { verifyRestoredPurchases } from "@/features/billing/restore-results";
+import { usePlayBilling } from "@/features/billing/play-billing-provider";
 import {
   isPicketSubscriptionId,
+  canStartPlayPurchase,
   verifyAndFinishPurchase,
 } from "@/features/billing/billing-policy";
 
@@ -61,16 +65,21 @@ const planCopy: Record<
 
 export default function BillingScreen() {
   const { session } = useAuth();
+  if (Platform.OS !== "android") return <Redirect href="/profile" />;
   if (!session) return <Redirect href={routes.login} />;
-  return <BillingContent accessToken={session.access_token} userId={session.user.id} />;
+  return <BillingContent key={session.user.id} accessToken={session.access_token} userId={session.user.id} />;
 }
 
 function BillingContent({ accessToken, userId }: { accessToken: string; userId: string }) {
+  const { colors, styles } = useMobileStyles(createStyles);
   const [busyProduct, setBusyProduct] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
+  const [availability, setAvailability] = useState<{ token: string; ready: boolean } | null>(null);
+  const storeReady = availability?.token === accessToken && availability.ready;
+  const checkingStore = Boolean(picketApi) && availability?.token !== accessToken;
   const processingTokens = useRef(new Set<string>());
   const fetchedProducts = useRef(false);
 
@@ -80,7 +89,8 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     fetchProducts,
     finishTransaction,
     requestPurchase,
-  } = useIAP({
+    revision,
+  } = usePlayBilling({
     onPurchaseSuccess: (purchase) => {
       void verifyStorePurchase(purchase);
     },
@@ -97,6 +107,20 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       setMessage("Không kết nối được Google Play Billing.");
     },
   });
+
+  useEffect(() => {
+    const controller=new AbortController();
+    let active=true;
+    if (!picketApi) return () => controller.abort();
+    void picketApi.billingAvailability(accessToken, controller.signal)
+      .then(status => {
+        if (active) setAvailability({ token: accessToken, ready: canStartPlayPurchase("android", true, status) });
+      })
+      .catch(() => {
+        if (active) setAvailability({ token: accessToken, ready: false });
+      });
+    return ()=>{active=false;controller.abort();};
+  },[accessToken]);
 
   useEffect(() => {
     if (!connected || Platform.OS !== "android" || fetchedProducts.current) return;
@@ -118,7 +142,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     return () => {
       active = false;
     };
-  }, [accessToken]);
+  }, [accessToken,revision]);
 
   async function refreshEntitlements() {
     if (!picketApi) return;
@@ -127,7 +151,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
 
   async function verifyStorePurchase(purchase: Purchase) {
     const token = purchase.purchaseToken;
-    if (!token || processingTokens.current.has(token)) return;
+    if (!token || processingTokens.current.has(token)) return false;
     processingTokens.current.add(token);
     setBusyProduct(purchase.productId);
     setSuccess(false);
@@ -147,6 +171,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           ? `Đã kích hoạt gói ${result.tier.toUpperCase()}.`
           : "Giao dịch hợp lệ nhưng gói đã hết hạn.",
       );
+      return true;
     } catch (error) {
       setSuccess(false);
       setMessage(
@@ -154,6 +179,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           ? error.message
           : "Không thể xác minh giao dịch. Google Play sẽ giữ giao dịch để thử lại.",
       );
+      return false;
     } finally {
       processingTokens.current.delete(token);
       setBusyProduct(null);
@@ -162,6 +188,9 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
 
   async function purchase(product: ProductSubscription) {
     if (Platform.OS !== "android" || product.platform !== "android") return;
+    if(!canStartPlayPurchase(Platform.OS,connected,{newPurchasesEnabled:storeReady})) {
+      setSuccess(false);setMessage("Cửa hàng chưa sẵn sàng. Chưa thể bắt đầu mua gói mới.");return;
+    }
     const offerToken = product.subscriptionOffers.find(
       (offer) => typeof offer.offerTokenAndroid === "string",
     )?.offerTokenAndroid;
@@ -209,10 +238,14 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
         setMessage("Không tìm thấy gói Picket đang hoạt động trên tài khoản Google Play này.");
         return;
       }
-      for (const item of eligible) await verifyStorePurchase(item);
+      const restored = await verifyRestoredPurchases(eligible, verifyStorePurchase);
       await refreshEntitlements();
-      setSuccess(true);
-      setMessage("Đã khôi phục và đồng bộ gói từ Google Play.");
+      setSuccess(restored.failed === 0 && restored.verified > 0);
+      setMessage(restored.failed === 0
+        ? "Đã xác minh và đồng bộ giao dịch từ Google Play. Xem trạng thái gói hiện tại bên dưới."
+        : restored.verified > 0
+          ? "Một số giao dịch chưa xác minh được. Hãy kiểm tra tài khoản và thử khôi phục lại."
+          : "Chưa xác minh được giao dịch nào. Gói chưa được khôi phục; hãy kiểm tra kết nối và tài khoản rồi thử lại.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Không thể khôi phục giao dịch.");
     } finally {
@@ -241,6 +274,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
+        {!storeReady && <Text accessibilityLiveRegion="polite" style={{color:colors.muted}}>{checkingStore ? "Đang kiểm tra cửa hàng…" : "Cửa hàng chưa sẵn sàng. Chưa thể bắt đầu mua gói mới."}</Text>}
         <Pressable onPress={() => router.back()}>
           <Text style={styles.back}>‹ Quay lại hồ sơ</Text>
         </Pressable>
@@ -288,12 +322,12 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
                 <Text style={styles.planSummary}>{copy.summary}</Text>
                 <Pressable
                   accessibilityLabel={`Chọn ${copy.name} ${copy.cadence}`}
-                  disabled={busyProduct !== null || restoring}
+                  disabled={!storeReady || !connected || busyProduct !== null || restoring}
                   onPress={() => void purchase(product)}
                   style={styles.primary}
                 >
                   {busyProduct === product.id ? (
-                    <ActivityIndicator accessibilityLabel={`Đang mua ${copy.name} ${copy.cadence}`} color={colors.white} />
+                    <ActivityIndicator accessibilityLabel={`Đang mua ${copy.name} ${copy.cadence}`} color={colors.onPrimary} />
                   ) : (
                     <Text style={styles.primaryText}>Chọn gói</Text>
                   )}
@@ -330,7 +364,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   safeArea: { backgroundColor: colors.cream, flex: 1 },
   content: { gap: 14, padding: 24, paddingBottom: 48 },
   back: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
@@ -349,7 +383,7 @@ const styles = StyleSheet.create({
   price: { color: colors.mauve, fontSize: 17, fontWeight: "700" },
   planSummary: { color: colors.muted, fontSize: 14, lineHeight: 21 },
   primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", minHeight: 50 },
-  primaryText: { color: colors.white, fontSize: 15, fontWeight: "700" },
+  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
   secondary: { alignItems: "center", borderColor: colors.mauve, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 52 },
   secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
   linkButton: { alignItems: "center", justifyContent: "center" },

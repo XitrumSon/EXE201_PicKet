@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import "@/core/export/native-backup-key";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
@@ -5,7 +6,6 @@ import { bootstrapIntentGate } from "@/core/navigation/bootstrap-intent";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ActivityIndicator, View } from "react-native";
-import { colors } from "@picket/design-tokens";
 import { canMountSessionRoutes } from "@/features/auth/session-route-policy";
 
 import { AuthProvider, useAuth } from "@/features/auth/auth-context";
@@ -20,7 +20,10 @@ import { DeviceLockProvider } from "@/features/security/device-lock";
 import { ReminderCoordinator } from "@/features/notifications/reminder-coordinator";
 import { GuestFinanceProvider } from "@/core/local/guest-finance-context";
 import { NavigationShell } from "@/core/ui/navigation-shell";
-import { AppAppearanceProvider } from "@/features/settings/appearance-provider";
+import { AppAppearanceProvider, useAppTheme } from "@/features/settings/appearance-provider";
+import { AccountAppearance } from "@/features/settings/account-appearance";
+import { LearningSync } from "@/features/learning/learning-sync";
+import { PlayBillingProvider } from "@/features/billing/play-billing-provider";
 import * as SplashScreen from "expo-splash-screen";
 
 void SplashScreen.preventAutoHideAsync();
@@ -28,9 +31,11 @@ void SplashScreen.preventAutoHideAsync();
 function ProviderTree({ children }: { children: React.ReactNode }) {
   return (
     <ProfileProvider>
-      <AccountsProvider>
+      <AccountAppearance />
+      <LearningSync />
+      <PlayBillingProvider><AccountsProvider>
         <TransactionsProvider><BudgetsProvider><BillsProvider><SubscriptionsProvider><SyncProvider><ReminderCoordinator />{children}</SyncProvider></SubscriptionsProvider></BillsProvider></BudgetsProvider></TransactionsProvider>
-      </AccountsProvider>
+      </AccountsProvider></PlayBillingProvider>
     </ProfileProvider>
   );
 }
@@ -52,17 +57,19 @@ export default function RootLayout() {
 }
 
 function SessionReadyTree() {
+  const { theme, colors } = useAppTheme();
+  const { t } = useTranslation("common");
   const { loading } = useAuth();
   // Effects run after the ready render commits its Stack. Do not signal from
   // auth recovery itself, where a nested navigator may not exist yet.
   useEffect(() => { if (!loading) bootstrapIntentGate.ready(); }, [loading]);
-  if (!canMountSessionRoutes(loading)) return <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.cream }}>
-    <ActivityIndicator accessibilityLabel="Đang khôi phục phiên Picket" color={colors.mauve} />
+  if (!canMountSessionRoutes(loading)) return <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.canvas }}>
+    <ActivityIndicator accessibilityLabel={t("Đang khôi phục phiên Picket")} color={colors.primary} />
   </View>;
   return (
         <DeviceLockProvider>
           <SessionProviders>
-            <StatusBar style="dark" />
+            <StatusBar style={theme === "dark" ? "light" : "dark"} />
             <Stack screenOptions={{ headerShown: false }} />
             <NavigationShell />
           </SessionProviders>

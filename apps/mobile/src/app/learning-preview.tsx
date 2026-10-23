@@ -1,0 +1,115 @@
+import { Redirect, router } from "expo-router";
+import { useEffect, useRef, useState } from "react";
+import * as Crypto from "expo-crypto";
+import { AppState, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
+import { useAppTheme } from "@/features/settings/appearance-provider";
+import { curriculumForLanguage, gradeQuiz } from "@/features/learning/curriculum";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "@/features/auth/auth-context";
+import { guestOwnerId } from "@/core/local/guest-finance";
+import { learningAttempts, learningDrafts, learningProgress } from "@/features/learning/progress-storage";
+import type { LearningProgress } from "@/features/learning/progress";
+import { NeedsWantsPractice } from "@/features/learning/needs-wants";
+import { WeeklyPractice } from "@/features/learning/weekly-practice";
+
+/** Authoring acceptance route; unpublished content never becomes a public course. */
+export default function LearningPreview() {
+  const { session, localMode } = useAuth();
+  const owner = localMode ? guestOwnerId : session?.user.id;
+  if (!__DEV__ || !owner) return <Redirect href="/" />;
+  return <LearningSession key={owner} owner={owner} />;
+}
+
+function LearningSession({ owner }: { owner: string }) {
+  const { session, localMode } = useAuth();
+  const attemptKey = useRef<{signature:string;key:string} | null>(null);
+  const { colors: c, language } = useAppTheme();
+  const curriculum = curriculumForLanguage(language);
+  const { t } = useTranslation("learning");
+  const [progress, setProgress] = useState<LearningProgress | null>(null);
+  const [storageError, setStorageError] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
+  const [lessonIndex, setLessonIndex] = useState<number | null>(null);
+  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [reviewOffset,setReviewOffset]=useState<number|null>(null);
+  const [reviewSaved,setReviewSaved]=useState(false);
+  const [reviews,setReviews]=useState<Awaited<ReturnType<typeof learningProgress.dueReviews>>>([]);
+  useEffect(()=>{
+    let active=true;
+    const refresh=()=>{void learningProgress.dueReviews(owner,new Date().toISOString().slice(0,10)).then(value=>{if(active)setReviews(value);}).catch(()=>{if(active)setStorageError(true);});};
+    refresh();
+    const subscription=AppState.addEventListener("change",state=>{if(state==="active")refresh();});
+    const timer=setInterval(refresh,60000);
+    return ()=>{active=false;subscription.remove();clearInterval(timer);};
+  },[owner,progress]);
+  useEffect(() => {
+    let active = true;
+    void Promise.all([learningProgress.load(owner), learningDrafts.load(owner)]).then(([value,draft]) => {
+      if (!active) return;
+      setProgress(value);
+      if (draft) {
+        setLessonIndex(curriculumForLanguage("vi").lessons.findIndex(row => row.lessonId === draft.lessonId));
+        setAnswers(Object.fromEntries(draft.answers.flatMap((answer,i) => answer === null ? [] : [[i,answer]])));
+      }
+      setDraftReady(true);
+    })
+      .catch(() => { if (active) setStorageError(true); });
+    return () => { active = false; };
+  }, [owner]);
+  const lesson = lessonIndex === null ? null : curriculum.lessons[lessonIndex];
+  useEffect(() => {
+    if (!draftReady || !lesson || storageError || submitted) return;
+    let active = true;
+    void learningDrafts.save(owner, { lessonId: lesson.lessonId, version: lesson.version, answers: lesson.questions.map((_,i) => answers[i] ?? null) })
+      .catch(() => { if (active) setStorageError(true); });
+    return () => { active = false; };
+  }, [answers, draftReady, lesson, owner, storageError, submitted]);
+  const result = lesson && submitted ? gradeQuiz(lesson, lesson.questions.map((_,i) => answers[i])) : null;
+  const complete = lesson?.questions.every((_,i) => answers[i] !== undefined) ?? false;
+  return <SafeAreaView style={{ flex: 1, backgroundColor: c.canvas }}><ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
+    <Pressable accessibilityRole="button" onPress={() => { if (lesson) { setLessonIndex(null); setAnswers({}); setSubmitted(false); setReviewOffset(null);setReviewSaved(false); } else router.back(); }}><Text style={{ color: c.primary }}>{t("back")}</Text></Pressable>
+    <Text accessibilityRole="header" style={{ color: c.text, fontSize: 26, fontWeight: "800" }}>{lesson?.title ?? t("title")}</Text>
+    <Text style={{ color: c.muted }}>{t("underReview")}</Text>
+    {!lesson && <WeeklyPractice owner={owner} />}
+    {!lesson && reviews.length>0 && <View style={{gap:12}}><Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("reviewTitle")}</Text>{reviews.map(review=><Pressable key={`${review.lessonId}:${review.version}:${review.offset}`} accessibilityRole="button" onPress={()=>{setLessonIndex(curriculum.lessons.findIndex(item=>item.lessonId===review.lessonId));setReviewOffset(review.offset);setReviewSaved(false);setAnswers({});setSubmitted(false);}} style={{padding:16,backgroundColor:c.surface,borderRadius:12}}><Text style={{color:c.primary}}>{t("reviewOpen")} · {curriculum.lessons.find(item=>item.lessonId===review.lessonId)?.title} · {review.dueDay}</Text></Pressable>)}</View>}
+    <Text accessibilityLiveRegion="polite" style={{ color: c.muted }}>{storageError ? t("storageError") : progress ? `${progress.completed.reduce((sum,row) => sum + row.xp,0)} XP · ${progress.completed.length}/12` : t("loading")}</Text>
+    {!lesson ? curriculum.lessons.map((item,i) => <Pressable key={item.lessonId} accessibilityRole="button" onPress={() => { setLessonIndex(i); setAnswers({}); setSubmitted(false); }} style={{ backgroundColor: c.surface, borderRadius: 14, padding: 18, minHeight: 56 }}><Text style={{ color: c.text, fontWeight: "700" }}>{i+1}. {item.title}</Text><Text style={{ color: c.muted }}>{item.objective}</Text></Pressable>) : <>
+      <Text style={{ color: c.muted }}>{lesson.objective}</Text>
+      <Text style={{ color: c.text, lineHeight: 25 }}>{lesson.body}</Text>
+      <Text style={{ color: c.text, lineHeight: 24, backgroundColor: c.elevated, padding: 16 }}>{lesson.workedExample.description}</Text>
+      {lesson.questions.map((question,i) => <View key={`${lesson.lessonId}:${i}`} style={{ gap: 10 }}>
+        <Text accessibilityRole="header" style={{ color: c.text, fontWeight: "700" }}>{i+1}. {question.prompt}</Text>
+        <View accessibilityRole="radiogroup" accessibilityLabel={question.prompt} style={{ gap: 8 }}>{question.choices.map((choice,j) => <Pressable key={j} accessibilityRole="radio" disabled={submitted} accessibilityState={{ checked: answers[i] === j, disabled: submitted }} onPress={() => setAnswers(old => ({ ...old, [i]: j }))} style={{ minHeight: 48, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: answers[i] === j ? c.primary : c.border, backgroundColor: c.surface }}><Text style={{ color: c.text }}>{choice.text}</Text>{submitted && <Text style={{ color: c.muted, marginTop: 8 }}>{choice.explanation}</Text>}</Pressable>)}</View>
+      </View>)}
+      {!submitted && <Pressable accessibilityRole="button" disabled={!complete} accessibilityState={{ disabled: !complete }} onPress={() => setSubmitted(true)} style={{ minHeight: 52, padding: 16, borderRadius: 14, backgroundColor: complete ? c.primary : c.disabledSurface }}><Text style={{ color: complete ? c.onPrimary : c.disabledText }}>{t("explanations")}</Text></Pressable>}
+      {result && <><Text accessibilityLiveRegion="polite" style={{ color: c.text }}>{t("result", {correct: result.correct, total: result.total})}</Text><Pressable accessibilityRole="button" onPress={() => { setSubmitted(false); setAnswers({}); }}><Text style={{ color: c.primary }}>{t("retry")}</Text></Pressable></>}
+      {result && <Pressable accessibilityRole="button" disabled={!progress || saving || storageError} accessibilityState={{ disabled: !progress || saving || storageError }} onPress={async () => {
+        setSaving(true);
+        try {
+          if (reviewOffset===null && !localMode && session?.user.id===owner && curriculum.publicationGate.publishable &&
+              process.env.EXPO_PUBLIC_LEARNING_CLOUD_ENABLED==="true") {
+            const selectedAnswers=lesson.questions.map((_,i)=>answers[i]);
+            const signature=JSON.stringify([lesson.lessonId,lesson.version,selectedAnswers]);
+            if(attemptKey.current?.signature!==signature)attemptKey.current={signature,key:Crypto.randomUUID()};
+            await learningAttempts.enqueue(owner,{key:attemptKey.current.key,lessonId:lesson.lessonId,
+              contentVersion:lesson.version,answers:selectedAnswers});
+          }
+          setProgress(reviewOffset===null ? await learningProgress.complete(owner, lesson.lessonId, lesson.version) : await learningProgress.review(owner,lesson.lessonId,lesson.version,reviewOffset));
+          if(reviewOffset!==null)setReviewSaved(true);
+          await learningDrafts.clear(owner);
+        }
+        catch { setStorageError(true); }
+        finally { setSaving(false); }
+      }} style={{ minHeight: 48, padding: 14, backgroundColor: c.surface }}><Text style={{ color: c.primary }}>{t(reviewOffset===null?"saveCompletion":"reviewSave")}</Text></Pressable>}
+      {reviewSaved && <Text accessibilityLiveRegion="polite" style={{color:c.text}}>{t("reviewSaved")}</Text>}
+      <Text style={{ color: c.text }}>{lesson.optionalAction.text}</Text>
+      <Text style={{ color: c.muted }}>{t("optionalPractice")}</Text>
+      <Text style={{ color: c.muted }}>{lesson.sources.join("\n")}</Text>
+      <NeedsWantsPractice />
+    </>}
+  </ScrollView></SafeAreaView>;
+}
