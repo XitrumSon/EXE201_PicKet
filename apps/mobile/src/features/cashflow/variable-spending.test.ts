@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { estimateVariableSpending } from "./variable-spending";
+import fixtures from "../../../../../packages/finance-fixtures/variable-spending-v1.json";
+
+for(const fixture of fixtures)test(`shared variable estimate: ${fixture.name}`,()=>{
+  const result=estimateVariableSpending(fixture.input);
+  assert.equal(result.kind,fixture.expected.kind);
+  assert.equal(result.dailyAmount,fixture.expected.dailyAmount);
+  assert.equal(result.observedDays,fixture.expected.observedDays);
+  assert.equal(result.occurrences.length,fixture.expected.occurrences);
+});
 
 const history=Array.from({length:28},(_,index)=>({day:new Date(Date.UTC(2026,8,index+1)).toISOString().slice(0,10),currency:"VND",complete:true,amount:10000}));
 test("F1 uses only confirmed complete history before origin and produces explicit daily estimates",()=>{

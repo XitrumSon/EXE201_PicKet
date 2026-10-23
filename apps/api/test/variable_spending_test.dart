@@ -11,7 +11,8 @@ void main() {
             ).readAsStringSync(),
           )
           as List;
-  for (final fixture in fixtures) {
+  for (final value in fixtures) {
+    final fixture = Map<String, dynamic>.from(value as Map);
     test('shared variable estimate: ${fixture['name']}', () {
       final result = estimateVariableSpending(
         Map<String, dynamic>.from(fixture['input'] as Map),
