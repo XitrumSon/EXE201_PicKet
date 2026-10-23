@@ -1,2 +1,34 @@
-export const authVi:Record<string,string>={};
-export const authEn:Record<string,string>={};
+export const authEn = {
+  "Email":"Email",
+  "Đang xử lý đăng nhập":"Completing sign-in",
+  "Đăng nhập chưa sẵn sàng. Bạn vẫn có thể sử dụng trên thiết bị.":"Sign-in is unavailable. You can still use Picket on this device.",
+  "Chào mừng trở lại":"Welcome back",
+  "Đăng nhập để đồng bộ, hoặc lưu nhật ký riêng trên điện thoại.":"Sign in to sync, or keep your records on this phone.",
+  "Mật khẩu":"Password", "Đăng nhập":"Sign in", "Tiếp tục với Google":"Continue with Google",
+  "Dùng trên thiết bị, không cần đăng nhập":"Use on this device without signing in", "Quên mật khẩu?":"Forgot password?", "Chưa có tài khoản? Đăng ký":"New to Picket? Sign up",
+  "Mật khẩu xác nhận không khớp.":"The passwords do not match.", "Tạo tài khoản Picket":"Create a Picket account", "Bắt đầu hành trình tài chính của riêng bạn.":"Start keeping track of your finances.",
+  "Nhập lại mật khẩu":"Confirm password", "Đăng ký":"Sign up", "Đã có tài khoản? Đăng nhập":"Already have an account? Sign in",
+  "Nếu email tồn tại, hướng dẫn đặt lại mật khẩu đã được gửi.":"If this email has an account, password reset instructions have been sent.",
+  "Quên mật khẩu":"Forgot password", "Nhập email để nhận liên kết đặt lại mật khẩu.":"Enter your email to receive a password reset link.",
+  "Gửi hướng dẫn":"Send instructions", "Quay lại đăng nhập":"Back to sign-in", "Mã OTP cần từ 6 đến 8 chữ số.":"Enter a 6 to 8 digit verification code.",
+  "Xác thực email":"Verify email", "email của bạn":"your email", "Mã OTP":"Verification code", "Xác thực":"Verify", "Gửi lại mã":"Resend code", "Mã mới đã được gửi.":"A new code has been sent.",
+  "Đặt mật khẩu mới":"Set a new password", "Dùng ít nhất 12 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt.":"Use at least 12 characters, including uppercase and lowercase letters, a number and a symbol.",
+  "Mật khẩu mới":"New password", "Cập nhật mật khẩu":"Update password",
+  "Không kết nối được dịch vụ. Hãy kiểm tra mạng và thử lại.":"Could not connect. Check your connection and try again.",
+  "Bạn thao tác quá nhanh. Vui lòng chờ rồi thử lại.":"Too many attempts. Wait a moment and try again.",
+  "Email chưa được xác nhận. Hãy kiểm tra hộp thư.":"Your email is not verified. Check your inbox.",
+  "Mã xác nhận không đúng hoặc đã hết hạn.":"The verification code is incorrect or expired.",
+  "Email hoặc mật khẩu không đúng.":"Incorrect email or password.", "Mật khẩu chưa đáp ứng yêu cầu bảo mật.":"The password does not meet the security requirements.",
+  "Không thể xác thực. Hãy kiểm tra thông tin và thử lại.":"Could not authenticate. Check your details and try again.",
+  "Email chưa hợp lệ.":"Enter a valid email address.", "Mật khẩu cần ít nhất 12 ký tự.":"Use at least 12 characters for your password.",
+  "Mật khẩu cần chữ hoa, chữ thường, chữ số và ký tự đặc biệt.":"Include uppercase and lowercase letters, a number and a symbol.",
+  "Phản hồi đăng nhập không đầy đủ. Vui lòng thử lại.":"The sign-in response was incomplete. Try again.",
+  "Cần cài hoặc bật trình duyệt hỗ trợ đăng nhập (Chrome, Edge hoặc Firefox), rồi thử lại.":"Install or enable a supported browser (Chrome, Edge or Firefox), then try again.",
+  "Google không trả về phiên đăng nhập. Vui lòng thử lại.":"Google did not return a sign-in session. Try again.",
+  "Đăng nhập Google đã bị hủy hoặc không hoàn tất.":"Google sign-in was cancelled or did not finish.",
+  processing:"Processing {{label}}", verificationDestination:"Enter the code sent to {{email}}.",
+} as const;
+export const authVi:Record<keyof typeof authEn,string>={
+  ...Object.fromEntries(Object.keys(authEn).map(key=>[key,key])),
+  processing:"Đang xử lý {{label}}",verificationDestination:"Nhập mã đã gửi tới {{email}}.",
+} as Record<keyof typeof authEn,string>;

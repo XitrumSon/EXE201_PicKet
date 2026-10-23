@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAuth } from "@/features/auth/auth-context";
 import { routes } from "@/core/navigation/routes";
@@ -7,6 +8,7 @@ import { authErrorMessage } from "@/features/auth/auth-errors";
 import { AuthField, AuthMessage, AuthScreen, PrimaryButton, TextLink } from "@/features/auth/auth-screen";
 
 export default function VerifyEmailScreen() {
+  const {t}=useTranslation("auth");
   const params = useLocalSearchParams<{ email?: string }>();
   const email = params.email ?? "";
   const { resendSignup, verifySignup } = useAuth();
@@ -34,7 +36,7 @@ export default function VerifyEmailScreen() {
   }
 
   return (
-    <AuthScreen title="Xác thực email" subtitle={`Nhập mã đã gửi tới ${email || "email của bạn"}.`}>
+    <AuthScreen title="Xác thực email" subtitle={t("verificationDestination",{email:email||t("email của bạn")})}>
       <AuthField editable={!busy} keyboardType="number-pad" maxLength={8} onChangeText={setToken} onSubmitEditing={verify} placeholder="Mã OTP" value={token} />
       {message && <AuthMessage>{message}</AuthMessage>}
       <PrimaryButton busy={busy} label="Xác thực" onPress={verify} />
