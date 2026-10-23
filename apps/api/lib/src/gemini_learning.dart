@@ -3,9 +3,15 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+enum LearningFailureKind { http, timeout, transport, invalidOutput }
+
 class LearningProviderUnavailable implements Exception {
-  const LearningProviderUnavailable({this.statusCode});
+  const LearningProviderUnavailable({
+    this.statusCode,
+    this.kind = LearningFailureKind.invalidOutput,
+  });
   final int? statusCode;
+  final LearningFailureKind kind;
   @override
   String toString() => 'Educational provider unavailable; use local content.';
 }
@@ -42,6 +48,7 @@ class GeminiLearningAdapter {
         'Only predefined educational cases supported.',
       );
     }
+    int? receivedStatus;
     try {
       final response = await client
           .post(
@@ -90,12 +97,21 @@ class GeminiLearningAdapter {
             }),
           )
           .timeout(timeout);
+      receivedStatus = response.statusCode;
       if (response.statusCode != 200 || response.bodyBytes.length > 32768) {
-        throw LearningProviderUnavailable(statusCode: response.statusCode);
+        throw LearningProviderUnavailable(
+          statusCode: response.statusCode,
+          kind: LearningFailureKind.http,
+        );
       }
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
       final candidates = decoded['candidates'] as List<dynamic>;
       final candidate = candidates.single as Map<String, dynamic>;
+      // https://ai.google.dev/api/generate-content#FinishReason
+      // A valid JSON fragment is not proof that generation completed.
+      if (candidate['finishReason'] != 'STOP') {
+        throw const LearningProviderUnavailable(statusCode: 200);
+      }
       final content = candidate['content'] as Map<String, dynamic>;
       final parts = content['parts'] as List<dynamic>;
       final part = parts.single as Map<String, dynamic>;
@@ -106,14 +122,22 @@ class GeminiLearningAdapter {
           ids.length > 3 ||
           ids.any((id) => id is! String || !_statementIds.contains(id)) ||
           ids.toSet().length != ids.length) {
-        throw const LearningProviderUnavailable();
+        throw const LearningProviderUnavailable(statusCode: 200);
       }
       return ids.cast<String>();
     } on LearningProviderUnavailable {
       rethrow;
+    } on TimeoutException {
+      throw const LearningProviderUnavailable(
+        kind: LearningFailureKind.timeout,
+      );
+    } on http.ClientException {
+      throw const LearningProviderUnavailable(
+        kind: LearningFailureKind.transport,
+      );
     } on Object {
       // Keep bodies, prompts, keys and transport errors out of logs.
-      throw const LearningProviderUnavailable();
+      throw LearningProviderUnavailable(statusCode: receivedStatus);
     }
   }
 }

@@ -19,7 +19,8 @@ Future<void> main() async {
   } on LearningProviderUnavailable catch (error) {
     stderr.writeln(
       'Synthetic smoke unavailable: '
-      'HTTP ${error.statusCode ?? "not available"}. No retry.',
+      '${error.kind.name}, HTTP ${error.statusCode ?? "not available"}. '
+      'No retry.',
     );
     exitCode = 1;
   } on Object {

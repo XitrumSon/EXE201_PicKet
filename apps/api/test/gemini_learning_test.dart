@@ -20,6 +20,7 @@ void main() {
             jsonEncode({
               'candidates': [
                 {
+                  'finishReason': 'STOP',
                   'content': {
                     'parts': [
                       {
