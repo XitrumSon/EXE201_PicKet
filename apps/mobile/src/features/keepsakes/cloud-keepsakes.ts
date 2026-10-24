@@ -6,7 +6,7 @@ import type { Keepsake as RemoteKeepsake } from "@picket/domain";
 import { picketApi } from "@/core/api/client";
 import { supabase } from "@/core/supabase/client";
 import { acknowledgeKeepsake, acknowledgeKeepsakePhotoCleanup, deleteKeepsake, enqueueKeepsakePhotoCleanup, listKeepsakePhotoCleanup, listKeepsakes, saveKeepsake, type Keepsake as LocalKeepsake } from "@/features/keepsakes/keepsake-store";
-import { readOfflineCache, writeOfflineCache } from "@/core/sync/offline-cache";
+import { readOfflineCache, writeOfflineCache, withLocalOwnerAccess } from "@/core/sync/offline-cache";
 import { loadWithKeepsakeCache } from "@/features/keepsakes/keepsake-cache-policy";
 import { mergeKeepsakeOutbox, planKeepsakePhotoReplay, planKeepsakeReplay } from "@/features/keepsakes/keepsake-outbox-policy";
 import { canCleanupKeepsakePhoto, isKeepsakeReplayConfirmed, keepsakeCacheFileName, keepsakePhotoPath, persistKeepsakeReplay, saveWithKeepsakePhoto, saveDurableKeepsake, withKeepsakeOwnerLock } from "./keepsake-media-policy";
@@ -32,7 +32,6 @@ async function toDisplay(item: RemoteKeepsake, userId: string): Promise<DisplayK
   let cachedPhotoUri: string | null = null;
   if (item.mediaPath) {
     const directory = new Directory(Paths.document, "keepsake-cloud-cache", userId);
-    directory.create({ idempotent: true, intermediates: true });
     const name = keepsakeCacheFileName(item.id, item.mediaPath);
     const destination = new File(directory, `${name}.enc`);
     const legacy = new File(directory, name);
@@ -67,7 +66,7 @@ async function uploadPhoto(userId: string, itemId: string, uri: string, previous
     itemId, obsoletePath: previousPath, replacementPath: path,
   });
   const type = extension === "png" ? "image/png" : extension === "webp" ? "image/webp" : "image/jpeg";
-  const { error } = await supabase.storage.from("picket-media").upload(path, body, { contentType:type, upsert:true });
+  const { error } = await withLocalOwnerAccess(userId,()=>supabase!.storage.from("picket-media").upload(path, body, { contentType:type, upsert:true }));
   if (error) throw error;
   return path;
 }

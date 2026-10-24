@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
+import { createClient } from "@supabase/supabase-js";
+import { createOwnerCacheLifecycle } from "../../core/sync/owner-cache-lifecycle";
 import { purgeKeepsakeOwner, type KeepsakeRetirementSource } from "./keepsake-retirement";
 
 function fixture(){
@@ -66,4 +68,21 @@ test("native keepsake image and SQL writers are fenced and cloud display never r
   assert.match(store,/purgeKeepsakeOwner/);assert.match(retire,/await purgeRetiredKeepsakeOwner\(owner\)/);
   assert.doesNotMatch(cloud,/directory.create\(/);
   assert.match(cloud,/withLocalOwnerAccess\(userId/);
+});
+
+test("retirement drains a dispatched SDK media upload and prevents later uploads from starting",{timeout:5000},async()=>{
+  let release!:()=>void,started!:()=>void,calls=0;
+  const entered=new Promise<void>(resolve=>{started=resolve;});
+  const pending=new Promise<void>(resolve=>{release=resolve;});
+  const client=createClient("https://synthetic.invalid","synthetic-publishable",{
+    auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},
+    global:{fetch:async()=>{calls++;started();await pending;return Response.json({Key:"picket-media/a/item.jpg"});}},
+  });
+  const retired=new Set<string>();
+  const lifecycle=createOwnerCacheLifecycle({isRetired:async owner=>retired.has(owner),retire:async owner=>{retired.add(owner);},resume:async owner=>{retired.delete(owner);}});
+  const upload=()=>client.storage.from("picket-media").upload("a/item.jpg",new Uint8Array([1,2,3]),{contentType:"image/jpeg",upsert:true});
+  const dispatched=lifecycle.run("a",upload);await entered;
+  const retirement=lifecycle.retire("a");assert.equal(retired.has("a"),false);
+  release();assert.equal((await dispatched).error,null);await retirement;
+  await assert.rejects(lifecycle.run("a",upload),/retired/);assert.equal(calls,1);
 });

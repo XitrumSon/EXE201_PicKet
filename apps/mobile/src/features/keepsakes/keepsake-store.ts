@@ -1,11 +1,12 @@
 import * as Crypto from "expo-crypto";
-import { File } from "expo-file-system";
+import { Directory, File, Paths } from "expo-file-system";
 import * as SQLite from "expo-sqlite";
 import { nextKeepsakePhotoUploadRequired } from "./keepsake-outbox-policy";
 import { sameKeepsakeOutbox, type KeepsakePhotoCleanup } from "./keepsake-media-policy";
 import { cleanupKeepsakePhotos, readKeepsakePhoto, withKeepsakePhotoLease, writeKeepsakePhoto } from "./keepsake-photo-storage";
-import { readOfflineCache } from "@/core/sync/offline-cache";
+import { readOfflineCache, withLocalOwnerAccess, isOfflineCacheOwnerRetired } from "@/core/sync/offline-cache";
 import { toByteArray } from "base64-js";
+import { purgeKeepsakeOwner } from "./keepsake-retirement";
 
 export interface Keepsake {
   id: string;
@@ -79,12 +80,12 @@ function fromRow(row: KeepsakeRow): Keepsake {
 export async function listKeepsakes(userId: string): Promise<Keepsake[]> {
   return withKeepsakePhotoLease(userId, async () => {
   const db = await database();
-  const rows = await db.getAllAsync<KeepsakeRow>("SELECT * FROM keepsakes WHERE user_id = ? ORDER BY date DESC", userId);
+  const rows = await withLocalOwnerAccess(userId,()=>db.getAllAsync<KeepsakeRow>("SELECT * FROM keepsakes WHERE user_id = ? ORDER BY date DESC", userId));
   for (const row of rows) if (row.photo_uri && !row.photo_uri.endsWith(".enc")) {
     try {
       const photo = await readKeepsakePhoto(userId, row.photo_uri);
       const next = await writeKeepsakePhoto(userId, toByteArray(photo.base64));
-      const changed = await db.runAsync("UPDATE keepsakes SET photo_uri = ? WHERE id = ? AND user_id = ? AND photo_uri = ?", next, row.id, userId, row.photo_uri);
+      const changed = await withLocalOwnerAccess(userId,()=>db.runAsync("UPDATE keepsakes SET photo_uri = ? WHERE id = ? AND user_id = ? AND photo_uri = ?", next, row.id, userId, row.photo_uri));
       if (changed.changes === 1) row.photo_uri = next;
     } catch { /* Preserve legacy reference when storage/key/migration is unavailable. */ }
   }
@@ -95,7 +96,7 @@ export async function listKeepsakes(userId: string): Promise<Keepsake[]> {
 export async function collectKeepsakePhotoOrphans(userId: string) {
   return cleanupKeepsakePhotos(userId, async () => {
     const db = await database();
-    const rows = await db.getAllAsync<{ photo_uri: string | null }>("SELECT photo_uri FROM keepsakes WHERE user_id = ?", userId);
+    const rows = await withLocalOwnerAccess(userId,()=>db.getAllAsync<{ photo_uri: string | null }>("SELECT photo_uri FROM keepsakes WHERE user_id = ?", userId));
     const cache = await readOfflineCache<Keepsake[]>(userId, "keepsakes");
     return [...rows.map(row => row.photo_uri), ...(cache?.value ?? []).map(row => row.photoUri)].filter((uri): uri is string => !!uri);
   });
@@ -115,7 +116,7 @@ async function saveKeepsakeWithLease(input: Omit<Keepsake, "id"> & { id?: string
     copied = new File(photoUri);
   }
   try {
-    const written = await db.runAsync(
+    const written = await withLocalOwnerAccess(input.userId,()=>db.runAsync(
       `INSERT INTO keepsakes (id,user_id,title,amount,date,note,photo_uri,category,warranty_until,return_until,remote_version,media_path,photo_upload_required)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
        ON CONFLICT(id) DO UPDATE SET title=excluded.title,amount=excluded.amount,date=excluded.date,
@@ -125,7 +126,7 @@ async function saveKeepsakeWithLease(input: Omit<Keepsake, "id"> & { id?: string
        WHERE keepsakes.user_id=excluded.user_id`,
       id, input.userId, input.title, input.amount, input.date, input.note, photoUri,
       input.category, input.warrantyUntil, input.returnUntil, input.version ?? null, input.mediaPath ?? null, photoUploadRequired ? 1 : 0,
-    );
+    ));
     if (written.changes !== 1) throw new Error("Không thể ghi đè món đồ của tài khoản khác.");
   } catch (error) {
     if (copied?.exists) copied.delete();
@@ -141,27 +142,33 @@ async function saveKeepsakeWithLease(input: Omit<Keepsake, "id"> & { id?: string
 }
 
 export async function enqueueKeepsakePhotoCleanup(userId: string, task: KeepsakePhotoCleanup) {
+  return withLocalOwnerAccess(userId,async()=>{
   const db = await database();
   await db.runAsync(`INSERT OR IGNORE INTO keepsake_photo_cleanup
     (user_id,item_id,obsolete_path,replacement_path) VALUES (?,?,?,?)`,
   userId, task.itemId, task.obsoletePath, task.replacementPath);
+  });
 }
 
 export async function listKeepsakePhotoCleanup(userId: string): Promise<KeepsakePhotoCleanup[]> {
+  return withLocalOwnerAccess(userId,async()=>{
   const db = await database();
   return db.getAllAsync<KeepsakePhotoCleanup>(`SELECT item_id AS itemId,
     obsolete_path AS obsoletePath, replacement_path AS replacementPath
     FROM keepsake_photo_cleanup WHERE user_id = ?`, userId);
+  });
 }
 
 export async function acknowledgeKeepsakePhotoCleanup(userId: string, task: KeepsakePhotoCleanup) {
+  return withLocalOwnerAccess(userId,async()=>{
   const db = await database();
   await db.runAsync(`DELETE FROM keepsake_photo_cleanup WHERE user_id = ? AND item_id = ?
     AND obsolete_path = ? AND replacement_path = ?`, userId, task.itemId, task.obsoletePath, task.replacementPath);
+  });
 }
 
 export async function deleteKeepsake(id: string, userId: string, preservePhotoUri?: string | null) {
-  return withKeepsakePhotoLease(userId, async () => {
+  return withKeepsakePhotoLease(userId, () => withLocalOwnerAccess(userId, async () => {
   const db = await database();
   const row = await db.getFirstAsync<KeepsakeRow>("SELECT * FROM keepsakes WHERE id = ? AND user_id = ?", id, userId);
   if (!row) return;
@@ -170,11 +177,12 @@ export async function deleteKeepsake(id: string, userId: string, preservePhotoUr
   // Only the bounded, reference-aware sweep removes files after its grace period.
   void preservePhotoUri;
   notifyChanged(userId);
-  });
+  }));
 }
 
 /** A concurrent local edit must survive acknowledgement of an older replay. */
 export async function acknowledgeKeepsake(expected: Keepsake) {
+  return withLocalOwnerAccess(expected.userId,async()=>{
   const db = await database();
   let removed = false;
   await db.withExclusiveTransactionAsync(async transaction => {
@@ -191,11 +199,13 @@ export async function acknowledgeKeepsake(expected: Keepsake) {
   // still reference it; safe orphan cleanup is separate from queue completion.
   if (removed) notifyChanged(expected.userId);
   return removed;
+  });
 }
 
 /** Replaces only one owner's rows. File removal is deliberately handled by the caller after commit. */
 export async function replaceKeepsakesForOwner(userId: string, items: Keepsake[]) {
   if (items.some((item) => item.userId !== userId)) throw new Error("Bản sao chứa kỷ vật của tài khoản khác.");
+  return withLocalOwnerAccess(userId,async()=>{
   const db = await database();
   await db.withExclusiveTransactionAsync(async (transaction) => {
     await transaction.runAsync("DELETE FROM keepsakes WHERE user_id = ?", userId);
@@ -208,4 +218,15 @@ export async function replaceKeepsakesForOwner(userId: string, items: Keepsake[]
     );
   });
   notifyChanged(userId);
+  });
+}
+
+export async function purgeRetiredKeepsakeOwner(owner:string){
+  await purgeKeepsakeOwner(owner,{
+    root:Paths.document.uri,isRetired:isOfflineCacheOwnerRetired,
+    directory:(root,namespace,id)=>new Directory(root,namespace,id).uri.replace(/\/$/,""),
+    removeDirectory:async uri=>{const dir=new Directory(uri);if(dir.exists){try{dir.delete();}catch(error){if(dir.exists)throw error;}}},
+    database,
+  });
+  notifyChanged(owner);
 }

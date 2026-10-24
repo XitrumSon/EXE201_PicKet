@@ -2,7 +2,7 @@ import { fromByteArray, toByteArray } from "base64-js";
 import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 import { getFreeDiskStorageAsync } from "expo-file-system/legacy";
-import { decryptLocalPayload, encryptLocalPayload } from "@/core/sync/offline-cache";
+import { decryptLocalPayload, encryptLocalPayload, withLocalOwnerAccess } from "@/core/sync/offline-cache";
 import { createPhotoLeaseGate, createPhotoVault, MAX_PHOTO_BYTES, requirePhotoWriteSpace, selectPhotoOrphans, type PhotoPayload } from "./keepsake-photo-vault";
 
 const leases = createPhotoLeaseGate();
@@ -30,7 +30,7 @@ export function keepsakePhotoMime(bytes: Uint8Array): string {
   throw new Error("Định dạng ảnh không được hỗ trợ.");
 }
 export function writeKeepsakePhoto(owner: string, bytes: Uint8Array, cacheName?: string): Promise<string> {
-  return leases.use(owner, async () => {
+  return leases.use(owner, () => withLocalOwnerAccess(owner, async () => {
     const mime = keepsakePhotoMime(bytes);
     requirePhotoWriteSpace(await getFreeDiskStorageAsync(), bytes.length * 3);
     const dir = directories(owner)[cacheName ? 1 : 0];
@@ -45,10 +45,10 @@ export function writeKeepsakePhoto(owner: string, bytes: Uint8Array, cacheName?:
       await temp.move(destination);
       return destination.uri;
     } catch (error) { if (temp.exists) temp.delete(); throw error; }
-  });
+  }));
 }
 export function readKeepsakePhoto(owner: string, uri: string): Promise<PhotoPayload> {
-  return leases.use(owner, async () => {
+  return leases.use(owner, () => withLocalOwnerAccess(owner, async () => {
     const file = ownedFile(owner, uri);
     if (uri.endsWith(".enc")) {
       const photo = await vault.read(owner, uri);
@@ -57,7 +57,7 @@ export function readKeepsakePhoto(owner: string, uri: string): Promise<PhotoPayl
     }
     const bytes = await file.bytes();
     return { mime: keepsakePhotoMime(bytes), base64: fromByteArray(bytes) };
-  });
+  }));
 }
 export async function keepsakePhotoSource(owner: string, uri: string) {
   const photo = await readKeepsakePhoto(owner, uri);

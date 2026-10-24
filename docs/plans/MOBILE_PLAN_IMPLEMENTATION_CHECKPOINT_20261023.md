@@ -6,6 +6,16 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Latest keepsake continuation: both attributed keepsake image directories and
+  the keepsake/photo-cleanup outboxes are erased behind the common owner fence.
+  Image/SQL writers and SDK upload dispatch are fenced; dispatched uploads drain
+  before retirement. SQLite and installed-SDK request tests pass. All **647 mobile
+  tests** pass; purge coverage is 100% lines / 96.55% branches / 100% functions.
+  Typecheck/Android JS export pass; lint has 0 errors/25 existing warnings.
+  Notification/lock preferences, unknown legacy images, native/server lifecycle
+  acceptance and broader product/release gates remain pending. See
+  `KEEPSAKE_RETIREMENT_CHECKPOINT_20261025.md`.
+
 - Latest pending-receipt continuation: draft reads/writes, canonical pin/reset,
   progress and removal now share the durable owner fence. New copied images use
   owner directories; deletion also erases attributable legacy shared UUID files
