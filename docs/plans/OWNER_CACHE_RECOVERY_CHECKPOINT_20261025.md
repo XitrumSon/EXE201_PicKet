@@ -30,6 +30,14 @@ acceptance.
   `mobile-recovery-lint.log`, `mobile-recovery-coverage.log`,
   `mobile-recovery-export.log`.
 
+Additional local Auth acceptance passed against the running local Supabase stack:
+an admin-created synthetic user signed in and recovered its retired cache; after
+hard deletion, the same captured access token could not recover the cache and
+the retirement marker remained set. The synthetic user was removed in cleanup.
+No production calls or credential logging were involved. The executed script is
+`.artifacts/cache-recovery-local-auth.ts`; this supplements the intercepted SDK
+tests above and does not substitute for native device acceptance.
+
 The native boundary currently has static wiring/localization checks, not a
 rendered device test. Physical Android process-death, TalkBack, deep-link and
 owner-switch acceptance still require a device. Confirmed remote deletion still
