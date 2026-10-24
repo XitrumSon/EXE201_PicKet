@@ -74,5 +74,7 @@ export function createLearningProgressStore(storage: { read(owner: string): Prom
     try{await operation;}finally{if(queues.get(owner)===operation)queues.delete(owner);}
     return load(owner);
   }
-  return { load, complete, mergeVerified, dueReviews, review };
+  return { load, complete, mergeVerified, dueReviews, review,
+    mergeReviews:async(owner:string,value:unknown)=>{void owner;void value;throw new Error("Review merge not implemented");},
+  };
 }

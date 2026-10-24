@@ -3,6 +3,8 @@ import type {
   LearningAiRequest,
   LearningAiQueuedJob,
   LearningAiJob,
+  LearningActivityDocument,
+  LearningActivityEvent,
   CashflowSchedule,
   CashflowScheduleDocument,
   BillingAvailability,
@@ -120,6 +122,13 @@ export class PicketApiClient {
 
   health(signal?: AbortSignal): Promise<ApiHealth> {
     return this.request<ApiHealth>("/health", { signal });
+  }
+
+  learningActivity(token:string,signal?:AbortSignal):Promise<LearningActivityDocument>{
+    return this.request("/v1/learning/activity",{headers:this.authHeaders(token),signal});
+  }
+  syncLearningActivity(token:string,events:LearningActivityEvent[],signal?:AbortSignal):Promise<LearningActivityDocument>{
+    return this.request("/v1/learning/activity",{method:"PUT",headers:this.jsonAuthHeaders(token),body:JSON.stringify({events}),signal});
   }
 
   learningAiConsent(token:string,signal?:AbortSignal):Promise<LearningAiConsent>{

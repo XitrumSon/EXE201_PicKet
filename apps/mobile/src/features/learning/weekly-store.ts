@@ -31,5 +31,7 @@ export function createWeeklyPracticeStore(storage:{read(owner:string):Promise<un
     try{await operation;}finally{if(pending.get(owner)===operation)pending.delete(owner);}
     return load(owner);
   }
-  return {load,record};
+  return {load,record,
+    mergeVerified:async(owner:string,value:unknown)=>{void owner;void value;throw new Error("Practice merge not implemented");},
+  };
 }

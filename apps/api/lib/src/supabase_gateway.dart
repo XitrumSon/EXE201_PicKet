@@ -14,6 +14,7 @@ import 'package:picket_api/src/category_contract.dart';
 import 'package:picket_api/src/entitlement_contract.dart';
 import 'package:picket_api/src/finance_contract.dart';
 import 'package:picket_api/src/keepsake_contract.dart';
+import 'package:picket_api/src/learning_activity.dart';
 import 'package:picket_api/src/learning_ai_consent.dart';
 import 'package:picket_api/src/learning_ai_jobs.dart';
 import 'package:picket_api/src/learning_contract.dart';
@@ -193,6 +194,25 @@ class SupabaseGateway {
       throw const GatewayException(
         HttpStatus.badGateway,
         'History deletion not confirmed.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> learningActivity(
+    String token, {
+    List<Map<String, dynamic>>? events,
+  }) async {
+    final result = await _learningAiRpc(
+      token,
+      events == null ? 'load_learning_activity' : 'sync_learning_activity',
+      events == null ? {} : {'p_events': events},
+    );
+    try {
+      return validateLearningActivityDocument(result);
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid learning activity response.',
       );
     }
   }
