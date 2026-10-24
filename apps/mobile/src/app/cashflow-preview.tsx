@@ -15,6 +15,7 @@ import { expandSchedules, type CashflowSchedule } from "@/features/cashflow/sche
 import { calculateCashflow } from "@/features/cashflow/forecast";
 import { parseScenarioMoney } from "@/features/cashflow/scenario-form";
 import { syncCashflowSchedules } from "@/features/cashflow/schedule-sync";
+import { ScheduleConflictCard } from "@/features/cashflow/schedule-conflict-card";
 
 export default function CashflowPreview(){
   const {session,localMode}=useAuth();
@@ -104,6 +105,7 @@ function Scenario({owner}:{owner:string}){
     {failed&&button(t("reload"),()=>setRevision(value=>value+1),busy)}
     {cloudEnabled&&<View style={{gap:10}}><Text accessibilityLiveRegion="polite" style={{color:syncFailed?c.expense:c.muted}}>{syncFailed?t("syncError"):syncStatus.pending?t("syncPending",{count:syncStatus.pending}):syncStatus.linked?t("syncReady"):""}</Text><Pressable accessibilityRole="button" accessibilityState={{disabled:busy||syncBusy}} disabled={busy||syncBusy} onPress={startSync} style={{minHeight:48,padding:14,borderRadius:12,backgroundColor:c.surface}}><Text style={{color:c.primary}}>{t("sync")}</Text></Pressable></View>}
     {field(t("currency"),currency,value=>setCurrency(value.toUpperCase()))}
+    {cloudEnabled&&<ScheduleConflictCard owner={owner}/>}
     {field(t("start"),start,setStart)}
     {field(t("opening"),opening,setOpening)}
     <View accessibilityRole="radiogroup" accessibilityLabel={t("title")} style={{gap:8}}>{[7,30].map(value=><Pressable key={value} accessibilityRole="radio" accessibilityState={{checked:days===value}} onPress={()=>setDays(value)} style={{padding:14,minHeight:48,backgroundColor:days===value?c.elevated:c.surface}}><Text style={{color:c.text}}>{t(value===7?"seven":"thirty")}</Text></Pressable>)}</View>

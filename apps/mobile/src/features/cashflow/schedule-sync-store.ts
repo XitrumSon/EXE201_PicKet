@@ -2,15 +2,16 @@ import type { CashflowScheduleDocument, CashflowSchedule } from "@picket/domain"
 import { parseScheduleDocument } from "./schedule-store";
 export type ScheduleOperation={key:string;expectedRevision:number;action:"save"|"remove";schedule:CashflowSchedule|{id:string}};
 export type ScheduleConflictReview={local:CashflowScheduleDocument;remote:CashflowScheduleDocument};
-type State=CashflowScheduleDocument&{owner?:string;cloud?:{baseRevision:number;pending:ScheduleOperation[]}};
+type State=CashflowScheduleDocument&{owner?:string;recovery?:CashflowScheduleDocument;cloud?:{baseRevision:number;pending:ScheduleOperation[]}};
 const maxRevision=Number.MAX_SAFE_INTEGER;
 function parse(value:unknown,owner:string):State{
   const doc=parseScheduleDocument(value);
   const raw=value as State|null|undefined;
   if(raw?.owner!==undefined&&raw.owner!==owner)throw new Error("Schedule owner mismatch");
-  if(raw?.cloud===undefined)return{...doc,owner};
+  const recovery=raw?.recovery===undefined?undefined:parseScheduleDocument(raw.recovery);
+  if(raw?.cloud===undefined)return{...doc,owner,...(recovery?{recovery}:{})};
   const {baseRevision,pending}=raw.cloud;
-  if(!Number.isSafeInteger(baseRevision)||baseRevision<0||baseRevision>maxRevision||!Array.isArray(pending)||pending.length>1000)throw new Error("Invalid schedule synchronization state");
+  if(!Number.isSafeInteger(baseRevision)||baseRevision<0||baseRevision>maxRevision||!Array.isArray(pending)||pending.length>2000)throw new Error("Invalid schedule synchronization state");
   const seen=new Set<string>();
   const operations=pending.map((operation,index)=>{
     if(!operation||typeof operation.key!=="string"||!/^[A-Za-z0-9._:-]{8,128}$/.test(operation.key)||seen.has(operation.key)||operation.expectedRevision!==baseRevision+index||operation.expectedRevision>=maxRevision)throw new Error("Invalid schedule operation");
@@ -22,7 +23,7 @@ function parse(value:unknown,owner:string):State{
     if(operation.action!=="remove"||!operation.schedule||!/^[A-Za-z0-9_-]{1,200}$/.test(operation.schedule.id)||Object.keys(operation.schedule).length!==1)throw new Error("Invalid schedule removal");
     return{...operation,schedule:{id:operation.schedule.id}};
   });
-  return{...doc,owner,cloud:{baseRevision,pending:operations}};
+  return{...doc,owner,...(recovery?{recovery}:{}),cloud:{baseRevision,pending:operations}};
 }
 function sameSchedules(a:CashflowSchedule[],b:CashflowSchedule[]){
   const sorted=(rows:CashflowSchedule[])=>[...rows].sort((x,y)=>x.id.localeCompare(y.id));
@@ -32,6 +33,7 @@ function sameSchedules(a:CashflowSchedule[],b:CashflowSchedule[]){
 export function createScheduleSyncStore(storage:{read(owner:string):Promise<unknown>;write(owner:string,value:State):Promise<void>},newKey:()=>string){
   const queues=new Map<string,Promise<unknown>>(),drains=new Map<string,Promise<CashflowScheduleDocument>>();
   const listeners=new Map<string,Set<()=>void>>();
+  const resolving=new Set<string>();
   const checkOwner=(owner:string)=>{if(!/^[A-Za-z0-9_-]{1,200}$/.test(owner))throw new Error("Invalid schedule owner");};
   const read=async(owner:string)=>parse(await storage.read(owner),owner);
   async function write(owner:string,state:State){
@@ -47,6 +49,12 @@ export function createScheduleSyncStore(storage:{read(owner:string):Promise<unkn
     try{return await operation;}finally{if(queues.get(owner)===operation)queues.delete(owner);}
   }
   const load=(owner:string)=>queue(owner,async()=>parseScheduleDocument(await read(owner)));
+  function adopt(current:State,remote:CashflowScheduleDocument):State{
+    const changed=!sameSchedules(current.schedules,remote.schedules);
+    const revision=Math.max(remote.revision,current.revision+(changed?1:0));
+    if(!Number.isSafeInteger(revision))throw new Error("Schedule revision exhausted");
+    return {...remote,revision,owner:current.owner,...(current.recovery?{recovery:current.recovery}:{})};
+  }
   function mutate(owner:string,revision:number,action:"save"|"remove",schedule:CashflowSchedule|{id:string}){
     return queue(owner,async()=>{
       const state=await read(owner);
@@ -56,11 +64,12 @@ export function createScheduleSyncStore(storage:{read(owner:string):Promise<unkn
       if(action==="save")schedules.push(schedule as CashflowSchedule);
       const doc=parseScheduleDocument({schemaVersion:1,revision:revision+1,schedules});
       const cloud=state.cloud?{baseRevision:state.cloud.baseRevision,pending:[...state.cloud.pending,{key:newKey(),expectedRevision:state.cloud.baseRevision+state.cloud.pending.length,action,schedule}]}:undefined;
-      return parseScheduleDocument(await write(owner,{...doc,owner,...(cloud?{cloud}:{})}));
+      return parseScheduleDocument(await write(owner,{...doc,owner,...(state.recovery?{recovery:state.recovery}:{}),...(cloud?{cloud}:{})}));
     });
   }
   function sync(owner:string,fetchRemote:()=>Promise<CashflowScheduleDocument>,send:(operation:ScheduleOperation)=>Promise<CashflowScheduleDocument>,isCurrent=()=>true):Promise<CashflowScheduleDocument>{
     checkOwner(owner);
+    if(resolving.has(owner))return Promise.reject(new Error("Schedule reconciliation in progress"));
     const existing=drains.get(owner);if(existing)return existing;
     const checkActive=()=>{if(!isCurrent())throw new Error("Schedule session changed");};
     const operation=(async()=>{
@@ -75,7 +84,7 @@ export function createScheduleSyncStore(storage:{read(owner:string):Promise<unkn
           if(!remote.schedules.length&&state.schedules.length){
             const pending=state.schedules.map((schedule,index)=>({key:newKey(),expectedRevision:remote.revision+index,action:"save" as const,schedule}));
             await write(owner,{...state,cloud:{baseRevision:remote.revision,pending}});
-          }else await write(owner,{...remote,owner,cloud:{baseRevision:remote.revision,pending:[]}});
+          }else await write(owner,{...adopt(state,remote),cloud:{baseRevision:remote.revision,pending:[]}});
         });
       }
       // Bound a foreground drain; unfinished operations stay durable for resume.
@@ -90,8 +99,8 @@ export function createScheduleSyncStore(storage:{read(owner:string):Promise<unkn
             checkActive();const current=await read(owner);
             if(current.cloud!.pending.length)return false;
             if(remote.revision<current.cloud!.baseRevision)throw new Error("Cloud schedule revision regressed");
-            if(remote.revision===current.revision&&remote.revision===current.cloud!.baseRevision&&sameSchedules(remote.schedules,current.schedules))return true;
-            await write(owner,{...remote,owner,cloud:{baseRevision:remote.revision,pending:[]}});return true;
+            if(remote.revision===current.cloud!.baseRevision&&sameSchedules(remote.schedules,current.schedules))return true;
+            await write(owner,{...adopt(current,remote),cloud:{baseRevision:remote.revision,pending:[]}});return true;
           });
           if(adopted)return load(owner);
           continue;
@@ -106,7 +115,7 @@ export function createScheduleSyncStore(storage:{read(owner:string):Promise<unkn
           // A replay may include newer changes from another device. Once our
           // queue is empty, the next mutation must use that current revision.
           const cloud={baseRevision:remaining.length?applied:remote.revision,pending:remaining};
-          await write(owner,{...(remaining.length?current:remote),owner,cloud});
+          await write(owner,{...(remaining.length?current:adopt(current,remote)),owner,cloud});
         });
       }
       return load(owner);
@@ -116,9 +125,46 @@ export function createScheduleSyncStore(storage:{read(owner:string):Promise<unkn
     return operation;
   }
   return{load,
-    reviewConflict:async(owner:string,fetchRemote:()=>Promise<CashflowScheduleDocument>):Promise<ScheduleConflictReview>=>{void owner;void fetchRemote;throw new Error("Reconciliation not implemented");},
-    resolveConflict:async(owner:string,review:ScheduleConflictReview,choices:Record<string,"local"|"cloud"|"omit">,fetchRemote:()=>Promise<CashflowScheduleDocument>):Promise<CashflowScheduleDocument>=>{void owner;void review;void choices;void fetchRemote;throw new Error("Reconciliation not implemented");},
-    recovery:async(owner:string):Promise<CashflowScheduleDocument|null>=>{void owner;return null;},
+    reviewConflict:async(owner:string,fetchRemote:()=>Promise<CashflowScheduleDocument>,isCurrent=()=>true):Promise<ScheduleConflictReview>=>{
+      checkOwner(owner);
+      if(drains.has(owner)||resolving.has(owner)||!isCurrent())throw new Error("Schedule synchronization in progress");
+      const remote=parseScheduleDocument(await fetchRemote());
+      if(!isCurrent())throw new Error("Schedule owner changed");
+      return {local:await load(owner),remote};
+    },
+    resolveConflict:async(owner:string,review:ScheduleConflictReview,choices:Record<string,"local"|"cloud"|"omit">,fetchRemote:()=>Promise<CashflowScheduleDocument>,isCurrent=()=>true):Promise<CashflowScheduleDocument>=>{
+      checkOwner(owner);
+      if(drains.has(owner)||resolving.has(owner)||!isCurrent())throw new Error("Schedule synchronization in progress");
+      resolving.add(owner);
+      try{
+        const local=parseScheduleDocument(review.local),reviewed=parseScheduleDocument(review.remote);
+        const remote=parseScheduleDocument(await fetchRemote());
+        if(!isCurrent()||remote.revision!==reviewed.revision||!sameSchedules(remote.schedules,reviewed.schedules))throw new Error("Cloud schedules changed; review again");
+        return await queue(owner,async()=>{
+          const current=await read(owner);
+          if(!isCurrent()||current.revision!==local.revision||!sameSchedules(current.schedules,local.schedules))throw new Error("Local schedules changed; review again");
+          const localRows=new Map(local.schedules.map(row=>[row.id,row]));
+          const remoteRows=new Map(remote.schedules.map(row=>[row.id,row]));
+          const ids=new Set([...localRows.keys(),...remoteRows.keys()]);
+          if(Object.keys(choices).some(id=>!ids.has(id)))throw new Error("Unknown reconciliation choice");
+          const selected:CashflowSchedule[]=[];
+          for(const id of ids){
+            const choice=choices[id];
+            if(!["local","cloud","omit"].includes(choice))throw new Error("Choose each schedule explicitly");
+            const row=choice==="local"?localRows.get(id):choice==="cloud"?remoteRows.get(id):undefined;
+            if(choice!=="omit"&&!row)throw new Error("Selected schedule no longer exists");
+            if(row)selected.push(row);
+          }
+          const doc=parseScheduleDocument({schemaVersion:1,revision:Math.max(current.revision,remote.revision)+1,schedules:selected});
+          const pending:ScheduleOperation[]=[];
+          const add=(action:"save"|"remove",schedule:CashflowSchedule|{id:string})=>pending.push({key:newKey(),expectedRevision:remote.revision+pending.length,action,schedule});
+          for(const row of remote.schedules)if(!selected.some(item=>item.id===row.id))add("remove",{id:row.id});
+          for(const row of selected)if(!sameSchedules([row],remoteRows.has(row.id)?[remoteRows.get(row.id)!]:[]))add("save",row);
+          return parseScheduleDocument(await write(owner,{...doc,owner,recovery:local,cloud:{baseRevision:remote.revision,pending}}));
+        });
+      }finally{resolving.delete(owner);}
+    },
+    recovery:(owner:string)=>queue(owner,async()=>{const state=await read(owner);return state.recovery??null;}),
     save:(owner:string,revision:number,schedule:CashflowSchedule)=>mutate(owner,revision,"save",schedule),
     remove:(owner:string,revision:number,id:string)=>mutate(owner,revision,"remove",{id}),sync,
     status:(owner:string)=>queue(owner,async()=>{const state=await read(owner);return{linked:!!state.cloud,pending:state.cloud?.pending.length??0};}),
