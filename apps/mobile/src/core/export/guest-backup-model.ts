@@ -3,6 +3,7 @@ import { guestOwnerId } from "@/core/local/guest-finance";
 import type { Keepsake } from "@/features/keepsakes/keepsake-store";
 import { makeGuestReceipt, type GuestReceipt } from "@/core/receipts/guest-receipt-model";
 import { backupAppearance } from "./backup-appearance";
+import {validateReconciliationReceipts} from "../local/guest-reconciliation-receipts";
 
 export interface GuestBackupPayload {
   finance: GuestFinance;
@@ -24,6 +25,7 @@ export function validateGuestBackupPayload(value: unknown): GuestBackupPayload {
       !object(finance.splits) || !object(finance.planningPeriods) || !object(finance.planningCloses) ||
       typeof finance.planningMethod !== "string") throw new Error("Dữ liệu tài chính trong bản sao không hợp lệ.");
   backupAppearance(finance.profile);
+  validateReconciliationReceipts(finance.reconciliationReceipts);
   const receiptIds = finance.receiptCreateIds;
   if (receiptIds !== undefined && (!Array.isArray(receiptIds) || receiptIds.length > 50_000 ||
       !receiptIds.every(id => typeof id === "string" && id.length > 0 && id.length <= 200) ||

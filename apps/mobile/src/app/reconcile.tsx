@@ -100,10 +100,12 @@ export default function ReconcileScreen() {
       const requestId = await reconciliationJournal.reserve(owner, serialized, expectedId);
       if (activeOwner.current !== owner) return;
       const { result, refreshFailed } = await runReconciliationAttempt(async () => {
-        const savedAccount = accounts.find((item) => item.id === request.accountId);
-        const savedCleared = (savedAccount?.openingBalance ?? 0) + transactions.filter((item) => request.selectedTransactionIds.includes(item.id)).reduce((sum, item) => sum + effect(item, request.accountId), 0);
         const saved = localMode
-          ? (await guest.commit({ type: "reconcile.apply", id: requestId, ...request, occurredAt: `${request.statementDate}T12:00:00.000Z` }), { difference: request.statementBalance - savedCleared })
+          ? await guest.commit({ type: "reconcile.apply", id: requestId, ...request, occurredAt: `${request.statementDate}T12:00:00.000Z` }).then(state => {
+              const receipt=state.reconciliationReceipts?.find(row=>row.id===requestId);
+              if(!receipt)throw new Error("Missing saved reconciliation result");
+              return {difference:receipt.difference};
+            })
           : await picketApi!.reconcileWallet(session!.access_token, { ...request, requestId });
         // A cleanup error cannot undo a confirmed server write. Keeping its ID
         // lets an identical retry retrieve that result instead of writing twice.

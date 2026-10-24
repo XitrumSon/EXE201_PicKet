@@ -4,7 +4,7 @@ import { readOfflineCache, writeOfflineCache } from "@/core/sync/offline-cache";
 import { applyGuestMutation, emptyGuestFinance, guestOwnerId, type GuestFinance, type GuestMutation } from "@/core/local/guest-finance";
 import { useAuth } from "@/features/auth/auth-context";
 
-type GuestFinanceValue = { data: GuestFinance; loading: boolean; error: string | null; commit(mutation: GuestMutation | ((current: GuestFinance) => GuestMutation)): Promise<void>; replace(value: GuestFinance): Promise<void> };
+type GuestFinanceValue = { data: GuestFinance; loading: boolean; error: string | null; commit(mutation: GuestMutation | ((current: GuestFinance) => GuestMutation)): Promise<GuestFinance>; replace(value: GuestFinance): Promise<void> };
 const GuestFinanceContext = createContext<GuestFinanceValue | null>(null);
 
 export function GuestFinanceProvider({ children }: PropsWithChildren) {
@@ -13,7 +13,7 @@ export function GuestFinanceProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(localMode);
   const [error, setError] = useState<string | null>(null);
   const current = useRef(data);
-  const pending = useRef<Promise<void>>(Promise.resolve());
+  const pending = useRef<Promise<unknown>>(Promise.resolve());
 
   useEffect(() => {
     if (!localMode) return;
@@ -37,6 +37,7 @@ export function GuestFinanceProvider({ children }: PropsWithChildren) {
       await writeOfflineCache(guestOwnerId, "guest-finance", next);
       current.current = next;
       setData(next);
+      return next;
     });
     pending.current = operation;
     return operation;

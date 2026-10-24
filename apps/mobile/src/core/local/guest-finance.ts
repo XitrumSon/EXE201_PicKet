@@ -1,5 +1,7 @@
 import type { Bill, Budget, BudgetMethod, Category, CurrentProfile, FinanceSubscription, FinancialAccount, PlanningMonthClose, Transaction, TransactionSplit } from "@picket/domain";
 import { MAX_MONEY } from "@picket/domain";
+import {decodeReconciliationRequest} from "../../features/transactions/reconciliation-attempt";
+import {validateReconciliationReceipts,type GuestReconciliationReceipt} from "./guest-reconciliation-receipts";
 
 export type GuestCollection = "accounts" | "categories" | "transactions" | "budgets" | "bills" | "subscriptions";
 
@@ -17,6 +19,8 @@ export interface GuestFinance {
   planningCloses: Record<string, PlanningMonthClose>;
   /** Durable receipt creation tombstones; absent in older device backups. */
   receiptCreateIds?: string[];
+  /** Completed requests, including zero adjustments, survive retries and deletion. */
+  reconciliationReceipts?: GuestReconciliationReceipt[];
 }
 
 export type GuestMutation =
@@ -46,7 +50,7 @@ export function emptyGuestFinance(): GuestFinance {
   return {
     profile: { id: guestOwnerId, displayName: "bạn", avatarUrl: null, onboardingCompleted: true, locale: "vi", timezone: "Asia/Ho_Chi_Minh", persona: "", goal: "", currencyCode: "VND", hideBalance: false },
     accounts: [], categories: [], transactions: [], splits: {}, budgets: [], bills: [], subscriptions: [],
-    planningMethod: "simple", planningPeriods: {}, planningCloses: {}, receiptCreateIds: [],
+    planningMethod: "simple", planningPeriods: {}, planningCloses: {}, receiptCreateIds: [], reconciliationReceipts:[],
   };
 }
 
@@ -137,18 +141,28 @@ export function applyGuestMutation(state: GuestFinance, mutation: GuestMutation)
     return { ...state, planningPeriods, planningCloses: { ...state.planningCloses, [mutation.value.month]: mutation.value } };
   }
   if (mutation.type === "reconcile.apply") {
-    if (state.transactions.some((item) => item.id === mutation.id)) return state;
+    const {accountId,statementDate,statementBalance,selectedTransactionIds,reason}=mutation;
+    const payload=JSON.stringify({accountId,statementDate,statementBalance,selectedTransactionIds:[...selectedTransactionIds].sort(),reason});
+    if(!mutation.id||mutation.id.length>200||reason.length>1000||selectedTransactionIds.length>10000||!decodeReconciliationRequest(payload)||!Number.isFinite(Date.parse(mutation.occurredAt)))throw new Error("Invalid reconciliation request");
+    validateReconciliationReceipts(state.reconciliationReceipts);
+    const receipts=state.reconciliationReceipts??[];
+    const previous=receipts.find(row=>row.id===mutation.id);
+    if(previous){if(previous.payload!==payload)throw new Error("Reconciliation request conflict");return state;}
+    // An older adjustment alone cannot prove the original request's exact payload.
+    if(state.transactions.some(item=>item.id===mutation.id))throw new Error("Legacy reconciliation requires review");
+    if(receipts.length>=50_000)throw new Error("Reconciliation history capacity reached");
     if (state.planningCloses[mutation.statementDate.slice(0, 7)]) throw new Error("Không thể đối soát tháng đã chốt.");
-    const account = state.accounts.find((item) => item.id === mutation.accountId && !item.archived);
+    const account = state.accounts.find((item) => item.id === mutation.accountId && !item.archived && !item.deletedAt);
     if (!account || !Number.isSafeInteger(mutation.statementBalance) || Math.abs(mutation.statementBalance) > 9_000_000_000_000) throw new Error("Số dư sao kê không hợp lệ.");
     const selected = new Set(mutation.selectedTransactionIds);
     const end = new Date(`${mutation.statementDate}T23:59:59.999`).getTime();
     if (Number.isNaN(end)) throw new Error("Ngày sao kê không hợp lệ.");
-    const eligible = state.transactions.filter((item) => (item.accountId === account.id || item.destinationAccountId === account.id) && new Date(item.occurredAt).getTime() <= end);
+    const eligible = state.transactions.filter((item) => !item.deletedAt && (item.accountId === account.id || item.destinationAccountId === account.id) && new Date(item.occurredAt).getTime() <= end);
     if (selected.size !== mutation.selectedTransactionIds.length || [...selected].some((id) => !eligible.some((item) => item.id === id))) throw new Error("Giao dịch đối soát không hợp lệ.");
     const effect = (item: Transaction) => item.accountId === account.id ? (item.kind === "income" || item.kind === "refund" ? item.amount : -item.amount) : item.kind === "transfer" && item.destinationAccountId === account.id ? item.amount : 0;
     const cleared = account.openingBalance + eligible.filter((item) => selected.has(item.id)).reduce((sum, item) => sum + effect(item), 0);
     const difference = mutation.statementBalance - cleared;
+    if(!Number.isSafeInteger(cleared)||!Number.isSafeInteger(difference)||Math.abs(difference)>MAX_MONEY)throw new Error("Invalid reconciliation adjustment");
     if (difference && !mutation.reason.trim()) throw new Error("Cần lý do điều chỉnh.");
     const eligibleIds = new Set(eligible.map((item) => item.id));
     const transactions = state.transactions.map((item) => {
@@ -158,7 +172,7 @@ export function applyGuestMutation(state: GuestFinance, mutation: GuestMutation)
       return { ...item, reconciledAccountIds: [...ids], version: item.version + 1, updatedAt: mutation.occurredAt };
     });
     if (difference) transactions.push({ id: mutation.id, title: "Điều chỉnh đối soát", amount: Math.abs(difference), kind: difference > 0 ? "income" : "expense", accountId: account.id, destinationAccountId: null, categoryId: null, occurredAt: mutation.occurredAt, note: mutation.reason.trim(), refundOfTransactionId: null, reconciledAccountIds: [account.id], version: 1, createdAt: mutation.occurredAt, updatedAt: mutation.occurredAt, deletedAt: null });
-    return { ...state, transactions };
+    return { ...state, transactions,reconciliationReceipts:[...receipts,{id:mutation.id,payload,difference}] };
   }
   if (mutation.type === "split.replace") return {
     ...state,

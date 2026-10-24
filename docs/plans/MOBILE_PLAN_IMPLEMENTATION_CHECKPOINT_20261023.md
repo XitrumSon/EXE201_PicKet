@@ -60,13 +60,30 @@ The latest continuation below supersedes older pending lists in this file.
 - User confirmed **no testing group or Android acceptance device is ready**.
   Real Play purchase cycles, physical-device/TalkBack checks and the 12-person
   closed-test period are external acceptance blockers, not passed tests.
-- Latest suites: **549 mobile tests and 136 API tests passed**, `dart analyze` clean; server build and standalone
+- Latest suites: **561 mobile tests and 136 API tests passed**, `dart analyze` clean; server build and standalone
   learning-worker compilation passed. Android JS export passed. Previous cashflow
   coverage: **98.85% lines / 89.06% branches / 97.77% functions**. Ten local SQL
   suites passed. Mobile typecheck passed; lint has no errors and 25 pre-existing
-  warnings. Logs: `.artifacts/mobile-management-notifications-tests.log`, `api-wallet-scope-tests.log`,
-  `mobile-management-notifications-export.log`, `management-notification-coverage.log`. Earlier counts below
+  warnings. Logs: `.artifacts/mobile-reconciliation-complete-tests.log`, `api-wallet-scope-tests.log`,
+  `mobile-reconciliation-export.log`, `management-notification-coverage.log`. Earlier counts below
   are historical.
+
+Reconciliation continuation (24 October): vi/en controlled UI, dates, money and
+structured success/refresh notices now rerender on locale changes without changing
+saved requests or user-supplied names/reasons. RED `58660fd`, GREEN `1238ed9`.
+Guest replay regressions were reproduced in RED `4726a8f`: zero-adjustment retries
+advanced versions, could undo a later reconciliation, accepted ID conflicts and
+could recreate deleted adjustments. Completed-request receipts now persist in the
+same encrypted finance state as each write and survive backup/restore, including
+zero differences. Exact replay returns the original result after durable commit;
+changed payloads reject. Damaged/duplicate receipts, invalid calendar dates,
+deleted evidence and unsafe differences reject before mutation. Old backups remain
+readable; legacy adjustment IDs without a receipt require review rather than an
+unverified success. Historical zero-adjustment writes cannot be reconstructed from
+old backups that did not record them. No production database changes were made.
+Full mobile suite: 561 passed; focused reconciliation suite: 40 passed, 92.86% lines /
+87.50% branches / 90.64% functions including imported modules. Receipt validation:
+100% lines/functions, 96% branches. Native device acceptance remains pending.
 
 Cloud assessment research (24 October): the user requested research, not provider
 activation. The decision document `ASSESSMENT_CLOUD_PRIVACY_RESEARCH_20261024.md`
