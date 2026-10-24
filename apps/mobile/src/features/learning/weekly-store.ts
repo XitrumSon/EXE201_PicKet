@@ -31,7 +31,23 @@ export function createWeeklyPracticeStore(storage:{read(owner:string):Promise<un
     try{await operation;}finally{if(pending.get(owner)===operation)pending.delete(owner);}
     return load(owner);
   }
-  return {load,record,
-    mergeVerified:async(owner:string,value:unknown)=>{void owner;void value;throw new Error("Practice merge not implemented");},
-  };
+  async function mergeVerified(owner:string,value:unknown){
+    checkOwner(owner);
+    if(!Array.isArray(value)||value.length>1000)throw new Error("Invalid cloud weekly practice");
+    const incoming=value.map(row=>{
+      if(!row||typeof row!=="object"||Object.keys(row).length!==2||typeof row.skipped!=="boolean")throw new Error("Invalid cloud practice event");
+      return {owner,weekStart:row.weekStart,action:"review-records" as const,skipped:row.skipped,xp:row.skipped?0:10};
+    });
+    parse({schemaVersion:1,events:incoming},owner);
+    const operation=(pending.get(owner)??Promise.resolve()).catch(()=>undefined).then(async()=>{
+      const previous=parse(await storage.read(owner),owner);
+      let events=previous.events;
+      for(const row of incoming)events=completeWeeklyPractice(events,{owner,weekStart:row.weekStart,action:"review-records"},row.skipped);
+      await storage.write(owner,parse({schemaVersion:1,events},owner));
+    });
+    pending.set(owner,operation);
+    try{await operation;}finally{if(pending.get(owner)===operation)pending.delete(owner);}
+    return load(owner);
+  }
+  return {load,record,mergeVerified};
 }

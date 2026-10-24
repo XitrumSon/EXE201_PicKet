@@ -74,7 +74,26 @@ export function createLearningProgressStore(storage: { read(owner: string): Prom
     try{await operation;}finally{if(queues.get(owner)===operation)queues.delete(owner);}
     return load(owner);
   }
-  return { load, complete, mergeVerified, dueReviews, review,
-    mergeReviews:async(owner:string,value:unknown)=>{void owner;void value;throw new Error("Review merge not implemented");},
-  };
+  async function mergeReviews(owner:string,value:unknown){
+    validateOwner(owner);
+    if(!Array.isArray(value)||value.length>1000)throw new Error("Invalid cloud reviews");
+    const seen=new Set<string>();
+    const incoming=value.map(row=>{
+      if(!row||typeof row!=="object"||Object.keys(row).length!==3||
+        !curriculum.lessons.some(lesson=>lesson.lessonId===row.lessonId&&lesson.version===row.contentVersion)||
+        (row.offset!==7&&row.offset!==30))throw new Error("Invalid cloud review");
+      const id=`${row.lessonId}:${row.contentVersion}:${row.offset}`;
+      if(seen.has(id))throw new Error("Duplicate cloud review");seen.add(id);
+      return {lessonId:row.lessonId as string,version:row.contentVersion as number,offset:row.offset as number};
+    });
+    const operation=(queues.get(owner)??Promise.resolve()).catch(()=>undefined).then(async()=>{
+      const previous=parseProgress(await storage.read(owner),owner);
+      const completed=previous.completed.map(row=>({...row,reviewedOffsets:[...new Set([...(row.reviewedOffsets??[]),...incoming.filter(item=>item.lessonId===row.lessonId&&item.version===row.version).map(item=>item.offset)])].sort((a,b)=>a-b)}));
+      await storage.write(owner,{version:1,completed});
+    });
+    queues.set(owner,operation);
+    try{await operation;}finally{if(queues.get(owner)===operation)queues.delete(owner);}
+    return load(owner);
+  }
+  return { load, complete, mergeVerified, mergeReviews, dueReviews, review };
 }

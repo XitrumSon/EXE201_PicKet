@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createLearningProgressStore } from "./progress";
 import { createWeeklyPracticeStore } from "./weekly-store";
+import { pendingLearningActivity } from "./pending-activity";
 const lesson="picket.vi.financial.v1.01";
 test("cloud reviews union with local reviews without changing completion or XP",async()=>{
   let value:unknown;let now=new Date("2026-09-01T00:00:00Z");
@@ -27,4 +28,14 @@ test("weekly cloud merge preserves completion and adds one reward per week",asyn
   assert.equal((await store.load("ownerB")).length,0);
   await assert.rejects(store.mergeVerified("ownerA",[{weekStart:"2026-10-20",skipped:false}]));
   assert.equal((await store.load("ownerA")).length,2);
+});
+test("pending activity waits for authoritative review dates without blocking practice",()=>{
+  const progress={version:1 as const,completed:[{owner:"ownerA",lessonId:lesson,version:1,xp:20,completedAt:"2026-09-01T00:00:00Z",reviewedOffsets:[7,30]}]};
+  const practice=[{owner:"ownerA",action:"review-records" as const,weekStart:"2026-10-19",skipped:false,xp:10}];
+  const verified=[{lesson_id:lesson,content_version:1,xp:20 as const,completed_at:"2026-10-20T00:00:00Z"}];
+  const cloud={reviews:[],practice:[]};
+  assert.deepEqual(pendingLearningActivity(progress,practice,verified,cloud,"2026-10-24"),[{kind:"practice",weekStart:"2026-10-19",skipped:false}]);
+  const due=pendingLearningActivity(progress,practice,verified,cloud,"2026-10-27");
+  assert.equal(due.filter(row=>row.kind==="review").length,1);
+  assert.equal(pendingLearningActivity(progress,practice,verified,{reviews:[{lessonId:lesson,contentVersion:1,offset:7}],practice:[{weekStart:"2026-10-19",skipped:false}]},"2026-10-27").length,0);
 });
