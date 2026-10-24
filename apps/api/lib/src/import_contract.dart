@@ -146,6 +146,11 @@ void _validatePayload(Map<String, dynamic> data) {
   for (final value in data['wallets'] as List) {
     final item = _object(value, 'Invalid wallet.');
     final id = item['id'];
+    final currency = item['currencyCode'];
+    if (item.containsKey('currencyCode') &&
+        (currency is! String || !RegExp(r'^[A-Z]{3}$').hasMatch(currency))) {
+      throw const FormatException('Invalid wallet currency.');
+    }
     if (!_validUuid(id) ||
         !walletIds.add(id as String) ||
         !_text(item['name'], 80) ||

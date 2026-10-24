@@ -4,6 +4,7 @@ import { toByteArray } from "base64-js";
 import { emptyGuestFinance, guestOwnerId } from "@/core/local/guest-finance";
 import { makeGuestReceipt } from "@/core/receipts/guest-receipt-model";
 import { validateGuestBackupPayload, type GuestBackupPayload } from "./guest-backup-model";
+import { backupAppearance } from "./backup-appearance";
 
 function imageMime(encoded: string) {
   const bytes = toByteArray(encoded);
@@ -26,11 +27,14 @@ export function convertLegacyBackupToGuest(backup: { data: FinancePayload; media
       !Array.isArray(data.budgets) || !Array.isArray(data.bills) || !Array.isArray(data.keepsakes) ||
       !Array.isArray(data.subscriptions) || !Array.isArray(data.closedMonths) || !Array.isArray(data.customCategories)) throw new Error("Dữ liệu backup Flutter không hợp lệ.");
   const now = new Date().toISOString();
+  const appearance=backupAppearance(data.preferences);
+  const preferredCurrency=data.preferences.currency??"VND";
+  if(typeof preferredCurrency!=="string"||!/^[A-Z]{3}$/.test(preferredCurrency))throw new Error("Invalid backup currency");
   const version = { version:1, createdAt:now, updatedAt:now, deletedAt:null } as const;
   const names = new Set<string>([...data.customCategories, ...data.entries.map((item) => item.category), ...data.entries.flatMap((item) => item.parts.map((part) => part.category)), ...data.budgets.map((item) => item.category)]);
   const categories: Category[] = [...names].filter(Boolean).map((name) => ({ ...version, id:`legacy-category:${encodeURIComponent(name)}`, name, kind:"both", color:null, icon:null, custom:true }));
   const categoryId = (name: string) => categories.find((item) => item.name === name)?.id ?? null;
-  const accounts: FinancialAccount[] = data.wallets.map((item) => ({ ...version, id:item.id, name:item.name, kind:"cash", currencyCode:"VND", openingBalance:item.openingBalance, archived:false }));
+  const accounts: FinancialAccount[] = data.wallets.map((item) => ({ ...version, id:item.id, name:item.name, kind:"cash", currencyCode:item.currencyCode===undefined?preferredCurrency:item.currencyCode, openingBalance:item.openingBalance, archived:false }));
   const accountIds = new Set(accounts.map((item) => item.id));
   if (data.entries.some((item) => !accountIds.has(item.walletId) || (item.destinationId && !accountIds.has(item.destinationId)))) throw new Error("Giao dịch trỏ tới ví không có trong backup Flutter.");
   const transactions: Transaction[] = data.entries.map((item) => ({ ...version, id:item.id, title:item.title, amount:item.amount,
@@ -45,7 +49,7 @@ export function convertLegacyBackupToGuest(backup: { data: FinancePayload; media
   for (const budget of data.budgets) for (const [period, limit] of Object.entries(budget.monthLimits)) planningPeriods[`${month(period)}:${budget.id}`] = limit;
   const bills: Bill[] = data.bills.map((item) => ({ ...version, id:item.id, title:item.title, amount:item.amount, dueAt:item.dueDate, paidTransactionId:item.paidEntryId, status:item.paidEntryId ? "paid" : "pending" }));
   const subscriptions: FinanceSubscription[] = data.subscriptions.map((item) => ({ ...version, id:item.id, walletId:null, categoryId:null, title:item.name, amount:item.amount, cadence:item.cycleMonths === 1 ? "monthly" : "custom", nextDueAt:item.nextDate, cycleMonths:item.cycleMonths, active:item.active, note:item.note, alertDays:item.alertDays }));
-  const finance = { ...emptyGuestFinance(), profile:{ ...emptyGuestFinance().profile, displayName:data.name || "bạn", onboardingCompleted:data.onboarded, hideBalance:data.hideBalance },
+  const finance = { ...emptyGuestFinance(), profile:{ ...emptyGuestFinance().profile, ...appearance, currencyCode:preferredCurrency, displayName:data.name || "bạn", onboardingCompleted:data.onboarded, hideBalance:data.hideBalance },
     accounts, categories, transactions, splits, budgets, bills, subscriptions, planningPeriods,
     planningCloses:Object.fromEntries(data.closedMonths.map((item) => [month(item.month), { month:month(item.month), closedAt:item.closedAt, income:item.income, expense:item.expense, note:item.note, rollover:false }])),
   };

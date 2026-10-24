@@ -23,3 +23,7 @@ test("guest backups reject invalid appearance defaults before replacing data",()
   const finance={...emptyGuestFinance(),profile:{...emptyGuestFinance().profile,colorSchemeId:"../invalid"}};
   assert.throws(()=>validateGuestBackupPayload({finance,keepsakes:[],receipts:[],media:{}}));
 });
+test("guest backups preserve legitimate negative opening balances",()=>{
+  const finance={...emptyGuestFinance(),accounts:[{id:"cash",name:"Cash",currencyCode:"VND",openingBalance:-100,archived:false,kind:"cash",version:1,createdAt:"2026-10-24T00:00:00Z",updatedAt:"2026-10-24T00:00:00Z",deletedAt:null}]};
+  assert.equal(validateGuestBackupPayload({finance,keepsakes:[],receipts:[],media:{}}).finance.accounts[0].openingBalance,-100);
+});

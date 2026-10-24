@@ -2,6 +2,7 @@ import type { GuestFinance } from "@/core/local/guest-finance";
 import { guestOwnerId } from "@/core/local/guest-finance";
 import type { Keepsake } from "@/features/keepsakes/keepsake-store";
 import { makeGuestReceipt, type GuestReceipt } from "@/core/receipts/guest-receipt-model";
+import { backupAppearance } from "./backup-appearance";
 
 export interface GuestBackupPayload {
   finance: GuestFinance;
@@ -22,6 +23,7 @@ export function validateGuestBackupPayload(value: unknown): GuestBackupPayload {
       !Array.isArray(finance.bills) || !Array.isArray(finance.subscriptions) ||
       !object(finance.splits) || !object(finance.planningPeriods) || !object(finance.planningCloses) ||
       typeof finance.planningMethod !== "string") throw new Error("Dữ liệu tài chính trong bản sao không hợp lệ.");
+  backupAppearance(finance.profile);
   const receiptIds = finance.receiptCreateIds;
   if (receiptIds !== undefined && (!Array.isArray(receiptIds) || receiptIds.length > 50_000 ||
       !receiptIds.every(id => typeof id === "string" && id.length > 0 && id.length <= 200) ||
@@ -31,14 +33,18 @@ export function validateGuestBackupPayload(value: unknown): GuestBackupPayload {
   }
   const validMoney = (amount: unknown) => Number.isSafeInteger(amount) && (amount as number) >= 0 && (amount as number) <= 9_000_000_000_000;
   const accountIds = new Set((finance.accounts as { id: string }[]).map((item) => item.id));
+  const currencies=new Map((finance.accounts as {id:string;currencyCode:string}[]).map(item=>[item.id,item.currencyCode]));
   for (const account of finance.accounts as Record<string, unknown>[]) {
-    if (typeof account.name !== "string" || !validMoney(account.openingBalance)) throw new Error("Ví trong bản sao không hợp lệ.");
+    if (typeof account.name !== "string" || !Number.isSafeInteger(account.openingBalance) || Math.abs(account.openingBalance as number)>9e12 || typeof account.currencyCode!=="string" || !/^[A-Z]{3}$/.test(account.currencyCode)) throw new Error("Ví trong bản sao không hợp lệ.");
   }
   for (const transaction of finance.transactions as Record<string, unknown>[]) {
     if (typeof transaction.title !== "string" || !validMoney(transaction.amount) || transaction.amount === 0 ||
         typeof transaction.occurredAt !== "string" || Number.isNaN(Date.parse(transaction.occurredAt)) ||
         typeof transaction.accountId !== "string" || !accountIds.has(transaction.accountId) ||
         (transaction.destinationAccountId !== null && (typeof transaction.destinationAccountId !== "string" || !accountIds.has(transaction.destinationAccountId)))) throw new Error("Giao dịch trong bản sao không hợp lệ.");
+    if(!["income","expense","refund","transfer"].includes(String(transaction.kind)) ||
+      (transaction.kind==="transfer" && (transaction.destinationAccountId===transaction.accountId || !transaction.destinationAccountId || currencies.get(String(transaction.accountId))!==currencies.get(String(transaction.destinationAccountId)))) ||
+      (transaction.kind!=="transfer"&&transaction.destinationAccountId!==null))throw new Error("Invalid transfer in backup");
   }
   for (const item of value.keepsakes) {
     if (!object(item) || !hasId(item)) throw new Error("Kỷ vật trong bản sao không hợp lệ.");

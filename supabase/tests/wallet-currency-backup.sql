@@ -16,5 +16,10 @@ begin
  if (select currency_code from public.wallets where id='33333333-1234-4321-8123-123456789011') is distinct from 'VND' then raise exception 'VND currency changed'; end if;
  if (select currency_code from public.wallets where id='33333333-1234-4321-8123-123456789012') is distinct from 'USD' then raise exception 'USD currency changed'; end if;
  if (select opening_balance from public.wallets where id='33333333-1234-4321-8123-123456789012')<>-100 then raise exception 'Opening balance changed'; end if;
+ -- A legacy single-currency backup falls back to its preference, not today's setting.
+ payload:=jsonb_set(payload,'{wallets}',(select jsonb_agg(w-'currencyCode') from jsonb_array_elements(payload->'wallets') w));
+ payload:=jsonb_set(payload,'{preferences,currency}','"USD"');
+ revision:=public.save_normalized_finance(revision,payload);
+ if exists(select 1 from public.wallets where user_id=auth.uid() and currency_code<>'USD') then raise exception 'Legacy currency fallback changed'; end if;
 end $$;
 rollback;

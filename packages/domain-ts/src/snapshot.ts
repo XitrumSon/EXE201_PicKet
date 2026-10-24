@@ -9,6 +9,8 @@ export interface LegacyWallet {
   id: string;
   name: string;
   openingBalance: number;
+  /** Absent in old backups; use their preference currency, then VND. */
+  currencyCode?: string;
 }
 
 export interface LegacyEntryPart {
