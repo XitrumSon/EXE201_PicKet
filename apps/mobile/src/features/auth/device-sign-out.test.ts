@@ -3,6 +3,25 @@ import test from "node:test";
 import { AuthApiError, AuthRetryableFetchError, createClient, processLock } from "@supabase/supabase-js";
 import { createAuthMutationQueue, signOutDeviceSession } from "./device-sign-out";
 
+test("a stale A logout queued behind B sign-in cannot call SDK logout or erase B",async()=>{
+ const storageKey="qa-stale-owner-logout";
+ const records=new Map<string,string>();let logoutRequests=0;
+ const storage={getItem:async(key:string)=>records.get(key)??null,setItem:async(key:string,value:string)=>{records.set(key,value);},removeItem:async(key:string)=>{records.delete(key);}};
+ const client=createClient("https://project.supabase.co","public-key",{
+  auth:{storageKey,storage,lock:processLock,autoRefreshToken:false,detectSessionInUrl:false},
+  global:{fetch:async input=>{
+   if(String(input).includes("/logout")){logoutRequests++;return new Response(null,{status:204});}
+   return Response.json({access_token:"synthetic-b",refresh_token:"synthetic-b-refresh",token_type:"bearer",expires_in:3600,user:{id:"owner-B",aud:"authenticated",created_at:"2026-10-25T00:00:00Z",app_metadata:{},user_metadata:{}}});
+  }},
+ });
+ const run=createAuthMutationQueue();
+ const signin=run(()=>client.auth.signInWithPassword({email:"synthetic-b@example.test",password:"synthetic-only"}));
+ const stale=run(()=>signOutDeviceSession({auth:client.auth,storageKey,storage,expectedOwner:"owner-A"}));
+ const rejected=assert.rejects(stale,/owner|session/);
+ assert.equal((await signin).data.user?.id,"owner-B");await rejected;
+ assert.equal(logoutRequests,0);assert.equal((await client.auth.getSession()).data.session?.user.id,"owner-B");
+});
+
 test("expired offline logout clears only the auth record, emits SIGNED_OUT and permits B", async () => {
   const storageKey = "qa-expired-offline-session";
   const records = new Map<string, string>([["owner-A-queue", "retained"], [storageKey, JSON.stringify({

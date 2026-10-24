@@ -10,6 +10,7 @@ export function createAuthMutationQueue() {
 }
 
 type DeviceSignOutSource = {
+  expectedOwner?: string;
   auth: Pick<SupabaseClient["auth"], "signOut">;
   storageKey: string;
   storage: { getItem(key: string): Promise<string | null>; removeItem(key: string): Promise<void> };
