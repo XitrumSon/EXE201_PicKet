@@ -1,7 +1,7 @@
-type DeliveryIO = {
+type DeliveryIO<Context> = {
   read(owner: string): Promise<string[]>;
   save(owner: string, ids: string[]): Promise<void>;
-  show(owner: string, id: string, isCurrent: () => boolean): Promise<void>;
+  show(owner: string, id: string, isCurrent: () => boolean, context:Context|undefined): Promise<void>;
 };
 
 /** Logout may finish cancellation before an in-flight OS schedule resolves. */
@@ -19,11 +19,12 @@ export async function scheduleOwnedReminder(identifier: string, isCurrent: () =>
 }
 
 /** Serialized owner/month ledger; a successful OS request is not repeated on recalculation. */
-export function createBudgetNoticeDelivery(io: DeliveryIO) {
+export function createBudgetNoticeDelivery<Context=undefined>(io: DeliveryIO<Context>) {
   let pending = Promise.resolve();
   const acknowledged = new Map<string, Set<string>>();
   return {
-    deliver(owner: string, ids: string[], isCurrent = () => true): Promise<void> {
+    deliver(owner: string, ids: string[], isCurrent = () => true,context?:Context): Promise<void> {
+      void context;
       const operation = pending.catch(() => undefined).then(async () => {
         if (!isCurrent()) return;
         const stored = await io.read(owner);
@@ -34,7 +35,7 @@ export function createBudgetNoticeDelivery(io: DeliveryIO) {
         for (const id of new Set(ids)) {
           if (!isCurrent()) return;
           if (!/^budget:[A-Za-z0-9_-]+:\d{4}-(0[1-9]|1[0-2])$/.test(id) || seen.has(id)) continue;
-          await io.show(owner, id, isCurrent);
+          await io.show(owner, id, isCurrent,undefined);
           seen.add(id);
           await persist();
         }
