@@ -44,3 +44,7 @@ test("installed footer includes actual version and build even while offline", as
   assert.equal((await load()).installedVersionLabel(installed), "Phiên bản 1.0.2 (3)");
   assert.equal((await load()).installedVersionLabel(null), "Chưa xác định phiên bản đã cài");
 });
+test("installed footer follows English without altering version identity",async()=>{
+  assert.equal((await load()).installedVersionLabel(installed,"en"),"Version 1.0.2 (3)");
+  assert.equal((await load()).installedVersionLabel(null,"en"),"Installed version unavailable");
+});
