@@ -1,4 +1,6 @@
 import type {
+  CashflowSchedule,
+  CashflowScheduleDocument,
   BillingAvailability,
   SubmitLearningAttempt,
   LearningAttemptResult,
@@ -278,6 +280,22 @@ export class PicketApiClient {
       headers: this.authHeaders(accessToken), signal,
     });
   }
+  cashflowSchedules(accessToken:string,signal?:AbortSignal):Promise<CashflowScheduleDocument>{
+    return this.request('/v1/cashflow-schedules',{headers:this.authHeaders(accessToken),signal});
+  }
+  saveCashflowSchedule(accessToken:string,expectedRevision:number,schedule:CashflowSchedule,key:string,signal?:AbortSignal):Promise<CashflowScheduleDocument>{
+    return this.request(`/v1/cashflow-schedules/${encodeURIComponent(schedule.id)}`,{
+      method:'PUT',headers:{...this.jsonAuthHeaders(accessToken),'idempotency-key':key},
+      body:JSON.stringify({expectedRevision,schedule}),signal,
+    });
+  }
+  removeCashflowSchedule(accessToken:string,expectedRevision:number,id:string,key:string,signal?:AbortSignal):Promise<CashflowScheduleDocument>{
+    return this.request(`/v1/cashflow-schedules/${encodeURIComponent(id)}`,{
+      method:'DELETE',headers:{...this.jsonAuthHeaders(accessToken),'idempotency-key':key},
+      body:JSON.stringify({expectedRevision}),signal,
+    });
+  }
+
   billingAvailability(accessToken:string,signal?:AbortSignal):Promise<BillingAvailability> {
     return this.request<BillingAvailability>("/v1/billing/availability",{headers:this.authHeaders(accessToken),signal});
   }

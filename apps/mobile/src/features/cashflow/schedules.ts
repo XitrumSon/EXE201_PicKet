@@ -1,8 +1,6 @@
 import type { CashflowOccurrence } from "./forecast";
-export type CashflowSchedule = {
-  id: string; startDay: string; endDay?: string; frequency: "once" | "weekly" | "monthly";
-  amount: number; currency: string; active: boolean;
-};
+import type { CashflowSchedule } from "@picket/domain";
+export type { CashflowSchedule } from "@picket/domain";
 function utcDay(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error("Invalid schedule day");
   const result = new Date(`${value}T00:00:00.000Z`);

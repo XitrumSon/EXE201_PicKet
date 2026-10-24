@@ -27,6 +27,8 @@ begin
  if jsonb_array_length(public.load_cashflow_schedules()->'schedules')<>1 then raise exception 'Duplicate schedule'; end if;
  result:=public.mutate_cashflow_schedule('schedule-delete-1',1,'remove',jsonb_build_object('id',schedule->>'id'));
  if (result->>'revision')::bigint<>2 or jsonb_array_length(result->'schedules')<>0 then raise exception 'Delete failed'; end if;
+ result:=public.mutate_cashflow_schedule('schedule-create-1',0,'save',schedule);
+ if (result->>'appliedRevision')::bigint<>1 or (result->>'revision')::bigint<>2 or jsonb_array_length(result->'schedules')<>0 then raise exception 'Old retry resurrected deleted data'; end if;
 end $$;
 select set_config('request.jwt.claim.sub','44444444-1234-4321-8123-123456789002',true);
 do $$ begin

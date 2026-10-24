@@ -9,6 +9,7 @@ import 'package:picket_api/src/api_config.dart';
 import 'package:picket_api/src/bill_contract.dart';
 import 'package:picket_api/src/billing_contract.dart';
 import 'package:picket_api/src/budget_contract.dart';
+import 'package:picket_api/src/cashflow_schedule_contract.dart';
 import 'package:picket_api/src/category_contract.dart';
 import 'package:picket_api/src/entitlement_contract.dart';
 import 'package:picket_api/src/finance_contract.dart';
@@ -55,6 +56,34 @@ class SupabaseGateway {
       throw const GatewayException(HttpStatus.unauthorized, 'Unauthorized');
     }
     return body['id'] as String;
+  }
+
+  Future<Map<String, dynamic>> cashflowSchedules(
+    String token, {
+    CashflowScheduleMutation? mutation,
+    String? key,
+  }) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri(
+            '/rest/v1/rpc/${mutation == null ? 'load_cashflow_schedules' : 'mutate_cashflow_schedule'}',
+          ),
+          headers: _headers(token),
+          body: jsonEncode(
+            mutation == null ? <String, dynamic>{} : mutation.toRpcJson(key!),
+          ),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    try {
+      return validateScheduleDocument(jsonDecode(response.body));
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid schedule response.',
+      );
+    }
   }
 
   Future<LearningAttemptResult> submitLearningAttempt(
