@@ -21,3 +21,10 @@ test("unknown confirmations and currency mismatch abstain; empty saved week neve
  const empty=buildWeeklyStory({...snapshot,entries:[],confirmations:[]},["cash"],"VND");
  assert.equal(empty.net,0);assert.deepEqual(empty.transactionIds,[]);
 });
+test("week boundaries use UTC and future or deleted records never enter the story",()=>{
+ const origin="2027-01-03T23:30:00-01:00";
+ const items=[row("current","income",1000,"2027-01-04T00:00:00Z"),row("prior","expense",100,"2027-01-03T23:59:59Z"),row("future","income",200,"2027-01-05T00:00:00Z"),{...row("deleted","expense",300,"2027-01-04T00:00:00Z"),deletedAt:"2027-01-04T00:01:00Z"}];
+ const story=buildWeeklyStory({...snapshot,asOf:origin,entries:items,confirmations:items.map(entry=>({transactionId:entry.id,source:"cloud-verified" as const,confirmedAt:origin}))},["cash"],"VND");
+ assert.equal(story.weekStart,"2027-01-04");assert.equal(story.throughDay,"2027-01-04");
+ assert.equal(story.net,1000);assert.deepEqual(story.transactionIds,["current"]);
+});
