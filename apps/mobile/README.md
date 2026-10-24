@@ -273,3 +273,11 @@ source drill-down. No facts are sent to Gemini and no story is auto-shared.
 It reports only recorded movements and never treats an empty week as proof of
 zero real spending. Guest/offline history stories and human content/device QA
 are not claimed by this route.
+
+Transaction create/edit, transfer, refund, splits and bulk-edit forms use vi/en
+copy, including their native dialogs and accessibility labels. Validation notices
+with amounts/counts keep structured data so an open notice can rerender after a
+language change. User-entered titles/notes and merchant/category/account names
+are treated as data and are not translated. Locale-aware formatting changes the
+display only; persisted amounts, IDs, dates and enum values keep their existing
+contracts. This does not imply complete localization of every product screen.

@@ -46,17 +46,33 @@ The latest continuation below supersedes older pending lists in this file.
   behind the existing cloud gate. Native/privacy interaction QA remains pending.
 - Languages: profile controls, controlled profile messages, app update phases,
   installer permissions and installed-version footer now use vi/en resources.
+  New/edit transaction, transfer, refund, category splits and bulk-edit forms now
+  localize visible copy, accessibility labels, duplicate/archive/delete dialogs,
+  controlled receipt validation messages and date/money displays. Structured
+  notices rerender their language and formatted money after a locale change;
+  user-entered descriptions, merchant names and notes remain untouched.
   Other untranslated product screens/errors still require migration.
 - User confirmed **no testing group or Android acceptance device is ready**.
   Real Play purchase cycles, physical-device/TalkBack checks and the 12-person
   closed-test period are external acceptance blockers, not passed tests.
-- Latest suites: **541 mobile tests and 136 API tests passed**, `dart analyze` clean; server build and standalone
-  learning-worker compilation passed. Android JS export passed. Learning/cashflow
-  cashflow coverage: **98.85% lines / 89.06% branches / 97.77% functions**. Ten local SQL
+- Latest suites: **544 mobile tests and 136 API tests passed**, `dart analyze` clean; server build and standalone
+  learning-worker compilation passed. Android JS export passed. Previous cashflow
+  coverage: **98.85% lines / 89.06% branches / 97.77% functions**. Ten local SQL
   suites passed. Mobile typecheck passed; lint has no errors and 25 pre-existing
-  warnings. Logs: `.artifacts/mobile-weekly-story-tests.log`, `api-wallet-scope-tests.log`,
-  `mobile-weekly-story-export.log`, `cashflow-weekly-story-coverage.log`. Earlier counts below
+  warnings. Logs: `.artifacts/mobile-transaction-locales-tests.log`, `api-wallet-scope-tests.log`,
+  `mobile-transaction-locales-export.log`, `cashflow-weekly-story-coverage.log`. Earlier counts below
   are historical.
+
+Transaction localization RED `c78b7a2`, GREEN `396a772`: runtime language switching,
+colon-containing keys, count interpolation and structured money notices pass.
+AST checks cover all six forms and reject untranslated visible JSX, accessibility
+attributes, dynamic copy, dialogs and raw controlled-message rendering. This is
+source/runtime-copy evidence, not native screen or TalkBack acceptance. The
+notice renderer has 100% line/function and 93.33% branch coverage; the focused
+suite reports 99.66% lines / 91.51% branches / 95.52% functions including imported
+resource/formatter code. Existing theme/Android/OCR working changes were retained
+outside the localization commit. Other product screen/error/notification strings
+remain a release gate.
 
 Settlement evidence (24 October): full suite `.artifacts/mobile-settlements-tests.log`
 passes 535 tests; typecheck and staged-file lint pass. Full lint has zero errors
