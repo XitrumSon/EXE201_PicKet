@@ -61,9 +61,8 @@ capture/store coverage: 100% lines, 87.33% branches, 98.59% functions. Logs are
 
 Before enabling for users:
 
-- Integrate the new resource with account-deletion/local-data purge. Per-case and
-  all-case deletion are implemented here; **automatic account-deletion purge is
-  not claimed**. Keep the preview gate closed until that lifecycle is verified.
+- The new resource is now integrated with account deletion in the follow-up
+  below. Native interaction acceptance and the remaining gates still apply.
 - Complete native keyboard/font/TalkBack, privacy/background and session-switch
   interaction acceptance. Source guards and JS export do not substitute for it.
 - Collect an authorized longitudinal panel, capture reviewed F1 histories and
@@ -73,3 +72,34 @@ Before enabling for users:
 The route and capture controls require a development build, the existing cashflow
 cloud preview flag and the matching signed-in owner. Production data/configuration
 and provider credentials were not changed.
+
+
+## Account-deletion follow-up
+
+RED `beb4fde`: the new forecast collection is retired **before** a server deletion
+request. The UI explicitly explains that local comparisons are erased even if the
+network request subsequently fails. Failure to persist retirement prevents sending
+the server request. Owner-generation fences reject queued stale operations;
+retirement waits for an already-dispatched save and overwrites it with an encrypted
+empty marker. The marker also blocks recreation after restart. Corrupt/unreadable
+capture data need not be decrypted before authorized retirement.
+
+An unconfirmed remote outcome can resume use of the now-empty collection; it never
+restores erased forecasts. A confirmed `{deleted:true}` acknowledgment remains a
+successful server deletion even when local sign-out fails. The UI then offers only
+sign-out retry, not another account deletion. A changed owner is not signed out by
+the prior owner's completion. The account-deletion screen now has vi/en controls,
+messages and accessibility labels; its existing theme edits were preserved.
+
+Latest verification: 604 mobile tests passed; typecheck, lint and Android JS export
+passed (25 pre-existing lint warnings). Focused capture/store/deletion-flow coverage
+is 100% lines, 88.89% branches and 100% functions. Logs:
+`.artifacts/mobile-observation-deletion-tests.log`,
+`forecast-observation-deletion-coverage.log`, `mobile-observation-deletion-types.log`,
+`mobile-observation-deletion-lint.log`, `mobile-observation-deletion-export.log`.
+Tests use injected stores/auth actions; no real account was deleted by this work.
+
+This retirement hook covers **forecast observations only**. It does not claim a
+comprehensive purge of all older local cache/media classes or forensic device
+storage erasure. Broader cache/media lifecycle review and physical-device privacy
+acceptance remain separate release gates. No production switch was enabled.

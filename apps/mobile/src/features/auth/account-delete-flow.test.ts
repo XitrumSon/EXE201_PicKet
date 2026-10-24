@@ -25,3 +25,30 @@ test("retirement can erase corrupt local capture data and fences queued stale wr
  await restarted.resumeOwner("a");assert.equal((await restarted.load("a")).cases.length,0);
  assert.equal(data.has("b"),false);
 });
+test("retirement does not need to decrypt unreadable data and never sends remote deletion before a durable marker",async()=>{
+ let value:unknown;
+ const store=createObservationStore({read:async()=>{throw Error("unreadable cipher");},write:async(_owner,next)=>{value=next;},newId:()=>"case",now:()=>"2026-10-24T12:00:00Z"});
+ await store.retireOwner("a");assert.deepEqual(value,{schemaVersion:1,owner:"a",revision:0,cases:[],retired:true});
+});
+test("queued writes from the previous owner generation cannot resurrect a retired collection",async()=>{
+ let release:()=>void=()=>{},started:()=>void=()=>{},value:unknown;
+ const reading=new Promise<void>(resolve=>{started=resolve;}),gate=new Promise<void>(resolve=>{release=resolve;});
+ const store=createObservationStore({read:async()=>{started();await gate;return value;},write:async(_owner,next)=>{value=structuredClone(next);},newId:()=>"case",now:()=>"2026-10-24T12:00:00Z"});
+ const stale=store.clear("a",0);await reading;const retirement=store.retireOwner("a");release();await assert.rejects(stale);await retirement;
+ assert.equal((await store.load("a")).cases.length,0);await assert.rejects(store.clear("a",0));
+});
+test("retirement waits for an already-dispatched save and durably removes it before completion",async()=>{
+ const at="2026-10-24T12:00:00Z",wallet="aaaaaaaa-1234-4321-8123-123456789010";let value:unknown,first=true,started:()=>void=()=>{},release:()=>void=()=>{};
+ const writing=new Promise<void>(resolve=>{started=resolve;}),gate=new Promise<void>(resolve=>{release=resolve;});
+ const source={read:async()=>structuredClone(value),write:async(_owner:string,next:unknown)=>{if(first){first=false;started();await gate;}value=structuredClone(next);},newId:()=>"case",now:()=>at};
+ const store=createObservationStore(source);
+ const input={snapshot:{asOf:at,wallets:[{id:wallet,name:"Cash",currencyCode:"VND",openingBalance:1,archived:false,deletedAt:null,updatedAt:at}],entries:[],confirmations:[]},accounts:[wallet],currency:"VND",days:7 as const,schedules:[],links:[],pendingCount:0};
+ const capture=store.capture("a",input);await writing;const retired=store.retireOwner("a");release();await capture;await retired;
+ assert.equal((await store.load("a")).cases.length,0);await assert.rejects(createObservationStore(source).capture("a",input));
+});
+test("successful deletion signs out once and a pre-request session change sends nothing",async()=>{
+ let deletes=0,outs=0;
+ const steps={retireLocal:async()=>{},resumeLocal:async()=>{},deleteRemote:async()=>{deletes++;},signOut:async()=>{outs++;},isCurrent:()=>true};
+ assert.deepEqual(await deleteAccountWithLocalRetirement(steps),{status:"deleted",signedOut:true});
+ assert.equal((await deleteAccountWithLocalRetirement({...steps,isCurrent:()=>false})).status,"session-changed");assert.equal(deletes,1);assert.equal(outs,1);
+});

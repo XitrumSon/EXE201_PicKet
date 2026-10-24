@@ -1,6 +1,9 @@
+import { useTranslation } from "react-i18next";
+import { forecastObservations } from "@/features/cashflow/forecast-observation-storage";
+import { deleteAccountWithLocalRetirement } from "@/features/auth/account-delete-flow";
 import { colors, radii } from "@picket/design-tokens";
 import { Redirect, router } from "expo-router";
-import { useState } from "react";
+import { useState,useEffect,useRef } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,37 +15,49 @@ import { useAuth } from "@/features/auth/auth-context";
 
 export default function DeleteAccountScreen() {
   const { session, signOut } = useAuth();
+  const {t}=useTranslation("accountDeletion");
+  const [remoteDeleted,setRemoteDeleted]=useState(false);
+  const submitting=useRef(false),mounted=useRef(true),currentOwner=useRef(session?.user.id);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  useEffect(()=>{currentOwner.current=session?.user.id;return()=>{currentOwner.current=undefined;};},[session?.user.id]);
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  if (!session) return <Redirect href={routes.login} />;
+  if (!session&&!remoteDeleted) return <Redirect href={routes.login} />;
 
   async function remove() {
-    if (confirmation !== "DELETE") return setMessage("Hãy nhập chính xác DELETE để xác nhận.");
-    if (!session || !picketApi) return setMessage("Chưa thực hiện được lúc này. Hãy đăng nhập và thử lại.");
-    setBusy(true);
-    setMessage(null);
-    try {
-      await picketApi.deleteAccount(session.access_token);
-      await signOut();
-      router.replace(routes.login);
-    } catch {
-      setMessage("Không thể xóa tài khoản. Hãy đăng xuất, đăng nhập lại rồi thử trong vòng 5 phút.");
-      setBusy(false);
-    }
+    if(submitting.current)return;
+    if(!remoteDeleted&&confirmation!=="DELETE"){setMessage("confirmError");return;}
+    if(!remoteDeleted&&(!session||!picketApi)){setMessage("unavailable");return;}
+    submitting.current=true;setBusy(true);setMessage(null);
+    try{
+      if(remoteDeleted){await signOut();if(mounted.current)router.replace(routes.login);return;}
+      const request=session!;const owner=request.user.id;
+      const result=await deleteAccountWithLocalRetirement({
+        retireLocal:()=>forecastObservations.retireOwner(owner),resumeLocal:()=>forecastObservations.resumeOwner(owner),
+        deleteRemote:async()=>{const result=await picketApi!.deleteAccount(request.access_token);if(result?.deleted!==true)throw new Error("Unconfirmed account deletion");},signOut,
+        isCurrent:()=>mounted.current&&currentOwner.current===owner,
+      });
+      if(!mounted.current||(currentOwner.current&&currentOwner.current!==owner))return;
+      if(result.status==="deleted"){
+        setRemoteDeleted(true);if(result.signedOut)router.replace(routes.login);else setMessage("deletedSignOut");
+      }else setMessage(result.status==="local-cleanup-failed"?"cleanupFailed":result.status==="remote-unconfirmed"?"remoteUnconfirmed":"sessionChanged");
+    }catch{if(mounted.current)setMessage(remoteDeleted?"deletedSignOut":"remoteUnconfirmed");}
+    finally{submitting.current=false;if(mounted.current)setBusy(false);}
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.content}>
-        <Pressable accessibilityRole="button" onPress={() => router.back()}><Text style={styles.back}>‹ Quay lại</Text></Pressable>
-        <Text accessibilityRole="header" style={styles.title}>Xóa tài khoản?</Text>
-        <Text style={styles.description}>Ảnh riêng tư, dữ liệu tài chính và tài khoản đăng nhập sẽ bị xóa vĩnh viễn. Bạn cần vừa đăng nhập lại trong vòng 5 phút.</Text>
-        <Text style={styles.label}>Nhập DELETE để xác nhận</Text>
-        <TextInput accessibilityLabel="Xác nhận xóa tài khoản" autoCapitalize="characters" autoComplete="off" onChangeText={setConfirmation} style={styles.input} value={confirmation} />
-        {message && <Text accessibilityLiveRegion="polite" style={styles.error}>{message}</Text>}
-        <Pressable accessibilityRole="button" disabled={busy || confirmation !== "DELETE"} onPress={() => void remove()} style={[styles.deleteButton, confirmation !== "DELETE" && styles.disabled]}>{busy ? <ActivityIndicator accessibilityLabel="Đang xóa vĩnh viễn tài khoản" color={colors.white} /> : <Text style={styles.deleteText}>Xóa vĩnh viễn tài khoản</Text>}</Pressable>
+        <Pressable accessibilityRole="button" disabled={busy} accessibilityState={{disabled:busy}} onPress={() => router.back()}><Text style={styles.back}>{t("back")}</Text></Pressable>
+        <Text accessibilityRole="header" style={styles.title}>{t("title")}</Text>
+        <Text style={styles.description}>{t("description")}</Text>
+        <Text style={styles.description}>{t("localNotice")}</Text>
+        <Text style={styles.label}>{t("confirmation")}</Text>
+        <TextInput accessibilityLabel={t("confirmationLabel")} editable={!busy&&!remoteDeleted} autoCapitalize="characters" autoComplete="off" onChangeText={setConfirmation} style={styles.input} value={confirmation} />
+        {message && <Text accessibilityLiveRegion="polite" style={styles.error}>{t(message)}</Text>}
+        <Pressable accessibilityRole="button" disabled={busy || (!remoteDeleted&&confirmation !== "DELETE")} onPress={() => void remove()} style={[styles.deleteButton, !remoteDeleted&&confirmation !== "DELETE" && styles.disabled]}>{busy ? <ActivityIndicator accessibilityLabel={t(remoteDeleted?"signingOut":"deleting")} color={colors.white} /> : <Text style={styles.deleteText}>{t(remoteDeleted?"finishSignOut":"remove")}</Text>}</Pressable>
       </View>
     </SafeAreaView>
   );
