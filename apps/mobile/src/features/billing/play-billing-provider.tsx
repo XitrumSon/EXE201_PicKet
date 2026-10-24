@@ -24,19 +24,25 @@ function ConnectedBilling({children,accessToken}:{children:React.ReactNode;acces
   },[]);
   const [revision,setRevision]=useState(0);
   const active=useRef(true);
+  const purchaseRequests=useRef(new AbortController());
   const api=useIAP({
     onPurchaseSuccess:purchase=>{
+      if(!active.current)return;
       if(listeners.current?.onPurchaseSuccess){listeners.current.onPurchaseSuccess(purchase);return;}
       const backend=picketApi;
       if(!backend)return;
-      void verifyAndFinishPurchase(purchase,request=>backend.verifyPlayPurchase(accessToken,request),async()=>{
+      void verifyAndFinishPurchase(purchase,request=>backend.verifyPlayPurchase(accessToken,request,purchaseRequests.current.signal),async()=>{
         if(active.current)await api.finishTransaction({purchase,isConsumable:false});
       }).then(()=>{if(active.current)setRevision(value=>value+1);}).catch(()=>undefined);
     },
     onPurchaseError:error=>listeners.current?.onPurchaseError?.(error),
     onError:error=>listeners.current?.onError?.(error),
   });
-  useEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
+  useEffect(()=>{
+    active.current=true;
+    if(purchaseRequests.current.signal.aborted)purchaseRequests.current=new AbortController();
+    return()=>{active.current=false;purchaseRequests.current.abort();};
+  },[]);
   useEffect(()=>{
     const backend=picketApi;
     if(!api.connected||!backend)return;
