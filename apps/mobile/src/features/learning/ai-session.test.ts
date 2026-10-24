@@ -102,3 +102,12 @@ test("malformed consent never enables generation",async()=>{
     assert.equal(session.snapshot().consent,null);assert.equal(keys.length,0);
   }
 });
+test("completed result refresh observes revocation or expiry from another device",async()=>{
+  let revoked=false;
+  const {session}=setup({learningAiJob:async()=>revoked?{id,status:"cancelled",statementIds:[]}:{id,status:"completed",statementIds:["timing"]}});
+  await session.load();await session.generate("vi");await session.poll();
+  assert.equal(session.snapshot().job?.status,"completed");
+  revoked=true;await session.poll();
+  assert.equal(session.snapshot().job?.status,"cancelled");
+  assert.deepEqual(session.snapshot().job?.statementIds,[]);
+});
