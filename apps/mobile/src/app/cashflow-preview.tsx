@@ -16,6 +16,7 @@ import { calculateCashflow } from "@/features/cashflow/forecast";
 import { parseScenarioMoney } from "@/features/cashflow/scenario-form";
 import { syncCashflowSchedules } from "@/features/cashflow/schedule-sync";
 import { ScheduleConflictCard } from "@/features/cashflow/schedule-conflict-card";
+import { LedgerFactsCard } from "@/features/cashflow/ledger-card";
 
 export default function CashflowPreview(){
   const {session,localMode}=useAuth();
@@ -108,6 +109,7 @@ function Scenario({owner}:{owner:string}){
     {cloudEnabled&&<ScheduleConflictCard owner={owner}/>}
     {field(t("start"),start,setStart)}
     {field(t("opening"),opening,setOpening)}
+    {cloudEnabled&&<LedgerFactsCard owner={owner} currency={currency} onUse={(balance,day)=>{setOpening(String(balance));setStart(day);setResult(null);}}/>}
     <View accessibilityRole="radiogroup" accessibilityLabel={t("title")} style={{gap:8}}>{[7,30].map(value=><Pressable key={value} accessibilityRole="radio" accessibilityState={{checked:days===value}} onPress={()=>setDays(value)} style={{padding:14,minHeight:48,backgroundColor:days===value?c.elevated:c.surface}}><Text style={{color:c.text}}>{t(value===7?"seven":"thirty")}</Text></Pressable>)}</View>
     <Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("schedules")}</Text>
     {doc?.schedules.length===0&&<Text style={{color:c.muted}}>{t("empty")}</Text>}
