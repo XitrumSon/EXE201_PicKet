@@ -241,3 +241,19 @@ gate. Local records remain usable offline. Only reviews due according to verifie
 server completion dates are uploaded; duplicate events cannot grant extra XP.
 Milestones are derived from unique owner records, do not award extra points and
 cannot be exchanged for money or paid-plan benefits.
+
+The development cashflow preview can read `/v1/cashflow-ledger` after the matching
+local snapshot migration/API is available. It requires explicit wallet selection
+and no pending device writes. The snapshot expires on background, mutation queue
+changes, session changes or the next minute; an adopted cloud opening is then
+cleared. The cloud gate remains off by default.
+
+Paid schedule occurrences can be explicitly linked to a confirmed transaction
+already included in that opening balance. One full occurrence maps to one payment;
+direction, amount, currency, wallet scope and transaction version must match.
+Transfers, partial payments and combined payments do not settle occurrences.
+Links use owner-scoped encrypted device storage with optimistic revisions; they
+are not cloud-synced or a transaction mutation. Changed evidence blocks adoption
+until reviewed/unlinked. Manual opening entry removes the verified settlement
+assumption. Schedule or horizon changes require reapplying the reviewed snapshot.
+Native interaction/TalkBack acceptance still requires an Android device.

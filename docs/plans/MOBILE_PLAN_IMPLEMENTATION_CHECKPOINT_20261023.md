@@ -23,6 +23,14 @@ The latest continuation below supersedes older pending lists in this file.
 - Schedules: reviewed per-row device/cloud/omit reconciliation is implemented,
   with revalidation of both copies and an encrypted local recovery copy. A
   reproduced local revision rollback bug is fixed; stale editors remain stale.
+- Settlement continuation: explicit one-to-one full-payment links are stored in
+  encrypted owner-scoped device storage. The vi/en review verifies included
+  transaction/version, signed amount, currency and selected wallet before
+  excluding an occurrence. It supports unlinking, clearing and paged review;
+  transfers, duplicate payment use and changed evidence reject. No transaction
+  is edited. Snapshot invalidation also clears an adopted cloud opening.
+  Links remain device-only; cloud link sync, partial/combined payments and
+  schedule wallet assignment are not implemented or claimed.
 - Ledger facts: an authenticated, no-store snapshot RPC/API now reads owner-scoped wallets and transactions at one database origin. The preview requires explicit wallet selection and no pending device mutations before adopting an opening assumption. It links included transactions and discards snapshots on background, queue changes, timeout or session change. Local Auth/RLS/API acceptance passes; migration remains local and the preview gate stays off. Settlement links and completeness/backtest acceptance remain pending.
 - Languages: profile controls, controlled profile messages, app update phases,
   installer permissions and installed-version footer now use vi/en resources.
@@ -30,7 +38,7 @@ The latest continuation below supersedes older pending lists in this file.
 - User confirmed **no testing group or Android acceptance device is ready**.
   Real Play purchase cycles, physical-device/TalkBack checks and the 12-person
   closed-test period are external acceptance blockers, not passed tests.
-- Latest suites: **530 mobile tests and 135 API tests passed**, `dart analyze` clean; server build and standalone
+- Latest suites: **535 mobile tests and 135 API tests passed**, `dart analyze` clean; server build and standalone
   learning-worker compilation passed. Android JS export passed. Learning/cashflow
   coverage: **99.20% lines / 84.80% branches / 86.27% functions**. Nine local SQL
   suites passed. Mobile typecheck passed; lint has no errors and 25 pre-existing
@@ -38,9 +46,19 @@ The latest continuation below supersedes older pending lists in this file.
   `mobile-ledger-export.log`, `learning-cashflow-coverage.log`. Earlier counts below
   are historical.
 
+Settlement evidence (24 October): full suite `.artifacts/mobile-settlements-tests.log`
+passes 535 tests; typecheck and staged-file lint pass. Full lint has zero errors
+and 25 existing warnings. Android JS export passes
+`.artifacts/mobile-settlements-export.log`. Cashflow domain coverage is 98.63%
+lines / 88.01% branches / 97.55% functions; settlement resolver has 100% lines /
+96.77% branches and storage has 100% lines / 92.11% branches. This coverage does
+not establish native UI or device acceptance. RED checkpoints: `11e83b2` (missing
+settlement verification), `463dbb5` (missing durable owner store). GREEN checkpoint:
+`010c75d` (verified resolver, durable store and preview integration).
+
 Still required before full P1–P5 completion: remaining screen/error/notification
 localization; production entry/device settings acceptance; financial-fact completeness,
-wallet scope/settlement links and real backtests; assessment/report/regrade and
+schedule wallet scope/settlement cloud sync and real backtests; assessment/report/regrade and
 personal-data-compatible provider decision; independent lesson/AI evaluation;
 staging/production deployment review; device/billing/pilot acceptance. The free
 Gemini synthetic boundary must not be widened to personal text or real finance
