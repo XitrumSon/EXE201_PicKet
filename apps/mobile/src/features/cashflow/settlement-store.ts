@@ -1,5 +1,7 @@
 import type { SettlementLink } from "./settlements";
 export type SettlementDocument={schemaVersion:1;revision:number;links:SettlementLink[]};
+export type SettlementReview={local:SettlementDocument;remote:SettlementDocument};
+export type SettlementSend=(revision:number,links:SettlementLink[],key:string)=>Promise<unknown>;
 function parse(value:unknown):SettlementDocument{
  if(value==null)return {schemaVersion:1,revision:0,links:[]};
  const doc=value as SettlementDocument;
@@ -20,6 +22,10 @@ export function createSettlementStore(storage:{read(owner:string):Promise<unknow
  const queues=new Map<string,Promise<unknown>>();
  const ownerKey=(owner:string)=>{if(!/^[A-Za-z0-9_-]{1,200}$/.test(owner))throw new Error("Invalid settlement owner");};
  return {
+  review:async(_owner:string,_fetch:()=>Promise<unknown>,_current:()=>boolean=()=>true):Promise<SettlementReview>=>{throw new Error("Not implemented");},
+  publish:async(_owner:string,_review:SettlementReview|null,_fetch:()=>Promise<unknown>,_send:SettlementSend,_key:()=>string,_current:()=>boolean=()=>true):Promise<SettlementDocument>=>{throw new Error("Not implemented");},
+  adopt:async(_owner:string,_review:SettlementReview,_fetch:()=>Promise<unknown>,_current:()=>boolean=()=>true):Promise<SettlementDocument>=>{throw new Error("Not implemented");},
+  status:async(_owner:string):Promise<{pending:boolean;recovery?:SettlementDocument}>=>({pending:false}),
   load:async(owner:string):Promise<SettlementDocument>=>{ownerKey(owner);await queues.get(owner)?.catch(()=>undefined);return parse(await storage.read(owner));},
   save:async(owner:string,revision:number,links:SettlementLink[]):Promise<SettlementDocument>=>{
    ownerKey(owner);
