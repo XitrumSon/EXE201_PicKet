@@ -44,7 +44,7 @@ test("reconciliation screen translates controlled UI and keeps recovery payloads
  assert.doesNotMatch(text,/formatVnd|toLocaleDateString\("vi-VN"\)|\{error\}|\{message\}/);
  assert.match(text,/reconciliationNoticeCopy/);
  assert.match(text,/sendRequest\(saved, entry.payload, entry.id\)/);
- assert.match(text,/\{saved.reason\}/);
+ assert.match(text,/reason:saved.reason/);
  assert.match(text,/\{item.title\}/);
  assert.doesNotMatch(text,/tx\((?:item\.title|saved\.reason|walletName)/);
 });

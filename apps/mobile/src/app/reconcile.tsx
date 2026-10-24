@@ -1,5 +1,9 @@
+import { useTranslation } from "react-i18next";
+import { useAppTheme } from "@/features/settings/appearance-provider";
+import { formatMoney,localeFor } from "@/core/i18n/formatters";
+import { reconciliationNoticeCopy,type ReconciliationNotice } from "@/features/transactions/reconciliation-copy";
 import { colors } from "@picket/design-tokens";
-import { formatVnd, type Transaction } from "@picket/domain";
+import type { Transaction } from "@picket/domain";
 import { Redirect } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
@@ -29,6 +33,9 @@ const localToday = () => {
 };
 
 export default function ReconcileScreen() {
+  const {t:tx}=useTranslation("reconciliation");
+  const {language}=useAppTheme();
+  const money=(value:number)=>formatMoney(value,language,"VND");
   const { session, localMode } = useAuth();
   const owner = localMode ? guestOwnerId : session?.user.id ?? "";
   const guest = useGuestFinance();
@@ -41,9 +48,9 @@ export default function ReconcileScreen() {
   const [selectedByAccount, setSelectedByAccount] = useState<Record<string, string[]>>({});
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
-  const [messageState, setMessageState] = useState<{ owner: string; text: string | null }>({ owner: "", text: null });
+  const [messageState, setMessageState] = useState<{ owner: string; text: string | ReconciliationNotice | null }>({ owner: "", text: null });
   const message = messageState.owner === owner ? messageState.text : null;
-  function setMessage(text: string | null) { setMessageState({ owner, text }); }
+  function setMessage(text: string | ReconciliationNotice | null) { setMessageState({ owner, text }); }
   const submitting = useRef(false);
   const activeOwner = useRef(owner);
   const [pendingState, setPendingState] = useState<{ owner: string; rows: PendingReconciliation[]; error: boolean }>({ owner: "", rows: [], error: false });
@@ -77,9 +84,9 @@ export default function ReconcileScreen() {
     if (submitting.current) return;
     if ((!localMode && (!session || !picketApi)) || !currentAccount || difference === null || !Number.isSafeInteger(difference) ||
         Math.abs(target!) > 9_000_000_000_000 || !isValidStatementDate(statementDate, localToday()) || Number.isNaN(end)) {
-      setMessage("Nhập ngày và số dư sao kê hợp lệ."); return;
+      setMessage("invalidStatement"); return;
     }
-    if (difference !== 0 && !reason.trim()) { setMessage("Nhập lý do trước khi tạo điều chỉnh."); return; }
+    if (difference !== 0 && !reason.trim()) { setMessage("reasonRequired"); return; }
     const request = { accountId:currentAccount.id, statementDate, statementBalance:target!, selectedTransactionIds:eligibleSelected.map((item) => item.id).sort(), reason:reason.trim() };
     const serialized = JSON.stringify(request);
     await sendRequest(request, serialized);
@@ -104,43 +111,42 @@ export default function ReconcileScreen() {
         if (activeOwner.current === owner) setSelectedByAccount({});
         return saved;
       }, () => Promise.all([refresh(), refreshRecent(), refreshAccounts()]));
-      const success = result.difference === 0 ? "Đã đối soát ví." : `Đã đối soát và tạo điều chỉnh ${formatVnd(Math.abs(result.difference))}${localMode ? " trên thiết bị" : ""}.`;
-      if (activeOwner.current === owner) setMessage(success + (refreshFailed ? " Chưa tải lại được số liệu. Kết nối mạng rồi tải lại, không cần gửi lại thao tác đã thành công." : ""));
-    } catch { if (activeOwner.current === owner) setMessage("Chưa xác nhận được kết quả đối soát. Kiểm tra kết nối và bộ nhớ thiết bị, rồi thử lại với đúng thông tin trước đó. Mã yêu cầu đã lưu sẽ được dùng lại để tránh tạo trùng."); }
+      if (activeOwner.current === owner) setMessage({difference:result.difference,local:localMode,refreshFailed});
+    } catch { if (activeOwner.current === owner) setMessage("unconfirmed"); }
     finally { await reloadPending(owner); submitting.current = false; setBusy(false); }
   }
   return <PicketScreen>
-    <TopAppBar title="Đối soát ví" />
-    <Text style={styles.subtitle}>{localMode ? "Đối soát chỉ lưu trên thiết bị này." : "So khớp các giao dịch đã chọn với số dư trên sao kê."}</Text>
-    {error && <Pressable accessibilityRole="button" onPress={() => void refresh()}><Text style={styles.error}>{error} Chạm để thử lại.</Text></Pressable>}
-    {loading && <Text style={styles.hint}>Đang tải lịch sử giao dịch…</Text>}
-    {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>}
-    {pendingState.owner === owner && pendingState.error && <Text accessibilityLiveRegion="polite" style={styles.error}>Chưa đọc được yêu cầu đã lưu. Dữ liệu chưa bị xóa. Mở lại màn hình để thử lại.</Text>}
+    <TopAppBar title={tx("title")} />
+    <Text style={styles.subtitle}>{localMode ? tx("localSubtitle") : tx("cloudSubtitle")}</Text>
+    {error && <Pressable accessibilityRole="button" onPress={() => void refresh()}><Text style={styles.error}>{tx("historyError")}</Text></Pressable>}
+    {loading && <Text style={styles.hint}>{tx("loading")}</Text>}
+    {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{typeof message === "string" ? tx(message) : reconciliationNoticeCopy(message,language)}</Text>}
+    {pendingState.owner === owner && pendingState.error && <Text accessibilityLiveRegion="polite" style={styles.error}>{tx("pendingError")}</Text>}
     {pendingState.owner === owner && pendingState.rows.length > 0 && <Surface peach>
-      <SectionTitle title="Đối soát chưa xác nhận" />
-      <Text style={styles.hint}>Không tự gửi lại. Thử lại sẽ dùng nguyên thông tin và mã đã lưu; có thể hoàn tất đối soát nếu lần trước chưa được ghi.</Text>
+      <SectionTitle title={tx("pendingTitle")} />
+      <Text style={styles.hint}>{tx("pendingBody")}</Text>
       {pendingState.rows.map((entry) => {
         const saved = decodeReconciliationRequest(entry.payload);
-        if (!saved) return <Text key={entry.id} style={styles.error}>Không đọc được một yêu cầu đã lưu. Giữ nguyên dữ liệu để kiểm tra, chưa thể thử lại.</Text>;
-        const walletName = accounts.find((item) => item.id === saved.accountId)?.name ?? "Ví trong yêu cầu đã lưu";
+        if (!saved) return <Text key={entry.id} style={styles.error}>{tx("damagedRequest")}</Text>;
+        const walletName = accounts.find((item) => item.id === saved.accountId)?.name ?? tx("savedWallet");
         return <View key={entry.id} style={{ marginTop: 16 }}>
           <Text style={styles.title}>{walletName} · {saved.statementDate}</Text>
-          <Text style={styles.hint}>Số dư sao kê: {formatVnd(saved.statementBalance)} · {saved.selectedTransactionIds.length} giao dịch</Text>
-          {Boolean(saved.reason) && <Text style={styles.hint}>Lý do: {saved.reason}</Text>}
-          <PrimaryAction disabled={busy || (localMode && (guest.loading || Boolean(guest.error)))} label={`Thử lại yêu cầu ${saved.statementDate}`} onPress={() => void sendRequest(saved, entry.payload, entry.id)} />
+          <Text style={styles.hint}>{tx("savedSummary",{amount:money(saved.statementBalance),count:saved.selectedTransactionIds.length})}</Text>
+          {Boolean(saved.reason) && <Text style={styles.hint}>{tx("savedReason",{reason:saved.reason})}</Text>}
+          <PrimaryAction disabled={busy || (localMode && (guest.loading || Boolean(guest.error)))} label={tx("retryRequest",{date:saved.statementDate})} onPress={() => void sendRequest(saved, entry.payload, entry.id)} />
         </View>;
       })}
     </Surface>}
-    {accounts.length === 0 ? <EmptyState title="Chưa có ví" description="Tạo ví trước khi đối soát." /> : <>
-      <SectionTitle title="Ví cần đối soát" /><View style={styles.chips}>{accounts.map((item) => <ChoiceChip checked={item.id===currentAccount?.id} key={item.id} label={item.name} onPress={() => setAccountId(item.id)} />)}</View>
-      <Text style={styles.label}>Ngày sao kê</Text><TextInput date accessibilityLabel="Ngày sao kê" onChangeText={setStatementDate} style={styles.input} value={statementDate} />
-      <Text style={styles.label}>Số dư trên sao kê (VND)</Text><TextInput money accessibilityLabel="Số dư trên sao kê" keyboardType="numbers-and-punctuation" onChangeText={setStatementBalance} style={styles.input} value={statementBalance} />
-      <Surface peach><Text style={styles.title}>Số dư từ giao dịch đã chọn: {formatVnd(clearedBalance)}</Text>{difference !== null && <Text style={styles.hint}>Chênh lệch: {formatVnd(difference)}</Text>}</Surface>
-      <SectionTitle title={`Giao dịch · đã chọn ${eligibleSelected.length}/${eligible.length}`} />
-      <View style={styles.actions}><Pressable accessibilityRole="button" onPress={() => setSelected(eligible.map((item) => item.id))}><Text style={styles.link}>Chọn tất cả</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setSelected([])}><Text style={styles.link}>Bỏ chọn</Text></Pressable></View>
-      <Surface>{eligible.map((item) => <Pressable accessibilityLabel={`${selected.includes(item.id) ? "Bỏ chọn" : "Chọn"} ${item.title}, ${formatVnd(item.amount)}`} accessibilityRole="checkbox" accessibilityState={{ checked:selected.includes(item.id) }} key={item.id} onPress={() => toggle(item.id)} style={styles.row}><Text style={styles.check}>{selected.includes(item.id) ? "☑" : "□"}</Text><View style={styles.copy}><Text style={styles.title}>{item.title}</Text><Text style={styles.hint}>{new Date(item.occurredAt).toLocaleDateString("vi-VN")}</Text></View><Text style={styles.value}>{formatVnd(effect(item,currentAccount!.id))}</Text></Pressable>)}</Surface>
-      <Text style={styles.label}>Lý do điều chỉnh nếu có chênh lệch</Text><TextInput accessibilityLabel="Lý do điều chỉnh" onChangeText={setReason} style={styles.input} value={reason} />
-      <PrimaryAction busy={busy} disabled={loading || Boolean(error) || difference === null} label={difference === 0 ? "Xác nhận đối soát" : "Xác nhận và tạo điều chỉnh"} onPress={() => void submit()} />
+    {accounts.length === 0 ? <EmptyState title={tx("noWallet")} description={tx("noWalletBody")} /> : <>
+      <SectionTitle title={tx("wallet")} /><View style={styles.chips}>{accounts.map((item) => <ChoiceChip checked={item.id===currentAccount?.id} key={item.id} label={item.name} onPress={() => setAccountId(item.id)} />)}</View>
+      <Text style={styles.label}>{tx("statementDate")}</Text><TextInput date accessibilityLabel={tx("statementDate")} onChangeText={setStatementDate} style={styles.input} value={statementDate} />
+      <Text style={styles.label}>{tx("statementBalanceVnd")}</Text><TextInput money accessibilityLabel={tx("statementBalance")} keyboardType="numbers-and-punctuation" onChangeText={setStatementBalance} style={styles.input} value={statementBalance} />
+      <Surface peach><Text style={styles.title}>{tx("cleared",{amount:money(clearedBalance)})}</Text>{difference !== null && <Text style={styles.hint}>{tx("difference",{amount:money(difference)})}</Text>}</Surface>
+      <SectionTitle title={tx("selection",{selected:eligibleSelected.length,total:eligible.length})} />
+      <View style={styles.actions}><Pressable accessibilityRole="button" onPress={() => setSelected(eligible.map((item) => item.id))}><Text style={styles.link}>{tx("selectAll")}</Text></Pressable><Pressable accessibilityRole="button" onPress={() => setSelected([])}><Text style={styles.link}>{tx("deselect")}</Text></Pressable></View>
+      <Surface>{eligible.map((item) => <Pressable accessibilityLabel={tx("selectTransaction",{action:tx(selected.includes(item.id) ? "deselect" : "select"),title:item.title,amount:money(item.amount)})} accessibilityRole="checkbox" accessibilityState={{ checked:selected.includes(item.id) }} key={item.id} onPress={() => toggle(item.id)} style={styles.row}><Text style={styles.check}>{selected.includes(item.id) ? "☑" : "□"}</Text><View style={styles.copy}><Text style={styles.title}>{item.title}</Text><Text style={styles.hint}>{new Date(item.occurredAt).toLocaleDateString(localeFor(language))}</Text></View><Text style={styles.value}>{money(effect(item,currentAccount!.id))}</Text></Pressable>)}</Surface>
+      <Text style={styles.label}>{tx("reasonLabel")}</Text><TextInput accessibilityLabel={tx("reason")} onChangeText={setReason} style={styles.input} value={reason} />
+      <PrimaryAction busy={busy} disabled={loading || Boolean(error) || difference === null} label={difference === 0 ? tx("confirm") : tx("confirmAdjustment")} onPress={() => void submit()} />
     </>}
   </PicketScreen>;
 }
