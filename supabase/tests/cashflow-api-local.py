@@ -1,6 +1,8 @@
 """Local-only API/auth/RLS/concurrency acceptance using disposable users."""
 import concurrent.futures
 import json
+import os
+import re
 import secrets
 import subprocess
 import urllib.error
@@ -9,7 +11,8 @@ import uuid
 
 status = json.loads(subprocess.run(['npx.cmd', '--yes', 'supabase', 'status', '-o', 'json'], capture_output=True, text=True, check=True).stdout)
 base = 'http://127.0.0.1:54321'
-api = 'http://127.0.0.1:8102'
+api = os.environ.get('PICKET_LOCAL_API_URL', 'http://127.0.0.1:8103')
+assert re.fullmatch(r'http://127\.0\.0\.1:[0-9]{4,5}', api), 'Local API only'
 created = []
 
 def req(url, method='GET', body=None, headers=None):
@@ -45,16 +48,22 @@ try:
     assert code == 200 and len(ledger['wallets']) == 1 and ledger['wallets'][0]['openingBalance'] == 100000
     assert req(api + '/v1/cashflow-ledger', headers={'Authorization':'Bearer '+tokens[1]})[1]['wallets'] == []
     assert req(api + '/v1/cashflow-ledger')[0] == 401
-    item = {'id': str(uuid.uuid4()), 'startDay': '2026-10-24', 'frequency': 'monthly', 'amount': -19000, 'currency': 'VND', 'active': True}
+    item = {'id': str(uuid.uuid4()), 'startDay': '2026-10-24', 'frequency': 'monthly', 'amount': -19000, 'currency': 'VND', 'active': True, 'walletId':ledger['wallets'][0]['id']}
     url = api + '/v1/cashflow-schedules/' + item['id']
     body = {'expectedRevision': 0, 'schedule': item}
     code, empty, headers = req(api + '/v1/cashflow-schedules', headers=auth)
     assert code == 200 and empty['revision'] == 0 and empty['schedules'] == [], ('initial', code)
     assert 'no-store' in headers.get('cache-control', headers.get('Cache-Control', ''))
     write = {**auth, 'Idempotency-Key': 'concurrent-schedule-1'}
+    foreign_auth = {'Authorization':'Bearer '+tokens[1]}
+    code, _, _ = req(api + '/v1/accounts', 'POST', {'name':'Foreign scope wallet','kind':'cash','currencyCode':'VND','openingBalance':0}, {**foreign_auth,'Idempotency-Key':'foreign-wallet-fixture'})
+    assert code == 201
+    foreign_wallet = req(api + '/v1/cashflow-ledger', headers=foreign_auth)[1]['wallets'][0]['id']
+    assert req(url, 'PUT', {**body,'schedule':{**item,'walletId':foreign_wallet}}, {**auth,'Idempotency-Key':'foreign-scope-reject'})[0] == 400, 'foreign wallet scope accepted'
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
         responses = list(pool.map(lambda _: req(url, 'PUT', body, write), range(2)))
     assert all(code == 200 and result['revision'] == 1 and len(result['schedules']) == 1 for code, result, _ in responses), 'concurrent retry'
+    assert all(result['schedules'][0]['walletId'] == item['walletId'] for _, result, _ in responses), 'wallet scope lost'
     assert req(url, 'PUT', {**body, 'schedule': {**item, 'amount': -49000}}, write)[0] == 409
     assert req(url, 'PUT', body, {**auth, 'Idempotency-Key': 'stale-schedule-1'})[0] == 409
     code, other, _ = req(api + '/v1/cashflow-schedules', headers={'Authorization': 'Bearer ' + tokens[1]})

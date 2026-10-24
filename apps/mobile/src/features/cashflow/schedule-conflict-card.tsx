@@ -9,6 +9,7 @@ import { useAppTheme } from "@/features/settings/appearance-provider";
 import { cashflowSchedules } from "./schedule-storage";
 import type { ScheduleConflictReview } from "./schedule-sync-store";
 import type { CashflowSchedule, CashflowScheduleDocument } from "@picket/domain";
+import { useAccounts } from "@/features/accounts/accounts-context";
 
 function ConflictButton({label,onPress,disabled=false}:{label:string;onPress:()=>void;disabled?:boolean}){
   const {colors:c}=useAppTheme();
@@ -16,6 +17,7 @@ function ConflictButton({label,onPress,disabled=false}:{label:string;onPress:()=
 }
 
 export function ScheduleConflictCard({owner}:{owner:string}){
+  const {accounts}=useAccounts();
   const {session,localMode}=useAuth();
   const {colors:c,language}=useAppTheme();
   const {t}=useTranslation("cashflow");
@@ -55,7 +57,8 @@ export function ScheduleConflictCard({owner}:{owner:string}){
     if(!row)return t("missingCopy");
     const format=new Intl.NumberFormat(localeFor(language),{style:"currency",currency:row.currency});
     const money=format.format(row.amount/10**(format.resolvedOptions().maximumFractionDigits??2));
-    return `${money} · ${formatCalendarDate(row.startDay,language)} · ${t(row.frequency)}${row.endDay?` · ${formatCalendarDate(row.endDay,language)}`:""} · ${t(row.active?"active":"inactive")}`;
+    const wallet=row.walletId?(accounts.find(account=>account.id===row.walletId)?.name??t("walletUnavailable")):t("walletUnassigned");
+    return `${money} · ${formatCalendarDate(row.startDay,language)} · ${t(row.frequency)}${row.endDay?` · ${formatCalendarDate(row.endDay,language)}`:""} · ${t(row.active?"active":"inactive")} · ${wallet}`;
   };
   if(localMode||session?.user.id!==owner)return null;
   return <View style={{gap:12}}>

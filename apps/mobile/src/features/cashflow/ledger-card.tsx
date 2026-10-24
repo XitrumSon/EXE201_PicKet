@@ -12,7 +12,7 @@ import { ledgerOpening,parseLedgerSnapshot,type LedgerSnapshot } from "./ledger-
 import { SettlementReview } from "./settlement-review";
 import type { CashflowSchedule } from "./schedules";
 
-type Props={owner:string;currency:string;schedules:CashflowSchedule[];days:number;onInvalidate:()=>void;onUse:(balance:number,day:string,settledIds:string[])=>void};
+type Props={owner:string;currency:string;schedules:CashflowSchedule[];days:number;onInvalidate:()=>void;onUse:(balance:number,day:string,settledIds:string[],accounts:string[])=>void};
 export function LedgerFactsCard(props:Props){
  const {session,localMode}=useAuth();
  if(!session||localMode||session.user.id!==props.owner)return null;
@@ -74,7 +74,7 @@ function LedgerFactsSession({owner,currency,schedules,days,onInvalidate,onUse}:P
     <Pressable accessibilityRole="button" onPress={()=>setShowEntries(value=>!value)} style={{minHeight:48,padding:12}}><Text style={{color:c.primary}}>{t("ledgerRecords",{count:facts.includedTransactionIds.length})}</Text></Pressable>
     {showEntries&&facts.includedTransactionIds.map((id,index)=><Pressable key={id} accessibilityRole="button" onPress={()=>router.push({pathname:"/transactions/[id]",params:{id}})} style={{minHeight:48,padding:12}}><Text style={{color:c.primary}}>{t("ledgerRecord",{count:index+1})}</Text></Pressable>)}
     <Text style={{color:c.muted,lineHeight:22}}>{t("ledgerUseHint")}</Text>
-    <SettlementReview key={JSON.stringify([selected,currency,schedules,days])} owner={owner} snapshot={snapshot} accounts={selected} currency={currency} schedules={schedules} days={days} onChange={onInvalidate} onUse={ids=>{if(facts&&snapshot)onUse(facts.balance,new Date(snapshot.asOf).toISOString().slice(0,10),ids);}}/>
+    <SettlementReview key={JSON.stringify([selected,currency,schedules,days])} owner={owner} snapshot={snapshot} accounts={selected} currency={currency} schedules={schedules} days={days} onChange={onInvalidate} onUse={ids=>{if(facts&&snapshot)onUse(facts.balance,new Date(snapshot.asOf).toISOString().slice(0,10),ids,[...selected]);}}/>
    </>}
   </>}
  </View>;

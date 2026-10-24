@@ -53,7 +53,9 @@ Map<String, dynamic> validateSchedule(Object? value) {
   };
   if (value is! Map ||
       !value.keys.toSet().containsAll(required) ||
-      value.keys.any((key) => !{...required, 'endDay'}.contains(key))) {
+      value.keys.any(
+        (key) => !{...required, 'endDay', 'walletId'}.contains(key),
+      )) {
     throw const FormatException('Invalid schedule fields.');
   }
   final id = value['id'];
@@ -71,6 +73,13 @@ Map<String, dynamic> validateSchedule(Object? value) {
     throw const FormatException('Invalid schedule values.');
   }
   final currency = validateCurrencyCode(value['currency']);
+  final wallet = value['walletId'];
+  if (value.containsKey('walletId')) {
+    if (wallet is! String) {
+      throw const FormatException('Invalid schedule wallet.');
+    }
+    validateUuid(wallet);
+  }
   return {
     'id': id,
     'startDay': value['startDay'],
@@ -79,6 +88,7 @@ Map<String, dynamic> validateSchedule(Object? value) {
     'amount': amount,
     'currency': currency,
     'active': value['active'],
+    if (wallet != null) 'walletId': wallet,
   };
 }
 

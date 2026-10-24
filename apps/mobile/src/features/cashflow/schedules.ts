@@ -13,6 +13,7 @@ export function expandSchedules(schedules: CashflowSchedule[], from: string, thr
   if (upper < lower || upper.getTime()-lower.getTime() > 366*86400000 || schedules.length > 1000) throw new Error("Schedule scope is too large");
   const seen = new Set<string>(), settled = new Set(settledIds), result: CashflowOccurrence[] = [];
   for (const row of schedules) {
+    if(row.walletId!==undefined&&(typeof row.walletId!=="string"||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.walletId)))throw new Error("Invalid schedule wallet");
     if (!/^[A-Za-z0-9_-]{1,200}$/.test(row.id) || seen.has(row.id) || !["once","weekly","monthly"].includes(row.frequency) ||
         !Number.isSafeInteger(row.amount) || row.amount === 0 || Math.abs(row.amount) > 9e12 || !/^[A-Z]{3}$/.test(row.currency) || typeof row.active !== "boolean") throw new Error("Invalid schedule");
     seen.add(row.id);
@@ -32,7 +33,7 @@ export function expandSchedules(schedules: CashflowSchedule[], from: string, thr
       if (cursor > upper || cursor > end) break;
       if (cursor >= lower) {
         const day = cursor.toISOString().slice(0,10), id = `${row.id}:${day}`;
-        result.push({id,day,amount:row.amount,currency:row.currency,settled:settled.has(id)});
+        result.push({id,day,amount:row.amount,currency:row.currency,settled:settled.has(id),...(row.walletId?{walletId:row.walletId}:{})});
       }
       if (row.frequency === "once") break;
       step++;

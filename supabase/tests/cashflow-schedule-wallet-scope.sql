@@ -25,4 +25,10 @@ begin
  end loop;
  if (public.load_cashflow_schedules()->>'revision')::int<>1 then raise exception 'Invalid writes advanced revision'; end if;
 end $$;
+reset role;
+-- A finance restore replaces wallets. It must not be blocked by scenario links.
+delete from public.wallets where id='55555555-1234-4321-8123-123456789011';
+do $$ begin
+ if exists(select 1 from public.cashflow_schedules where user_id='55555555-1234-4321-8123-123456789001' and wallet_id is not null) then raise exception 'Deleted wallet left a trusted scope'; end if;
+end $$;
 rollback;

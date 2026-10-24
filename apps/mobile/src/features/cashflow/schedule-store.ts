@@ -3,7 +3,7 @@ export type ScheduleDocument = { schemaVersion: 1; revision: number; schedules: 
 function checkSchedule(value: CashflowSchedule) {
   expandSchedules([value],value.startDay,value.startDay);
   return { id: value.id, startDay: value.startDay, ...(value.endDay ? {endDay:value.endDay} : {}),
-    frequency:value.frequency,amount:value.amount,currency:value.currency,active:value.active };
+    frequency:value.frequency,amount:value.amount,currency:value.currency,active:value.active,...(value.walletId?{walletId:value.walletId}:{}) };
 }
 export function parseScheduleDocument(value: unknown): ScheduleDocument {
   if (value == null) return { schemaVersion:1, revision:0, schedules:[] };

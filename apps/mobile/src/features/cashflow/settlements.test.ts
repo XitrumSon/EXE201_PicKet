@@ -20,6 +20,7 @@ test("only explicitly linked confirmed movements settle an occurrence without mu
 test("changed schedules or transactions, duplicates, wrong directions and transfers reject",()=>{
  for(const change of [{amount:-18000},{day:"2026-10-25"},{currency:"USD"},{transactionId:"missing"},{transactionUpdatedAt:"2026-10-23T12:00:00Z"}])assert.throws(()=>resolveSettlements(snapshot,["cash"],"VND",[occurrence],[{...link,...change}]));
  assert.throws(()=>resolveSettlements(snapshot,["cash"],"VND",[occurrence],[link,link]));
+ assert.throws(()=>resolveSettlements(snapshot,["cash"],"VND",[{...occurrence,walletId:"another-wallet"}],[link]));
  const second={...occurrence,id:"second:2026-10-24"};
  assert.throws(()=>resolveSettlements(snapshot,["cash"],"VND",[occurrence,second],[link,{...link,occurrenceId:second.id}]));
  for(const kind of ["income","refund","transfer"]){

@@ -10,6 +10,7 @@ import type { SettlementDocument } from "./settlement-store";
 import { resolveSettlements,type SettlementLink } from "./settlements";
 import { expandSchedules,type CashflowSchedule } from "./schedules";
 import { ledgerOpening,type LedgerSnapshot } from "./ledger-snapshot";
+import { scopeSchedules } from "./schedule-scope";
 
 type Props={owner:string;snapshot:LedgerSnapshot;accounts:string[];currency:string;schedules:CashflowSchedule[];days:number;onChange:()=>void;onUse:(ids:string[])=>void};
 export function SettlementReview({owner,snapshot,accounts,currency,schedules,days,onChange,onUse}:Props){
@@ -20,7 +21,7 @@ export function SettlementReview({owner,snapshot,accounts,currency,schedules,day
  let occurrences:ReturnType<typeof expandSchedules>=[],ids:string[]|null=null,included:string[]=[];
  try{
   const start=new Date(snapshot.asOf).toISOString().slice(0,10),through=new Date(Date.parse(start+"T00:00:00Z")+(days-1)*86400000).toISOString().slice(0,10);
-  occurrences=expandSchedules(schedules.filter(row=>row.currency===currency),start,through);
+  occurrences=expandSchedules(scopeSchedules(schedules,accounts,currency),start,through);
   included=ledgerOpening(snapshot,accounts,currency,0).includedTransactionIds;
   const occurrenceIds=new Set(occurrences.map(row=>row.id));
   if(doc)ids=resolveSettlements(snapshot,accounts,currency,occurrences,doc.links.filter(link=>occurrenceIds.has(link.occurrenceId)));
@@ -39,7 +40,7 @@ export function SettlementReview({owner,snapshot,accounts,currency,schedules,day
   {failed&&<Text accessibilityRole="alert" style={{color:c.expense}}>{t("settlementSaveError")}</Text>}
   {doc&&occurrences.slice(page*20,(page+1)*20).map(row=>{
    const link=doc.links.find(value=>value.occurrenceId===row.id);
-   const candidates=expanded===row.id?snapshot.entries.filter(entry=>includedSet.has(entry.id)&&accounts.includes(entry.accountId)&&entry.kind!=="transfer"&&entry.amount*(entry.kind==="expense"?-1:1)===row.amount&&!used.has(entry.id)):[];
+   const candidates=expanded===row.id?snapshot.entries.filter(entry=>includedSet.has(entry.id)&&accounts.includes(entry.accountId)&&(!row.walletId||row.walletId===entry.accountId)&&entry.kind!=="transfer"&&entry.amount*(entry.kind==="expense"?-1:1)===row.amount&&!used.has(entry.id)):[];
    return <View key={row.id} style={{padding:10,gap:8,borderWidth:1,borderColor:c.border,borderRadius:10}}>
     <Text style={{color:c.text}}>{formatCalendarDate(row.day,language)} · {row.amount} {row.currency}</Text>
     {link?<>
@@ -64,7 +65,7 @@ export function SettlementReview({owner,snapshot,accounts,currency,schedules,day
    {button(t("settlementPrevious"),()=>{setExpanded(null);setPage(value=>value-1);},page===0)}
    {button(t("settlementNext"),()=>{setExpanded(null);setPage(value=>value+1);},(page+1)*20>=occurrences.length)}
   </View>}
-  {doc&&ids===null&&<Text accessibilityRole="alert" style={{color:c.expense}}>{t("settlementChanged")}</Text>}
+  {doc&&ids===null&&<Text accessibilityRole="alert" style={{color:c.expense}}>{t("settlementScopeError")}</Text>}
   {button(t("ledgerUse"),()=>{if(ids)onUse(ids);},!doc||busy||ids===null)}
  </View>;
 }

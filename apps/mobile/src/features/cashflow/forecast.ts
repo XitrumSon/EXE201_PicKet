@@ -1,4 +1,4 @@
-export type CashflowOccurrence = { id: string; day: string; amount: number; currency: string; settled: boolean };
+export type CashflowOccurrence = { id: string; day: string; amount: number; currency: string; settled: boolean;walletId?:string };
 type ForecastInput = { startDay: string; days: number; currency: string; openingBalance: number; occurrences: CashflowOccurrence[] };
 type PurchaseScenario = { day: string; amount: number };
 function dateDay(day: string) {

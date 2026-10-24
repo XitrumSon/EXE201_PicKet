@@ -11,6 +11,7 @@ export function resolveSettlements(snapshot:LedgerSnapshot,accounts:string[],cur
  for(const link of links){
   const occurrence=expected.get(link.occurrenceId),entry=entries.get(link.transactionId);
   if(!occurrence||!entry||!included.has(entry.id)||!accounts.includes(entry.accountId)||entry.kind==="transfer"||
+     (occurrence.walletId!==undefined&&occurrence.walletId!==entry.accountId)||
      occurrence.currency!==currency||link.currency!==currency||link.day!==occurrence.day||link.amount!==occurrence.amount||
      entry.updatedAt!==link.transactionUpdatedAt||entry.amount*(entry.kind==="expense"?-1:1)!==occurrence.amount||
      used.has(entry.id)||settled.has(occurrence.id))throw new Error("Settlement evidence changed or does not match");
