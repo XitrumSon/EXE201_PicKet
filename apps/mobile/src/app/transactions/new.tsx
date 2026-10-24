@@ -1,3 +1,4 @@
+import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
 import { colors, radii } from "@picket/design-tokens";
 import { MAX_MONEY, type TransactionKind } from "@picket/domain";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
@@ -46,6 +47,7 @@ import { captureJournal } from "@/core/ocr/capture-storage";
 type BasicTransactionKind = Extract<TransactionKind, "expense" | "income">;
 
 export default function NewTransactionScreen() {
+  const {tx,locale,money}=useTransactionCopy();
   const { session, localMode } = useAuth();
   const owner = session?.user.id ?? (localMode ? guestOwnerId : null);
   const { accounts } = useAccounts();
@@ -65,7 +67,7 @@ export default function NewTransactionScreen() {
   const [amount, setAmount] = useState(params.amount ?? "");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<TransactionNotice | null>(null);
   const [receiptDraft, setReceiptDraft] = useState<PendingReceiptDraft | null>(null);
   const [loadingDraft, setLoadingDraft] = useState(Boolean(params.receiptDraftId));
 
@@ -193,14 +195,14 @@ export default function NewTransactionScreen() {
         const shouldContinue = await new Promise<boolean>((resolve) => {
           const exact = duplicate.matchType === "exact_hash";
           Alert.alert(
-            exact ? "Hóa đơn này đã được lưu" : "Có thể trùng hóa đơn",
+            exact ? tx("Hóa đơn này đã được lưu") : tx("Có thể trùng hóa đơn"),
             exact
-              ? "Ảnh giống hệt một hóa đơn đã có. Bạn có thể mở bản đã lưu."
-              : "Có hóa đơn cùng cửa hàng, ngày và tổng tiền. Hãy kiểm tra trước khi lưu thêm.",
+              ? tx("Ảnh giống hệt một hóa đơn đã có. Bạn có thể mở bản đã lưu.")
+              : tx("Có hóa đơn cùng cửa hàng, ngày và tổng tiền. Hãy kiểm tra trước khi lưu thêm."),
             [
-              { text: "Hủy", style: "cancel", onPress: () => resolve(false) },
+              { text: tx("Hủy"), style: "cancel", onPress: () => resolve(false) },
               {
-                text: "Xem hóa đơn",
+                text: tx("Xem hóa đơn"),
                 onPress: () => {
                   void (async () => {
                     try {
@@ -218,7 +220,7 @@ export default function NewTransactionScreen() {
                 },
               },
               ...(!exact
-                ? [{ text: "Vẫn lưu", onPress: () => resolve(true) }]
+                ? [{ text: tx("Vẫn lưu"), onPress: () => resolve(true) }]
                 : []),
             ],
             { cancelable: false },
@@ -287,18 +289,17 @@ export default function NewTransactionScreen() {
 
   return (
     <PicketScreen>
-      <TopAppBar title="Giao dịch mới" subtitle="Ghi lại khoản thu hoặc chi của bạn." />
-        {loadingDraft && <ActivityIndicator accessibilityLabel="Đang tải bản nháp hóa đơn" color={colors.mauve} />}
+      <TopAppBar title={tx("Giao dịch mới")} subtitle={tx("Ghi lại khoản thu hoặc chi của bạn.")} />
+        {loadingDraft && <ActivityIndicator accessibilityLabel={tx("Đang tải bản nháp hóa đơn")} color={colors.mauve} />}
         {receiptDraft && (
           <View style={styles.receiptCard}>
-            <Image accessibilityLabel="Ảnh hóa đơn của giao dịch mới" source={{ uri: receiptDraft.imageUri }} style={styles.receiptImage} />
+            <Image accessibilityLabel={tx("Ảnh hóa đơn của giao dịch mới")} source={{ uri: receiptDraft.imageUri }} style={styles.receiptImage} />
             <View style={styles.receiptCopy}>
-              <Text style={styles.receiptTitle}>Có đính kèm hóa đơn</Text>
+              <Text style={styles.receiptTitle}>{tx("Có đính kèm hóa đơn")}</Text>
               <Text style={styles.receiptHint}>
-                Ảnh chỉ được tải lên khi bạn bấm Lưu giao dịch.
-                {receiptDraft.lineItems.length > 0
-                  ? ` OCR đã tách ${receiptDraft.lineItems.length} sản phẩm để bạn kiểm tra.`
-                  : " Không có dòng sản phẩm đủ tin cậy; bạn có thể thêm sau."}
+                {tx("Ảnh chỉ được tải lên khi bạn bấm Lưu giao dịch.")}{receiptDraft.lineItems.length > 0
+                  ? tx("receiptItems",{count:receiptDraft.lineItems.length})
+                  : tx(" Không có dòng sản phẩm đủ tin cậy; bạn có thể thêm sau.")}
               </Text>
             </View>
           </View>
@@ -307,7 +308,7 @@ export default function NewTransactionScreen() {
           {(["expense", "income"] as const).map((value) => (
             <Pressable accessibilityRole="radio" accessibilityState={{ checked: kind === value }} key={value} onPress={() => { setKind(value); setCategoryId(""); }} style={[styles.segmentItem, kind === value && styles.segmentSelected]}>
               <Text style={[styles.segmentText, kind === value && styles.segmentTextSelected]}>
-                {value === "expense" ? "Khoản chi" : "Khoản thu"}
+                {value === "expense" ? tx("Khoản chi") : tx("Khoản thu")}
               </Text>
             </Pressable>
           ))}
@@ -315,37 +316,37 @@ export default function NewTransactionScreen() {
 
         <Surface style={styles.form}>
         {receiptDraft?.transactionRequest ? <View>
-          <Text style={styles.label}>Yêu cầu gốc đã được lưu an toàn</Text>
-          <Text style={styles.receiptHint}>Thử lại sẽ giữ nguyên ví, danh mục, thời gian và số tiền để không tạo giao dịch trùng. Hoàn tất yêu cầu này trước khi sửa giao dịch.</Text>
+          <Text style={styles.label}>{tx("Yêu cầu gốc đã được lưu an toàn")}</Text>
+          <Text style={styles.receiptHint}>{tx("Thử lại sẽ giữ nguyên ví, danh mục, thời gian và số tiền để không tạo giao dịch trùng. Hoàn tất yêu cầu này trước khi sửa giao dịch.")}</Text>
           <Text style={styles.label}>{receiptDraft.transactionRequest.title}</Text>
-          <Text style={styles.amountInput}>{receiptDraft.transactionRequest.amount.toLocaleString("vi-VN")} ₫</Text>
-          <Text style={styles.receiptHint}>{accounts.find(account => account.id === receiptDraft.transactionRequest?.accountId)?.name ?? "Ví của yêu cầu gốc"} · {receiptDraft.transactionRequest.kind === "expense" ? "Khoản chi" : "Khoản thu"}</Text>
-          <Text style={styles.receiptHint}>{new Date(receiptDraft.transactionRequest.occurredAt).toLocaleString("vi-VN")}</Text>
+          <Text style={styles.amountInput}>{money(receiptDraft.transactionRequest.amount)}</Text>
+          <Text style={styles.receiptHint}>{accounts.find(account => account.id === receiptDraft.transactionRequest?.accountId)?.name ?? tx("Ví của yêu cầu gốc")} · {receiptDraft.transactionRequest.kind === "expense" ? tx("Khoản chi") : tx("Khoản thu")}</Text>
+          <Text style={styles.receiptHint}>{new Date(receiptDraft.transactionRequest.occurredAt).toLocaleString(locale)}</Text>
           {receiptDraft.transactionRequest.note ? <Text style={styles.receiptHint}>{receiptDraft.transactionRequest.note}</Text> : null}
         </View> : <>
-        <FieldLabel>Số tiền</FieldLabel><View style={styles.amountBox}><TextInput money accessibilityLabel="Số tiền giao dịch" keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={amount} onChangeText={setAmount} /><Text style={styles.currency}>VND</Text></View>
-        <FieldLabel>Nội dung</FieldLabel><TextInput accessibilityLabel="Nội dung giao dịch" placeholder="Ví dụ: Ăn trưa" placeholderTextColor={colors.muted} style={styles.input} value={title} onChangeText={setTitle} />
+        <FieldLabel>{tx("Số tiền")}</FieldLabel><View style={styles.amountBox}><TextInput money accessibilityLabel={tx("Số tiền giao dịch")} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={amount} onChangeText={setAmount} /><Text style={styles.currency}>VND</Text></View>
+        <FieldLabel>{tx("Nội dung")}</FieldLabel><TextInput accessibilityLabel={tx("Nội dung giao dịch")} placeholder={tx("Ví dụ: Ăn trưa")} placeholderTextColor={colors.muted} style={styles.input} value={title} onChangeText={setTitle} />
 
-        <FieldLabel>Tài khoản</FieldLabel>
+        <FieldLabel>{tx("Tài khoản")}</FieldLabel>
         <View accessibilityRole="radiogroup" style={styles.choices}>
           {accounts.map((account) => (
             <ChoiceChip checked={selectedAccountId === account.id} key={account.id} label={account.name} onPress={() => setAccountId(account.id)} />
           ))}
         </View>
 
-        <View style={styles.labelRow}><Text style={styles.label}>Danh mục</Text><Pressable accessibilityRole="link" onPress={() => router.push(routes.categories)}><Text style={styles.manage}>Quản lý</Text></Pressable></View>
+        <View style={styles.labelRow}><Text style={styles.label}>{tx("Danh mục")}</Text><Pressable accessibilityRole="link" onPress={() => router.push(routes.categories)}><Text style={styles.manage}>{tx("Quản lý")}</Text></Pressable></View>
         <View accessibilityRole="radiogroup" style={styles.choices}>
           {availableCategories.map((category) => (
             <ChoiceChip checked={selectedCategoryId === category.id} key={category.id} label={category.name} onPress={() => setCategoryId(category.id)} />
           ))}
-          {availableCategories.length === 0 && <Text style={styles.empty}>Chưa có danh mục phù hợp.</Text>}
+          {availableCategories.length === 0 && <Text style={styles.empty}>{tx("Chưa có danh mục phù hợp.")}</Text>}
         </View>
 
-        <FieldLabel>Ghi chú</FieldLabel><TextInput accessibilityLabel="Ghi chú giao dịch, không bắt buộc" multiline numberOfLines={3} placeholder="Không bắt buộc" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
+        <FieldLabel>{tx("Ghi chú")}</FieldLabel><TextInput accessibilityLabel={tx("Ghi chú giao dịch, không bắt buộc")} multiline numberOfLines={3} placeholder={tx("Không bắt buộc")} placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} onChangeText={setNote} />
         </>}
-        {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
-        <PrimaryAction busy={busy} disabled={loadingDraft} label={receiptDraft?.transactionRequest ? "Thử lại yêu cầu cũ" : "Lưu giao dịch"} onPress={() => void submit()} />
-        {!localMode && receiptDraft?.transactionRequest && !receiptDraft.transactionId && <Pressable accessibilityRole="button" disabled={busy} onPress={() => void recoverReceiptAttempt()}><Text style={styles.manage}>Kiểm tra để sửa yêu cầu</Text></Pressable>}
+        {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{tx(message)}</Text>}
+        <PrimaryAction busy={busy} disabled={loadingDraft} label={receiptDraft?.transactionRequest ? tx("Thử lại yêu cầu cũ") : tx("Lưu giao dịch")} onPress={() => void submit()} />
+        {!localMode && receiptDraft?.transactionRequest && !receiptDraft.transactionId && <Pressable accessibilityRole="button" disabled={busy} onPress={() => void recoverReceiptAttempt()}><Text style={styles.manage}>{tx("Kiểm tra để sửa yêu cầu")}</Text></Pressable>}
         </Surface>
     </PicketScreen>
   );

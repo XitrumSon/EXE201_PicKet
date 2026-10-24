@@ -1,3 +1,4 @@
+import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
 import { colors, radii } from "@picket/design-tokens";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
@@ -24,6 +25,7 @@ import { useTransactions } from "@/features/transactions/transactions-context";
 import { buildTransactionEditRequest } from "@/features/transactions/transaction-edit-request";
 
 export default function TransactionDetailScreen() {
+  const {tx,money}=useTransactionCopy();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, localMode } = useAuth();
   const { archive, categories, loading, transactions, update } = useTransactions();
@@ -33,7 +35,7 @@ export default function TransactionDetailScreen() {
   const [note, setNote] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<string | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<TransactionNotice | null>(null);
   const [receiptId, setReceiptId] = useState<string | null>(null);
   const [guestReceipt, setGuestReceipt] = useState<GuestReceipt | null>(null);
 
@@ -66,16 +68,16 @@ export default function TransactionDetailScreen() {
   if (loading && !transaction) {
     return (
       <SafeAreaView style={[styles.safeArea, styles.center]}>
-        <ActivityIndicator accessibilityLabel="Đang tải giao dịch" color={colors.mauve} />
+        <ActivityIndicator accessibilityLabel={tx("Đang tải giao dịch")} color={colors.mauve} />
       </SafeAreaView>
     );
   }
   if (!transaction) {
     return (
       <SafeAreaView style={[styles.safeArea, styles.center]}>
-        <Text style={styles.error}>Không tìm thấy giao dịch.</Text>
+        <Text style={styles.error}>{tx("Không tìm thấy giao dịch.")}</Text>
         <Pressable onPress={() => router.replace(routes.transactions)} style={styles.secondary}>
-          <Text style={styles.secondaryText}>Về danh sách</Text>
+          <Text style={styles.secondaryText}>{tx("Về danh sách")}</Text>
         </Pressable>
       </SafeAreaView>
     );
@@ -111,12 +113,12 @@ export default function TransactionDetailScreen() {
 
   function confirmArchive() {
     Alert.alert(
-      "Xóa giao dịch?",
-      "Giao dịch sẽ được lưu trữ mềm và không còn xuất hiện trong danh sách.",
+      tx("Xóa giao dịch?"),
+      tx("Giao dịch sẽ được lưu trữ mềm và không còn xuất hiện trong danh sách."),
       [
-        { text: "Hủy", style: "cancel" },
+        { text: tx("Hủy"), style: "cancel" },
         {
-          text: "Xóa",
+          text: tx("Xóa"),
           style: "destructive",
           onPress: () => {
             setBusy(true);
@@ -140,27 +142,27 @@ export default function TransactionDetailScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Sửa giao dịch</Text>
+        <Text style={styles.title}>{tx("Sửa giao dịch")}</Text>
         <Text style={transaction.kind === "income" ? styles.income : styles.expense}>
-          {transaction.kind === "income" ? "Khoản thu" : "Khoản chi"}
+          {transaction.kind === "income" ? tx("Khoản thu") : tx("Khoản chi")}
         </Text>
-        <TextInput accessibilityLabel="Nội dung giao dịch" editable={editable} placeholder="Nội dung" placeholderTextColor={colors.muted} style={[styles.input, !editable && styles.readonly]} value={currentTitle} onChangeText={setTitle} />
-        <TextInput money accessibilityLabel="Số tiền giao dịch" editable={editable} keyboardType="number-pad" placeholder="Số tiền (VND)" placeholderTextColor={colors.muted} style={[styles.input, !editable && styles.readonly]} value={currentAmount} onChangeText={setAmount} />
-        <TextInput accessibilityLabel="Ghi chú giao dịch" editable={editable} multiline numberOfLines={3} placeholder="Ghi chú" placeholderTextColor={colors.muted} style={[styles.input, styles.note, !editable && styles.readonly]} value={currentNote} onChangeText={setNote} />
-        {editable && <><Text style={styles.label}>Danh mục</Text><ScrollView contentContainerStyle={styles.categoryRow} horizontal showsHorizontalScrollIndicator={false}><ChoiceChip checked={currentCategoryId === null} label="Cần phân loại" onPress={() => setCategoryId(null)} />{categories.filter((item) => item.kind === transaction.kind || item.kind === "both").map((item) => <ChoiceChip checked={currentCategoryId === item.id} key={item.id} label={item.name} onPress={() => setCategoryId(item.id)} />)}</ScrollView></>}
-        {message && <Text style={styles.error}>{message}</Text>}
+        <TextInput accessibilityLabel={tx("Nội dung giao dịch")} editable={editable} placeholder={tx("Nội dung")} placeholderTextColor={colors.muted} style={[styles.input, !editable && styles.readonly]} value={currentTitle} onChangeText={setTitle} />
+        <TextInput money accessibilityLabel={tx("Số tiền giao dịch")} editable={editable} keyboardType="number-pad" placeholder={tx("Số tiền (VND)")} placeholderTextColor={colors.muted} style={[styles.input, !editable && styles.readonly]} value={currentAmount} onChangeText={setAmount} />
+        <TextInput accessibilityLabel={tx("Ghi chú giao dịch")} editable={editable} multiline numberOfLines={3} placeholder={tx("Ghi chú")} placeholderTextColor={colors.muted} style={[styles.input, styles.note, !editable && styles.readonly]} value={currentNote} onChangeText={setNote} />
+        {editable && <><Text style={styles.label}>{tx("Danh mục")}</Text><ScrollView contentContainerStyle={styles.categoryRow} horizontal showsHorizontalScrollIndicator={false}><ChoiceChip checked={currentCategoryId === null} label={tx("Cần phân loại")} onPress={() => setCategoryId(null)} />{categories.filter((item) => item.kind === transaction.kind || item.kind === "both").map((item) => <ChoiceChip checked={currentCategoryId === item.id} key={item.id} label={item.name} onPress={() => setCategoryId(item.id)} />)}</ScrollView></>}
+        {message && <Text style={styles.error}>{tx(message)}</Text>}
         {editable && <Pressable disabled={busy} onPress={() => void save()} style={styles.primary}>
-          {busy ? <ActivityIndicator accessibilityLabel="Đang lưu giao dịch" color={colors.white} /> : <Text style={styles.primaryText}>Lưu thay đổi</Text>}
+          {busy ? <ActivityIndicator accessibilityLabel={tx("Đang lưu giao dịch")} color={colors.white} /> : <Text style={styles.primaryText}>{tx("Lưu thay đổi")}</Text>}
         </Pressable>}
-        {editable && <Pressable disabled={busy} onPress={() => router.push(routes.splits(transactionId))} style={styles.actionButton}><Text style={styles.actionText}>Chia theo danh mục</Text></Pressable>}
-        {transaction.kind === "expense" && <Pressable disabled={busy} onPress={() => router.push(routes.refund(transactionId))} style={styles.actionButton}><Text style={styles.actionText}>Tạo khoản hoàn tiền</Text></Pressable>}
-        {receiptId && <Pressable disabled={busy} onPress={() => router.push(routes.receipt(receiptId))} style={styles.actionButton}><Text style={styles.actionText}>Xem hóa đơn đính kèm</Text></Pressable>}
-        {guestReceipt && <><Text style={styles.actionText}>Hóa đơn trên thiết bị · {guestReceipt.merchant}</Text><Image accessibilityLabel={`Ảnh hóa đơn ${guestReceipt.merchant}`} resizeMode="contain" source={{ uri:`data:${guestReceipt.contentType};base64,${guestReceipt.imageBase64}` }} style={styles.receiptImage} />{guestReceipt.lineItems.map((item, index) => <Text key={`${index}:${item.name}`} style={styles.secondaryText}>{item.name} · {item.total.toLocaleString("vi-VN")}đ</Text>)}</>}
+        {editable && <Pressable disabled={busy} onPress={() => router.push(routes.splits(transactionId))} style={styles.actionButton}><Text style={styles.actionText}>{tx("Chia theo danh mục")}</Text></Pressable>}
+        {transaction.kind === "expense" && <Pressable disabled={busy} onPress={() => router.push(routes.refund(transactionId))} style={styles.actionButton}><Text style={styles.actionText}>{tx("Tạo khoản hoàn tiền")}</Text></Pressable>}
+        {receiptId && <Pressable disabled={busy} onPress={() => router.push(routes.receipt(receiptId))} style={styles.actionButton}><Text style={styles.actionText}>{tx("Xem hóa đơn đính kèm")}</Text></Pressable>}
+        {guestReceipt && <><Text style={styles.actionText}>{tx("Hóa đơn trên thiết bị ·")}{" "}{guestReceipt.merchant}</Text><Image accessibilityLabel={tx("receiptImage",{merchant:guestReceipt.merchant})} resizeMode="contain" source={{ uri:`data:${guestReceipt.contentType};base64,${guestReceipt.imageBase64}` }} style={styles.receiptImage} />{guestReceipt.lineItems.map((item, index) => <Text key={`${index}:${item.name}`} style={styles.secondaryText}>{item.name} · {money(item.total)}</Text>)}</>}
         <Pressable disabled={busy} onPress={confirmArchive} style={styles.deleteButton}>
-          <Text style={styles.deleteText}>Xóa giao dịch</Text>
+          <Text style={styles.deleteText}>{tx("Xóa giao dịch")}</Text>
         </Pressable>
         <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}>
-          <Text style={styles.secondaryText}>Hủy</Text>
+          <Text style={styles.secondaryText}>{tx("Hủy")}</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>

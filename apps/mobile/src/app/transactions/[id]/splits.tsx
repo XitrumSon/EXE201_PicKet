@@ -1,5 +1,5 @@
+import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
 import { colors, radii } from "@picket/design-tokens";
-import { formatVnd } from "@picket/domain";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
@@ -19,6 +19,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 
 export default function TransactionSplitsScreen() {
+  const {tx,money:formatVnd}=useTransactionCopy();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, localMode } = useAuth();
   const { categories, getSplits, setSplits, transactions } = useTransactions();
@@ -26,7 +27,7 @@ export default function TransactionSplitsScreen() {
   const [amounts, setAmounts] = useState<Record<string, string>>({});
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<TransactionNotice | null>(null);
   const availableCategories = useMemo(
     () =>
       categories.filter(
@@ -62,10 +63,10 @@ export default function TransactionSplitsScreen() {
 
   if (!session && !localMode) return <Redirect href={routes.login} />;
   if (!transaction || !loaded) {
-    return <SafeAreaView style={[styles.safeArea, styles.center]}>{transaction ? <ActivityIndicator accessibilityLabel="Đang tải phân bổ giao dịch" color={colors.mauve} /> : <Text style={styles.error}>Không tìm thấy giao dịch.</Text>}</SafeAreaView>;
+    return <SafeAreaView style={[styles.safeArea, styles.center]}>{transaction ? <ActivityIndicator accessibilityLabel={tx("Đang tải phân bổ giao dịch")} color={colors.mauve} /> : <Text style={styles.error}>{tx("Không tìm thấy giao dịch.")}</Text>}</SafeAreaView>;
   }
   if (transaction.kind !== "expense" && transaction.kind !== "income") {
-    return <SafeAreaView style={[styles.safeArea, styles.center]}><Text style={styles.error}>Loại giao dịch này không hỗ trợ chia danh mục.</Text><Pressable onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>Quay lại</Text></Pressable></SafeAreaView>;
+    return <SafeAreaView style={[styles.safeArea, styles.center]}><Text style={styles.error}>{tx("Loại giao dịch này không hỗ trợ chia danh mục.")}</Text><Pressable onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>{tx("Quay lại")}</Text></Pressable></SafeAreaView>;
   }
 
   const normalizedAmounts = availableCategories.map((category) => {
@@ -94,7 +95,7 @@ export default function TransactionSplitsScreen() {
       return setMessage("Mỗi phần phải là số nguyên lớn hơn 0.");
     }
     if (splits.length > 0 && total !== transactionAmount) {
-      return setMessage(`Tổng phân bổ phải bằng ${formatVnd(transactionAmount)}.`);
+      return setMessage({key:"splitTotal",money:transactionAmount});
     }
     setBusy(true);
     setMessage(null);
@@ -118,22 +119,22 @@ export default function TransactionSplitsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>Chia danh mục</Text>
+        <Text style={styles.title}>{tx("Chia danh mục")}</Text>
         <Text style={styles.subtitle}>{transaction.title}</Text>
         <View style={styles.totalCard}>
-          <Text style={styles.totalLabel}>Đã phân bổ</Text>
+          <Text style={styles.totalLabel}>{tx("Đã phân bổ")}</Text>
           <Text style={[styles.totalValue, total === transaction.amount ? styles.valid : styles.invalid]}>{formatVnd(total)} / {formatVnd(transaction.amount)}</Text>
         </View>
         {normalizedAmounts.map(({ category, value }) => (
           <View key={category.id} style={styles.row}>
             <Text style={styles.category}>{category.name}</Text>
-            <TextInput money accessibilityLabel={`Số tiền phân bổ cho ${category.name}`} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={value} onChangeText={(next) => setAmounts((current) => ({ ...current, [category.id]: next }))} />
+            <TextInput money accessibilityLabel={tx("splitAmount",{category:category.name})} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={value} onChangeText={(next) => setAmounts((current) => ({ ...current, [category.id]: next }))} />
           </View>
         ))}
-        {message && <Text style={styles.error}>{message}</Text>}
-        <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel="Đang lưu phân bổ giao dịch" color={colors.white} /> : <Text style={styles.primaryText}>Lưu phân bổ</Text>}</Pressable>
-        <Pressable disabled={busy} onPress={() => { setAmounts(Object.fromEntries(availableCategories.map((item) => [item.id, ""]))); }} style={styles.clear}><Text style={styles.clearText}>Bỏ toàn bộ phân bổ</Text></Pressable>
-        <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>Hủy</Text></Pressable>
+        {message && <Text style={styles.error}>{tx(message)}</Text>}
+        <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel={tx("Đang lưu phân bổ giao dịch")} color={colors.white} /> : <Text style={styles.primaryText}>{tx("Lưu phân bổ")}</Text>}</Pressable>
+        <Pressable disabled={busy} onPress={() => { setAmounts(Object.fromEntries(availableCategories.map((item) => [item.id, ""]))); }} style={styles.clear}><Text style={styles.clearText}>{tx("Bỏ toàn bộ phân bổ")}</Text></Pressable>
+        <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>{tx("Hủy")}</Text></Pressable>
       </ScrollView>
     </SafeAreaView>
   );

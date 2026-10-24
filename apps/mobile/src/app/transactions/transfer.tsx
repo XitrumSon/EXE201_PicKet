@@ -1,3 +1,4 @@
+import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
 import { TopAppBar , ChoiceChip, FieldLabel, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
 import { colors, radii } from "@picket/design-tokens";
 import { Redirect, router } from "expo-router";
@@ -12,6 +13,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 
 export default function NewTransferScreen() {
+  const {tx}=useTransactionCopy();
   const { session, localMode } = useAuth();
   const { accounts } = useAccounts();
   const { createTransfer } = useTransactions();
@@ -20,11 +22,11 @@ export default function NewTransferScreen() {
   const destinations = useMemo(() => accounts.filter((item) => item.id !== source?.id && item.currencyCode === source?.currencyCode), [accounts, source]);
   const [destinationId, setDestinationId] = useState("");
   const selectedDestinationId = destinations.some((item) => item.id === destinationId) ? destinationId : destinations[0]?.id ?? "";
-  const [title, setTitle] = useState("Chuyển tiền");
+  const [title, setTitle] = useState(tx("Chuyển tiền"));
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<TransactionNotice | null>(null);
   if (!session && !localMode) return <Redirect href={routes.login} />;
 
   async function submit() {
@@ -43,17 +45,17 @@ export default function NewTransferScreen() {
   }
 
   return <PicketScreen>
-    <TopAppBar title="Chuyển tiền" backDisabled={busy} />
-    <Text style={styles.subtitle}>Di chuyển tiền giữa các tài khoản mà không làm thay đổi tổng thu chi.</Text>
-    <Surface peach style={styles.summary}><Text style={styles.summarySymbol}>⇄</Text><View style={styles.summaryCopy}><Text style={styles.summaryTitle}>Chuyển nội bộ</Text><Text style={styles.summaryText}>Chỉ các tài khoản cùng loại tiền mới có thể chuyển cho nhau.</Text></View></Surface>
+    <TopAppBar title={tx("Chuyển tiền")} backDisabled={busy} />
+    <Text style={styles.subtitle}>{tx("Di chuyển tiền giữa các tài khoản mà không làm thay đổi tổng thu chi.")}</Text>
+    <Surface peach style={styles.summary}><Text style={styles.summarySymbol}>⇄</Text><View style={styles.summaryCopy}><Text style={styles.summaryTitle}>{tx("Chuyển nội bộ")}</Text><Text style={styles.summaryText}>{tx("Chỉ các tài khoản cùng loại tiền mới có thể chuyển cho nhau.")}</Text></View></Surface>
     <Surface style={styles.form}>
-      <FieldLabel>Từ tài khoản</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{accounts.map((account) => <ChoiceChip checked={source?.id === account.id} key={account.id} label={account.name} onPress={() => { setSourceId(account.id); setDestinationId(""); }} />)}</View>
-      <FieldLabel>Đến tài khoản ({source?.currencyCode ?? "—"})</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{destinations.map((account) => <ChoiceChip checked={selectedDestinationId === account.id} key={account.id} label={account.name} onPress={() => setDestinationId(account.id)} />)}{destinations.length === 0 ? <Text style={styles.empty}>Không có tài khoản đích cùng loại tiền.</Text> : null}</View>
-      <FieldLabel>Nội dung</FieldLabel><TextInput accessibilityLabel="Nội dung chuyển tiền" maxLength={120} onChangeText={setTitle} placeholder="Ví dụ: Chuyển sang ví tiết kiệm" placeholderTextColor={colors.muted} style={styles.input} value={title} />
-      <FieldLabel>Số tiền</FieldLabel><View style={styles.amountBox}><TextInput money accessibilityLabel="Số tiền chuyển" keyboardType="number-pad" onChangeText={setAmount} placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={amount} /><Text style={styles.currency}>{source?.currencyCode ?? "VND"}</Text></View>
-      <FieldLabel>Ghi chú</FieldLabel><TextInput accessibilityLabel="Ghi chú chuyển tiền" multiline onChangeText={setNote} placeholder="Không bắt buộc" placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} />
-      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text> : null}
-      <PrimaryAction busy={busy} disabled={!source || !selectedDestinationId} label="Xác nhận chuyển" onPress={() => void submit()} />
+      <FieldLabel>{tx("Từ tài khoản")}</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{accounts.map((account) => <ChoiceChip checked={source?.id === account.id} key={account.id} label={account.name} onPress={() => { setSourceId(account.id); setDestinationId(""); }} />)}</View>
+      <FieldLabel>{tx("Đến tài khoản (")}{source?.currencyCode ?? "—"})</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{destinations.map((account) => <ChoiceChip checked={selectedDestinationId === account.id} key={account.id} label={account.name} onPress={() => setDestinationId(account.id)} />)}{destinations.length === 0 ? <Text style={styles.empty}>{tx("Không có tài khoản đích cùng loại tiền.")}</Text> : null}</View>
+      <FieldLabel>{tx("Nội dung")}</FieldLabel><TextInput accessibilityLabel={tx("Nội dung chuyển tiền")} maxLength={120} onChangeText={setTitle} placeholder={tx("Ví dụ: Chuyển sang ví tiết kiệm")} placeholderTextColor={colors.muted} style={styles.input} value={title} />
+      <FieldLabel>{tx("Số tiền")}</FieldLabel><View style={styles.amountBox}><TextInput money accessibilityLabel={tx("Số tiền chuyển")} keyboardType="number-pad" onChangeText={setAmount} placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={amount} /><Text style={styles.currency}>{source?.currencyCode ?? "VND"}</Text></View>
+      <FieldLabel>{tx("Ghi chú")}</FieldLabel><TextInput accessibilityLabel={tx("Ghi chú chuyển tiền")} multiline onChangeText={setNote} placeholder={tx("Không bắt buộc")} placeholderTextColor={colors.muted} style={[styles.input, styles.note]} value={note} />
+      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{tx(message)}</Text> : null}
+      <PrimaryAction busy={busy} disabled={!source || !selectedDestinationId} label={tx("Xác nhận chuyển")} onPress={() => void submit()} />
     </Surface>
   </PicketScreen>;
 }

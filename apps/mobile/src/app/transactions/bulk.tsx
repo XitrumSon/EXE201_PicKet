@@ -1,5 +1,5 @@
+import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
 import { colors } from "@picket/design-tokens";
-import { formatVnd } from "@picket/domain";
 import { Redirect } from "expo-router";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
@@ -12,12 +12,13 @@ import { useTransactions } from "@/features/transactions/transactions-context";
 import { runBulkAction } from "@/features/transactions/bulk-action";
 
 export default function BulkTransactionsScreen() {
+  const {tx,money:formatVnd,locale}=useTransactionCopy();
   const { session, localMode } = useAuth();
   const { archive, categories, transactions, update } = useTransactions();
   const [selected, setSelected] = useState<string[]>([]);
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<TransactionNotice | null>(null);
   if (!session && !localMode) return <Redirect href={routes.login} />;
 
   const eligible = transactions.filter((item) => item.kind === "income" || item.kind === "expense");
@@ -38,31 +39,31 @@ export default function BulkTransactionsScreen() {
     });
     const acceptedIds = new Set([...result.completedIds, ...result.queuedIds]);
     setSelected((current) => current.filter((id) => !acceptedIds.has(id)));
-    setMessage(`${result.completedIds.length}/${chosen.length} giao dịch đã xử lý. ${result.queuedIds.length > 0 ? `${result.queuedIds.length} giao dịch đã lưu trên máy, chờ đồng bộ. ` : ""}${result.failedIds.length > 0 ? `${result.failedIds.length} mục chưa thành công và vẫn được chọn; hãy kiểm tra rồi thử lại.` : ""}`);
+    setMessage({key:"bulkResult",values:{done:result.completedIds.length,total:chosen.length,queued:result.queuedIds.length,failed:result.failedIds.length}});
     setBusy(false);
   }
   function confirmArchive() {
     if (chosen.length === 0) return;
-    Alert.alert("Lưu trữ giao dịch?", `${chosen.length} giao dịch đã chọn sẽ không còn trong danh sách đang hoạt động.`, [
-      { text: "Hủy", style: "cancel" },
-      { text: "Lưu trữ", style: "destructive", onPress: () => void perform("archive") },
+    Alert.alert(tx("Lưu trữ giao dịch?"), tx("archiveSelection",{count:chosen.length}), [
+      { text: tx("Hủy"), style: "cancel" },
+      { text: tx("Lưu trữ"), style: "destructive", onPress: () => void perform("archive") },
     ]);
   }
   return <PicketScreen>
-    <TopAppBar title="Sửa nhiều giao dịch" />
-    <Text style={styles.subtitle}>Chọn các khoản thu/chi để đổi danh mục hoặc lưu trữ. Mỗi mục được xử lý riêng; mục lỗi sẽ còn được chọn.</Text>
-    {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>}
-    <Text style={styles.label}>Đã chọn {chosen.length}</Text>
+    <TopAppBar title={tx("Sửa nhiều giao dịch")} />
+    <Text style={styles.subtitle}>{tx("Chọn các khoản thu/chi để đổi danh mục hoặc lưu trữ. Mỗi mục được xử lý riêng; mục lỗi sẽ còn được chọn.")}</Text>
+    {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{tx(message)}</Text>}
+    <Text style={styles.label}>{tx("selectedCount",{count:chosen.length})}</Text>
     <View style={styles.actions}>
-      <Pressable accessibilityRole="button" onPress={() => setSelected(eligible.map((item) => item.id))}><Text style={styles.link}>Chọn tất cả</Text></Pressable>
-      <Pressable accessibilityRole="button" onPress={() => setSelected([])}><Text style={styles.link}>Bỏ chọn</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={() => setSelected(eligible.map((item) => item.id))}><Text style={styles.link}>{tx("Chọn tất cả")}</Text></Pressable>
+      <Pressable accessibilityRole="button" onPress={() => setSelected([])}><Text style={styles.link}>{tx("Bỏ chọn")}</Text></Pressable>
     </View>
-    {eligible.length === 0 ? <EmptyState title="Chưa có giao dịch" description="Tạo khoản thu hoặc chi trước khi chỉnh sửa hàng loạt." /> :
-      <Surface style={styles.list}>{eligible.map((item) => <Pressable accessibilityLabel={`${selected.includes(item.id) ? "Bỏ chọn" : "Chọn"} ${item.title}, ${formatVnd(item.amount)}`} accessibilityRole="checkbox" accessibilityState={{ checked: selected.includes(item.id), disabled: busy }} disabled={busy} key={item.id} onPress={() => toggle(item.id)} style={styles.row}><Text style={styles.check}>{selected.includes(item.id) ? "☑" : "□"}</Text><View style={styles.copy}><Text style={styles.title}>{item.title}</Text><Text style={styles.meta}>{new Date(item.occurredAt).toLocaleDateString("vi-VN")}</Text></View><Text style={styles.amount}>{formatVnd(item.amount)}</Text></Pressable>)}</Surface>}
-    <Text style={styles.label}>Danh mục mới</Text>
+    {eligible.length === 0 ? <EmptyState title={tx("Chưa có giao dịch")} description={tx("Tạo khoản thu hoặc chi trước khi chỉnh sửa hàng loạt.")} /> :
+      <Surface style={styles.list}>{eligible.map((item) => <Pressable accessibilityLabel={`${selected.includes(item.id) ? tx("Bỏ chọn") : tx("Chọn")} ${item.title}, ${formatVnd(item.amount)}`} accessibilityRole="checkbox" accessibilityState={{ checked: selected.includes(item.id), disabled: busy }} disabled={busy} key={item.id} onPress={() => toggle(item.id)} style={styles.row}><Text style={styles.check}>{selected.includes(item.id) ? "☑" : "□"}</Text><View style={styles.copy}><Text style={styles.title}>{item.title}</Text><Text style={styles.meta}>{new Date(item.occurredAt).toLocaleDateString(locale)}</Text></View><Text style={styles.amount}>{formatVnd(item.amount)}</Text></Pressable>)}</Surface>}
+    <Text style={styles.label}>{tx("Danh mục mới")}</Text>
     <View style={styles.chips}>{availableCategories.map((item) => <ChoiceChip checked={categoryId === item.id} key={item.id} label={item.name} onPress={() => setCategoryId(item.id)} />)}</View>
-    <PrimaryAction busy={busy} disabled={chosen.length === 0 || categoryId === null || !availableCategories.some((item) => item.id === categoryId)} label="Đổi danh mục đã chọn" onPress={() => void perform("category")} />
-    <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy || chosen.length === 0 }} disabled={busy || chosen.length === 0} onPress={confirmArchive} style={styles.archive}><Text style={styles.archiveText}>Lưu trữ đã chọn</Text></Pressable>
+    <PrimaryAction busy={busy} disabled={chosen.length === 0 || categoryId === null || !availableCategories.some((item) => item.id === categoryId)} label={tx("Đổi danh mục đã chọn")} onPress={() => void perform("category")} />
+    <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy || chosen.length === 0 }} disabled={busy || chosen.length === 0} onPress={confirmArchive} style={styles.archive}><Text style={styles.archiveText}>{tx("Lưu trữ đã chọn")}</Text></Pressable>
   </PicketScreen>;
 }
 
