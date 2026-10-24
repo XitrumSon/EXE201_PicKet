@@ -2,6 +2,17 @@ import assert from "node:assert/strict";
 import {test} from "node:test";
 import {deleteAccountWithLocalRetirement} from "./account-delete-flow";
 import {createObservationStore} from "../cashflow/forecast-observation-store";
+import {createOwnerCacheLifecycle} from "../../core/sync/owner-cache-lifecycle";
+
+test("account deletion retires every generic cache resource before the server call and keeps it fenced after sign-out failure",async()=>{
+ const retired=new Set<string>(),rows=new Map<string,string>([["a","all resource payloads"],["b","other owner"]]);
+ const driver={isRetired:async(owner:string)=>retired.has(owner),retire:async(owner:string)=>{rows.delete(owner);retired.add(owner);},resume:async(owner:string)=>{retired.delete(owner);}};
+ const cache=createOwnerCacheLifecycle(driver);
+ const result=await deleteAccountWithLocalRetirement({retireLocal:()=>cache.retire("a"),resumeLocal:()=>cache.resume("a"),deleteRemote:async()=>{assert.equal(rows.has("a"),false);assert.equal(retired.has("a"),true);},signOut:async()=>{throw Error("device sign-out failed");},isCurrent:()=>true});
+ assert.deepEqual(result,{status:"deleted",signedOut:false});
+ await assert.rejects(createOwnerCacheLifecycle(driver).run("a",async()=>rows.set("a","late response")),/retired/);
+ assert.equal(rows.get("b"),"other owner");
+});
 test("local retirement precedes remote deletion and sign-out failure never reclassifies a confirmed deletion",async()=>{
  const order:string[]=[];
  const result=await deleteAccountWithLocalRetirement({retireLocal:async()=>{order.push("retire");},resumeLocal:async()=>{order.push("resume");},deleteRemote:async()=>{order.push("delete");},signOut:async()=>{order.push("signout");throw Error("storage");},isCurrent:()=>true});
