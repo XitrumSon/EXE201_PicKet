@@ -42,7 +42,7 @@ The latest continuation below supersedes older pending lists in this file.
   block local editing until resolved; no automatic resend or merge occurs.
   Partial/combined payments remain unsupported. A payment must also match the
   occurrence's wallet. Cloud activation and native acceptance remain gated.
-- Ledger facts: an authenticated, no-store snapshot RPC/API now reads owner-scoped wallets and transactions at one database origin. The preview requires explicit wallet selection and no pending device mutations before adopting an opening assumption. It links included transactions and discards snapshots on background, queue changes, timeout or session change. Local Auth/RLS/API acceptance passes; migration remains local and the preview gate stays off. Manual settlement sync is implemented; completeness/backtest acceptance remains pending.
+- Ledger facts: an authenticated, no-store snapshot RPC/API now reads owner-scoped wallets and transactions at one database origin. The preview requires explicit wallet selection and no pending device mutations before adopting an opening assumption. It links included transactions and discards snapshots on background, queue changes, timeout or session change. Local Auth/RLS/API acceptance passes; migration remains local and the preview gate stays off. Manual settlement sync and offline backtest tooling are implemented; longitudinal capture and real-panel forecast acceptance remain pending.
 - Weekly Money Story: a local vi/en template now summarizes only confirmed
   selected-wallet records from UTC Monday through snapshot time. Income,
   expenses, refunds and scope transfers stay separate. Amounts hide by default
@@ -50,6 +50,16 @@ The latest continuation below supersedes older pending lists in this file.
   explicit, including empty weeks. No AI call, financial write, automatic sharing
   or affordability claim. The development route is linked from the learning hub
   behind the existing cloud gate. Native/privacy interaction QA remains pending.
+- Forecast evaluation: the offline runner now joins frozen ledger facts, wallet-
+  scoped schedules, verified settlement links and the existing F0/F1 engines.
+  A 28-day adapter requires explicit scope-bound day completeness and reviewed
+  expense classifications; missing records are never inferred as zero spending.
+  Future features, repeated windows and cross-split subject/family leakage reject.
+  Missing truth excludes a horizon; F1 abstains without sufficient history.
+  Grouped and paired metrics stay separate by currency, horizon, cohort and split.
+  A local CLI writes reproducible synthetic reports without uploads or overwrites.
+  This does not activate F1 or establish accuracy on real users. Longitudinal
+  capture/review UI, an authorized real panel and calibration remain pending.
 - Languages: profile controls, controlled profile messages, app update phases,
   installer permissions and installed-version footer now use vi/en resources.
   New/edit transaction, transfer, refund, category splits and bulk-edit forms now
@@ -66,13 +76,21 @@ The latest continuation below supersedes older pending lists in this file.
 - User confirmed **no testing group or Android acceptance device is ready**.
   Real Play purchase cycles, physical-device/TalkBack checks and the 12-person
   closed-test period are external acceptance blockers, not passed tests.
-- Latest suites: **569 mobile tests and 140 API tests passed**, `dart analyze` clean; server build and standalone
+- Latest suites: **586 mobile tests and 140 API tests passed**, `dart analyze` clean; server build and standalone
   learning-worker compilation passed. Android JS export passed. Previous cashflow
   coverage: **98.85% lines / 89.06% branches / 97.77% functions**. Eleven local SQL
   suites passed. Mobile typecheck passed; lint has no errors and 25 pre-existing
-  warnings. Logs: `.artifacts/mobile-settlement-cloud-tests.log`, `api-settlement-tests.log`,
-  `mobile-settlement-cloud-export.log`, `settlement-domain-coverage.log`. Earlier counts below
+  warnings. Logs: `.artifacts/mobile-backtest-tests.log`, `api-settlement-tests.log`,
+  `mobile-backtest-export.log`, `forecast-backtest-coverage.log`. Earlier counts below
   are historical.
+
+Forecast evaluation continuation (24 October): adapter RED `1ab6832`, GREEN
+`644758b`; backtest RED `bb080de`. The offline CLI exercises 14 synthetic origins,
+excludes two incomplete horizons and abstains from F1 on two insufficient-history
+origins. Focused changed-domain coverage is 97.83% lines / 89.76% branches /
+100% functions. See `FORECAST_BACKTEST_READINESS_20261024.md` for contracts,
+reproduction and remaining real-panel gates. No financial data was uploaded and
+no provider, production configuration or feature gate was changed.
 
 Settlement cloud continuation (24 October): backend contract RED `deb76d6`,
 mobile durable/review protocol RED `7654933`. GET/PUT `/v1/cashflow-settlements`
