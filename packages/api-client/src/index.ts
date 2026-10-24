@@ -123,6 +123,9 @@ export class PicketApiClient {
   health(signal?: AbortSignal): Promise<ApiHealth> {
     return this.request<ApiHealth>("/health", { signal });
   }
+  cashflowLedger(token:string,signal?:AbortSignal):Promise<unknown>{
+    return this.request("/v1/cashflow-ledger",{headers:this.authHeaders(token),signal});
+  }
 
   learningActivity(token:string,signal?:AbortSignal):Promise<LearningActivityDocument>{
     return this.request("/v1/learning/activity",{headers:this.authHeaders(token),signal});

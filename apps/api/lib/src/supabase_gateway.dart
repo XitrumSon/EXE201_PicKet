@@ -89,6 +89,29 @@ class SupabaseGateway {
     }
   }
 
+  Future<Map<String, dynamic>> cashflowLedger(String token) async {
+    final value = await _learningAiRpc(
+      token,
+      'load_cashflow_ledger_snapshot',
+      {},
+    );
+    if (value is! Map<String, dynamic> ||
+        value['asOf'] is! String ||
+        DateTime.tryParse(value['asOf'] as String) == null ||
+        value['wallets'] is! List ||
+        value['entries'] is! List ||
+        value['confirmations'] is! List ||
+        (value['wallets'] as List).length > 1000 ||
+        (value['entries'] as List).length > 100000 ||
+        (value['confirmations'] as List).length > 100000) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid ledger snapshot.',
+      );
+    }
+    return value;
+  }
+
   Future<Map<String, dynamic>> learningAiConsent(
     String token, {
     bool? accepted,
