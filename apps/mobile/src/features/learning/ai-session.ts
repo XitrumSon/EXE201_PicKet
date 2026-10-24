@@ -61,8 +61,7 @@ export function createLearningAiSession(api:LearningAiApi,token:string,newKey:()
     }),
     poll:()=>run(async(signal,current)=>{
       const job=state.job;
-      if(!job||!state.consent?.accepted||["failed","cancelled","expired"].includes(job.status)||
-        (job.status==="completed"&&job.statementIds.length>0))return;
+      if(!job||!state.consent?.accepted||["failed","cancelled","expired"].includes(job.status))return;
       let response:unknown;
       try{response=await api.learningAiJob(accessToken,job.id,signal);}
       catch(error){

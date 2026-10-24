@@ -30,14 +30,15 @@ function AiSession({api,token}:{api:LearningAiApi;token:string}){
   },[machine]);
   const pending=state.job&&(["queued","claimed","dispatched"].includes(state.job.status)||
     (state.job.status==="completed"&&state.job.statementIds.length===0));
+  const completed=state.job?.status==="completed"&&state.job.statementIds.length>0;
   useEffect(()=>{
-    if(!pending)return;
+    if(!pending&&!completed)return;
     const poll=()=>{if(AppState.currentState==="active")void machine.poll();};
     poll();
-    const timer=setInterval(poll,2000);
+    const timer=setInterval(poll,pending?2000:60000);
     const listener=AppState.addEventListener("change",value=>{if(value==="active")poll();});
     return()=>{clearInterval(timer);listener.remove();};
-  },[machine,pending]);
+  },[machine,pending,completed]);
   function button(label:string,action:()=>void,disabled=false){
     return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={action} style={{minHeight:48,padding:14,borderRadius:12,borderColor:c.border,borderWidth:1,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.primary,fontWeight:"600"}}>{label}</Text></Pressable>;
   }
@@ -52,7 +53,7 @@ function AiSession({api,token}:{api:LearningAiApi;token:string}){
     {!state.consent?.accepted&&button(t("accept"),()=>void machine.setConsent(true),state.busy||!state.consent||!enabled)}
     {state.consent?.accepted&&button(t("generate"),()=>void machine.generate(language),state.busy||!!pending||!enabled)}
     {state.busy&&<Text accessibilityLiveRegion="polite" style={{color:c.muted}}>{t("loading")}</Text>}
-    {state.job&&<View accessibilityLiveRegion="polite" style={{gap:10}}><Text style={{color:c.text,fontWeight:"600"}}>{t(state.job.status)}</Text>{state.job.statementIds.map(id=><Text key={id} style={{color:c.text,lineHeight:24}}>{t(id)}</Text>)}</View>}
+    {state.job&&<View accessibilityLiveRegion="polite" style={{gap:10}}><Text style={{color:c.text,fontWeight:"600"}}>{t(state.job.status)}</Text>{!state.error&&!state.busy&&state.job.statementIds.map(id=><Text key={id} style={{color:c.text,lineHeight:24}}>{t(id)}</Text>)}</View>}
     {state.error&&<Text accessibilityRole="alert" style={{color:c.expense}}>{t(state.error)}</Text>}
     {(state.error||!state.consent)&&button(t("refresh"),()=>void machine.load(),state.busy)}
     {state.consent?.accepted!==false&&button(t("revoke"),()=>void machine.setConsent(false))}
