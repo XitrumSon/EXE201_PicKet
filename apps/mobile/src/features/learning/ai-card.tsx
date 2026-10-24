@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { AppState, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { picketApi } from "@/core/api/client";
@@ -19,10 +19,12 @@ export function LearningAiCard(){
 function AiSession({api,token}:{api:LearningAiApi;token:string}){
   const {colors:c,language}=useAppTheme();
   const {t}=useTranslation("learningAi");
-  const machine=useMemo(()=>createLearningAiSession(api,token,()=>Crypto.randomUUID()),[api,token]);
+  const [machine]=useState(()=>createLearningAiSession(api,token,()=>Crypto.randomUUID()));
   const state=useSyncExternalStore(machine.subscribe,machine.snapshot,machine.snapshot);
   const enabled=process.env.EXPO_PUBLIC_LEARNING_AI_ENABLED==="true";
+  useEffect(()=>{machine.setAccessToken(token);},[machine,token]);
   useEffect(()=>{
+    machine.start();
     void machine.load();
     return()=>machine.dispose();
   },[machine]);

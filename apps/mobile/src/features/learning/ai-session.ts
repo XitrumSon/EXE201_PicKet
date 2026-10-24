@@ -15,6 +15,7 @@ export interface LearningAiState {
 }
 
 export function createLearningAiSession(api:LearningAiApi,token:string,newKey:()=>string) {
+  let accessToken=token;
   let state:LearningAiState={consent:null,job:null,busy:false,error:null};
   let active=true;
   let version=0;
@@ -36,12 +37,17 @@ export function createLearningAiSession(api:LearningAiApi,token:string,newKey:()
     finally{if(current())update({busy:false});}
   }
   return {
-    start:()=>undefined,
-    setAccessToken:(next:string)=>{void next;},
+    start:()=>{if(!active){active=true;version++;update({consent:null,job:null,busy:false,error:null});}},
+    setAccessToken:(next:string)=>{
+      if(!next.trim())throw new Error("Access token required");
+      if(next===accessToken)return;
+      accessToken=next;version++;controller.abort();controller=new AbortController();
+      update({busy:false});
+    },
     snapshot:()=>state,
     subscribe:(listener:()=>void)=>{listeners.add(listener);return()=>{listeners.delete(listener);};},
     load:()=>run(async(signal,current)=>{
-      const consent=parseConsent(await api.learningAiConsent(token,signal));
+      const consent=parseConsent(await api.learningAiConsent(accessToken,signal));
       if(!current())return;
       if(!consent.accepted||consent.generation!==state.consent?.generation){request=null;update({job:null});}
       update({consent});
@@ -50,14 +56,14 @@ export function createLearningAiSession(api:LearningAiApi,token:string,newKey:()
       if(!state.consent?.accepted)throw new Error("Explicit consent required");
       // Retain the same key after a lost response; no automatic POST replay.
       if(!request||request.locale!==locale)request={locale,key:newKey()};
-      const job=parseJob(await api.enqueueLearningAi(token,{scenarioId:"cash-gap-v1",locale},request.key,signal),true);
+      const job=parseJob(await api.enqueueLearningAi(accessToken,{scenarioId:"cash-gap-v1",locale},request.key,signal),true);
       if(current())update({job:{...job,statementIds:[]}});
     }),
     poll:()=>run(async(signal,current)=>{
       const job=state.job;
       if(!job||!state.consent?.accepted||["failed","cancelled","expired"].includes(job.status)||
         (job.status==="completed"&&job.statementIds.length>0))return;
-      const result=parseJob(await api.learningAiJob(token,job.id,signal));
+      const result=parseJob(await api.learningAiJob(accessToken,job.id,signal));
       if(result.id!==job.id)throw new Error("Mismatched job");
       if(current()){
         update({job:result as LearningAiJob});
@@ -68,7 +74,7 @@ export function createLearningAiSession(api:LearningAiApi,token:string,newKey:()
       // Hide old output immediately. A failed revoke remains visibly failed.
       request=null;update({job:null});
       return run(async(signal,current)=>{
-        const consent=parseConsent(await api.setLearningAiConsent(token,accepted,signal));
+        const consent=parseConsent(await api.setLearningAiConsent(accessToken,accepted,signal));
         if(consent.accepted!==accepted)throw new Error("Consent not confirmed");
         if(current())update({consent});
       },true);
@@ -76,7 +82,7 @@ export function createLearningAiSession(api:LearningAiApi,token:string,newKey:()
     clearHistory:()=>{
       request=null;update({job:null});
       return run(async(signal,current)=>{
-        await api.deleteLearningAiHistory(token,signal);
+        await api.deleteLearningAiHistory(accessToken,signal);
         if(current())update({job:null});
       },true);
     },
