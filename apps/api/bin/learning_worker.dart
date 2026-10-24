@@ -16,12 +16,19 @@ Future<void> main(List<String> arguments) async {
       model: config.model,
       client: client,
     );
+    final gateway = SupabaseLearningJobGateway(config, client);
     final worker = LearningWorker(
-      gateway: SupabaseLearningJobGateway(config, client),
+      gateway: gateway,
       explain: provider.explain,
     );
+    var nextPrune = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
     do {
       try {
+        final now = DateTime.now().toUtc();
+        if (!now.isBefore(nextPrune)) {
+          await gateway.prune();
+          nextPrune = now.add(const Duration(hours: 1));
+        }
         await worker.runOnce();
       } on Object {
         // Never log keys, owner IDs, job bodies or provider responses.

@@ -1,4 +1,8 @@
 import type {
+  LearningAiConsent,
+  LearningAiRequest,
+  LearningAiQueuedJob,
+  LearningAiJob,
   CashflowSchedule,
   CashflowScheduleDocument,
   BillingAvailability,
@@ -116,6 +120,22 @@ export class PicketApiClient {
 
   health(signal?: AbortSignal): Promise<ApiHealth> {
     return this.request<ApiHealth>("/health", { signal });
+  }
+
+  learningAiConsent(token:string,signal?:AbortSignal):Promise<LearningAiConsent>{
+    return this.request("/v1/learning-ai/consent",{headers:this.authHeaders(token),signal});
+  }
+  setLearningAiConsent(token:string,accepted:boolean,signal?:AbortSignal):Promise<LearningAiConsent>{
+    return this.request("/v1/learning-ai/consent",{method:"PUT",headers:this.jsonAuthHeaders(token),body:JSON.stringify({accepted}),signal});
+  }
+  enqueueLearningAi(token:string,request:LearningAiRequest,key:string,signal?:AbortSignal):Promise<LearningAiQueuedJob>{
+    return this.request("/v1/learning-ai/jobs",{method:"POST",headers:{...this.jsonAuthHeaders(token),"idempotency-key":key},body:JSON.stringify(request),signal});
+  }
+  learningAiJob(token:string,id:string,signal?:AbortSignal):Promise<LearningAiJob>{
+    return this.request(`/v1/learning-ai/jobs/${encodeURIComponent(id)}`,{headers:this.authHeaders(token),signal});
+  }
+  deleteLearningAiHistory(token:string,signal?:AbortSignal):Promise<void>{
+    return this.request("/v1/learning-ai/jobs",{method:"DELETE",headers:this.authHeaders(token),signal});
   }
 
   currentEntitlements(

@@ -106,10 +106,11 @@ class SupabaseLearningJobGateway implements LearningJobGateway {
             body: jsonEncode(body),
           )
           .timeout(const Duration(seconds: 10));
-      if (response.statusCode != 200 || response.bodyBytes.length > 8192) {
+      if (!{200, 204}.contains(response.statusCode) ||
+          response.bodyBytes.length > 8192) {
         throw const LearningWorkerGatewayException();
       }
-      return jsonDecode(response.body);
+      return response.body.isEmpty ? null : jsonDecode(response.body);
     } on Object {
       throw const LearningWorkerGatewayException();
     }
@@ -134,6 +135,10 @@ class SupabaseLearningJobGateway implements LearningJobGateway {
       value['scenarioId'] as String,
       value['locale'] as String,
     );
+  }
+
+  Future<void> prune() async {
+    await _rpc('prune_learning_ai_jobs', {});
   }
 
   static final _uuid = RegExp(
