@@ -23,3 +23,11 @@ test("Flutter backup maps wallets, categories, budget periods and receipt into g
 test("Flutter backup rejects a missing receipt image", () => {
   assert.throws(() => convertLegacyBackupToGuest({ data:legacy, media:{} }));
 });
+test("backup conversion retains per-wallet currency and account appearance",()=>{
+  const data={...legacy,preferences:{currency:"VND",themeMode:"dark",languageMode:"en",colorSchemeId:"ocean"},wallets:[{...legacy.wallets[0],currencyCode:"USD"}]};
+  const result=convertLegacyBackupToGuest({data,media:{"image:0":"/9j/"}});
+  assert.equal(result.finance.accounts[0].currencyCode,"USD");
+  assert.equal(result.finance.profile.themeMode,"dark");
+  assert.equal(result.finance.profile.languageMode,"en");
+  assert.equal(result.finance.profile.colorSchemeId,"ocean");
+});

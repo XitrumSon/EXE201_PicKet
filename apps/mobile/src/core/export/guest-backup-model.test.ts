@@ -19,3 +19,7 @@ test("guest backup rejects a transaction with invalid amount before replacing lo
   const broken = { ...emptyGuestFinance(), transactions: [{ id:"entry", title:"Bad", amount:-4, kind:"expense", accountId:"cash", occurredAt:"invalid" }] };
   assert.throws(() => validateGuestBackupPayload({ finance:broken, keepsakes:[], receipts:[], media:{} }));
 });
+test("guest backups reject invalid appearance defaults before replacing data",()=>{
+  const finance={...emptyGuestFinance(),profile:{...emptyGuestFinance().profile,colorSchemeId:"../invalid"}};
+  assert.throws(()=>validateGuestBackupPayload({finance,keepsakes:[],receipts:[],media:{}}));
+});
