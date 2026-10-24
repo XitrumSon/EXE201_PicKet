@@ -11,5 +11,7 @@ test("account deletion copy explains pre-request erasure and confirmed-deletion 
  const retirement=readFileSync(resolve(process.cwd(),"src/features/auth/account-local-retirement.ts"),"utf8");
  assert.ok(retirement.indexOf("await retireOfflineCacheOwner")<retirement.indexOf("await purgeRetiredMutationOwner"));
  assert.match(screen,/result\?\.deleted!==true/);
+ assert.match(screen,/requestOwnerRecovery\(owner,true\)/);
+ assert.match(screen,/requestOwnerRecovery\(owner\)/);
  assert.doesNotMatch(screen,/>[^<\n]*[À-ỹĐđ][^<\n]*</);
 });

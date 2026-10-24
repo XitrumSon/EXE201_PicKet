@@ -4,6 +4,21 @@ import {deleteAccountWithLocalRetirement} from "./account-delete-flow";
 import {createObservationStore} from "../cashflow/forecast-observation-store";
 import {createOwnerCacheLifecycle} from "../../core/sync/owner-cache-lifecycle";
 
+test("a lost deletion acknowledgement never reopens local data or permits a late write",async()=>{
+ const retired=new Set<string>();const cache=createOwnerCacheLifecycle({isRetired:async owner=>retired.has(owner),retire:async owner=>{retired.add(owner);},resume:async owner=>{retired.delete(owner);}});
+ const steps={retireLocal:()=>cache.retire("a"),resumeLocal:()=>cache.resume("a"),deleteRemote:async()=>{throw Error("server deleted account but response was lost");},signOut:async()=>{},isCurrent:()=>true};
+ assert.equal((await deleteAccountWithLocalRetirement(steps)).status,"remote-unconfirmed");
+ assert.equal(await cache.isRetired("a"),true);
+ await assert.rejects(cache.run("a",async()=>"late saved data"),/retired/);
+});
+
+test("a session change before the remote request leaves the original owner fenced until verified recovery",async()=>{
+ let current=true,remote=0;const retired=new Set<string>();const cache=createOwnerCacheLifecycle({isRetired:async owner=>retired.has(owner),retire:async owner=>{retired.add(owner);},resume:async owner=>{retired.delete(owner);}});
+ const steps={retireLocal:async()=>{await cache.retire("a");current=false;},resumeLocal:()=>cache.resume("a"),deleteRemote:async()=>{remote++;},signOut:async()=>{},isCurrent:()=>current};
+ assert.equal((await deleteAccountWithLocalRetirement(steps)).status,"session-changed");
+ assert.equal(remote,0);assert.equal(await cache.isRetired("a"),true);
+});
+
 test("account deletion retires every generic cache resource before the server call and keeps it fenced after sign-out failure",async()=>{
  const retired=new Set<string>(),rows=new Map<string,string>([["a","all resource payloads"],["b","other owner"]]);
  const driver={isRetired:async(owner:string)=>retired.has(owner),retire:async(owner:string)=>{rows.delete(owner);retired.add(owner);},resume:async(owner:string)=>{retired.delete(owner);}};
