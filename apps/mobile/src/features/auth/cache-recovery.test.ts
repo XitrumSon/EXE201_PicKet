@@ -38,6 +38,7 @@ test("the owner recovery boundary gates data providers and defers navigation rea
   assert.match(boundary, /isOfflineCacheOwnerRetired/);
   assert.match(boundary, /verifyCacheRecoveryOwner/);
   assert.match(boundary, /recoverOfflineCacheOwner/);
+  assert.match(boundary, /await refreshDeviceLock\(\)/);
   assert.doesNotMatch(boundary, /resumeOfflineCacheOwner|getSession\(|getClaims\(/);
   assert.match(layout, /<OwnerCacheBoundary><ReadySessionProviders>/);
   assert.match(layout, /function ReadySessionProviders/);
@@ -45,7 +46,7 @@ test("the owner recovery boundary gates data providers and defers navigation rea
   assert.doesNotMatch(readyTree, /bootstrapIntentGate.ready/);
   for (const language of ["vi", "en"] as const) {
     const copy = createAppI18n(language);
-    for (const key of ["recoveryTitle", "recoveryDescription", "verifyAccount", "verifyFailed", "finishSignOut", "checkingAccount"]) {
+    for (const key of ["recoveryTitle", "recoveryDescription", "deletedTitle", "verifyAccount", "verifyFailed", "finishSignOut", "checkingAccount"]) {
       const value = copy.t(key, { ns: "accountDeletion" });
       assert.notEqual(value, key);
       assert.ok(value.length > 0);
