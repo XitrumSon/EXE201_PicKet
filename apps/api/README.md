@@ -114,3 +114,40 @@ with an acknowledgement so a failed cleanup can safely retry.
 For current `sb_secret_...` keys the worker sends the credential only in the
 `apikey` header. Legacy service-role JWTs additionally use `Authorization`.
 Never pass an `sb_secret_...` key as a bearer token.
+
+## Synthetic educational AI worker
+
+`bin/learning_worker.dart` is a separate server-only process. Configure it using
+`.env.learning-worker.example`; do not put its service credential or Gemini key
+in the public API or Expo environment. Generation defaults off. The optional
+Compose profile is `learning-ai`; both API and worker require
+`LEARNING_AI_ENABLED=true`. The app independently gates requests with
+`EXPO_PUBLIC_LEARNING_AI_ENABLED=true`.
+
+Apply the consent, jobs, history/retention and scheduled-cleanup migrations before
+enabling the feature. Only `cash-gap-v1` and vi/en are accepted; the worker sends
+no owner, transaction, receipt or personal answer to Gemini. It publishes only
+approved explanation IDs, never model prose. Daily limits reserve at enqueue:
+3 requests per owner and 100 globally, using UTC days. Failures do not refund
+limits. Acknowledged dispatch is required before the single provider attempt;
+uncertain dispatch/completion and expired leases never retry the provider.
+
+Public endpoints use the caller JWT: GET/PUT `/v1/learning-ai/consent`, POST/DELETE
+`/v1/learning-ai/jobs`, GET `/v1/learning-ai/jobs/:id`. DELETE cancels pending work
+and clears outputs, retaining deduplication/quota tombstones for 30 days. Consent
+revocation increments its generation and clears all output. Polling checks the
+current generation, active account and expiry. Results are hidden after 24 hours;
+hourly database Cron clears old outputs and deletes metadata after 30 days even
+when the worker is disabled. Cron run history for these jobs is kept 7 days.
+
+Local integration harnesses `supabase/tests/learning-ai-api-local.py` and
+`learning-activity-api-local.py` require the built API on loopback port 8101 and
+the local Supabase stack. They create and delete disposable users. The AI worker
+harness uses real queue RPCs and a fake provider; it refuses remote Supabase URLs.
+These checks do not establish human content quality or production acceptance.
+
+Learning activity GET/PUT `/v1/learning/activity` synchronizes due 7/30-day reviews
+and weekly practice. Review events award no additional XP. Practice completion
+is monotonic and awards 10 XP once per week; skipping cannot remove completion.
+Publication remains independently gated by the reviewed curriculum manifest and
+server-owned answer keys.

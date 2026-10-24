@@ -17,5 +17,3 @@ export const languages = {
 } as const;
 export type AppLanguage = keyof typeof languages;
 export const languageCodes = Object.keys(languages) as AppLanguage[];
-
-

@@ -222,3 +222,22 @@ later retry. First-link conflicts preserve device data and require reconciliatio
 The preview provides a manual sync action and protects an open editor against
 background revision changes. This has local API/Auth/RLS acceptance, not remote
 production or device acceptance.
+
+The schedule comparison now requires a decision for every row (device, cloud or
+omit). It rechecks both copies before saving, preserves an encrypted recovery
+copy, and creates new stable-key operations against the reviewed cloud revision.
+Local edit revisions never regress when cloud data is adopted.
+
+The learning preview includes synthetic AI consent, queued status, predefined
+vi/en explanations, revoke and history deletion. New generation remains off by
+default (`EXPO_PUBLIC_LEARNING_AI_ENABLED=false`). Do not enable it without the
+matching server migrations/API/worker. Requests contain only the fixed example
+and locale. Same-owner token refresh preserves work; changing owners/unmounting
+aborts requests and suppresses late results. Completed output is checked on
+foreground/resume and every minute for remote revocation or expiry.
+
+Cloud review/practice synchronization is part of the existing learning cloud
+gate. Local records remain usable offline. Only reviews due according to verified
+server completion dates are uploaded; duplicate events cannot grant extra XP.
+Milestones are derived from unique owner records, do not award extra points and
+cannot be exchanged for money or paid-plan benefits.

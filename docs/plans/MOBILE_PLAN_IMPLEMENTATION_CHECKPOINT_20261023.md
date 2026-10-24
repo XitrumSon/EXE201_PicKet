@@ -4,6 +4,49 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 ## Current continuation status
 
+The latest continuation below supersedes older pending lists in this file.
+
+- AI: the synthetic-case vertical slice now has server-only HTTP worker/executable,
+  opt-in Compose profile, enqueue/poll/delete API, mobile vi/en consent and approved
+  explanations. Real local Auth/RLS/worker acceptance covers concurrent same-key
+  retry, wrong owner, revoke/completion race, deletion and atomic per-owner quota.
+  Results hide after 24 hours; database Cron prunes outputs and 30-day metadata
+  independently of worker uptime. Provider input remains fixed synthetic only.
+  Same-owner token refresh preserves work; remote deletion/revocation/expiry is
+  rechecked on foreground and periodically. No production activation or human
+  quality acceptance is claimed.
+- Learning: cloud review/practice API, owner merge, server-due-date filtering and
+  monotonic weekly completion are implemented. Review grants no extra XP; repeated
+  practice sync grants once. Derived learning milestones have no cash/plan value.
+  Local API/Auth/RLS concurrent activity acceptance passes. Publication gates stay
+  closed until independent content review.
+- Schedules: reviewed per-row device/cloud/omit reconciliation is implemented,
+  with revalidation of both copies and an encrypted local recovery copy. A
+  reproduced local revision rollback bug is fixed; stale editors remain stale.
+- Languages: profile controls, controlled profile messages, app update phases,
+  installer permissions and installed-version footer now use vi/en resources.
+  Other untranslated product screens/errors still require migration.
+- User confirmed **no testing group or Android acceptance device is ready**.
+  Real Play purchase cycles, physical-device/TalkBack checks and the 12-person
+  closed-test period are external acceptance blockers, not passed tests.
+- Latest suites: **528 mobile tests and 134 API tests passed**, `dart analyze` clean; server build and standalone
+  learning-worker compilation passed. Android JS export passed. Learning/cashflow
+  coverage: **99.20% lines / 84.80% branches / 86.27% functions**. Eight local SQL
+  suites passed. Mobile typecheck passed; lint has no errors and 25 pre-existing
+  warnings. Logs: `.artifacts/mobile-final-check.log`, `api-plan-latest-tests.log`,
+  `mobile-plan-export.log`, `learning-cashflow-coverage.log`. Earlier counts below
+  are historical.
+
+Still required before full P1–P5 completion: remaining screen/error/notification
+localization; production entry/device settings acceptance; runtime financial facts,
+wallet scope/settlement links and real backtests; assessment/report/regrade and
+personal-data-compatible provider decision; independent lesson/AI evaluation;
+staging/production deployment review; device/billing/pilot acceptance. The free
+Gemini synthetic boundary must not be widened to personal text or real finance
+to make these items appear complete.
+
+## Previous checkpoint snapshot
+
 - AI continuation: explicit owner-scoped consent GET/PUT API, default-off consent, monotonic consent generations, local PostgreSQL queue with atomic daily caps (3 per owner / 100 global), request-key replay and mismatch protection. Service-only claim/dispatch/finalize RPCs recheck consent and active account. Revocation clears results and cancels work under the same owner lock as dispatch/finalize. Dispatched/expired jobs cannot invoke the provider again. Dart worker orchestration passes timeout/uncertain acknowledgement/invalid case/output tests. **Still pending:** HTTP worker gateway/executable, enqueue/poll/history deletion API, mobile consent UI, retention, real concurrency acceptance and deployment. No AI production activation occurred.
 
 - Latest full checks: **505 mobile tests and 119 Dart API tests passed**. Mobile typecheck passes; lint has **0 errors / 25 existing warnings**; `dart analyze` has no issues. Android Kotlin/manifest integration passed in **3m36s**. This is not a new released APK or device acceptance.
