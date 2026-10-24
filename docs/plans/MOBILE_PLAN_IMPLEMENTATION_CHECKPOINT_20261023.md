@@ -51,17 +51,34 @@ The latest continuation below supersedes older pending lists in this file.
   controlled receipt validation messages and date/money displays. Structured
   notices rerender their language and formatted money after a locale change;
   user-entered descriptions, merchant names and notes remain untouched.
+  Account new/edit and category list/new/edit now translate controlled labels,
+  validation, archive/delete dialogs and accessibility copy without translating
+  saved names or enum values. Notification settings, reminder labels and private
+  native notification copy also support vi/en. Each delivery captures its locale;
+  locale changes do not resend acknowledged budget warnings or request permission.
   Other untranslated product screens/errors still require migration.
 - User confirmed **no testing group or Android acceptance device is ready**.
   Real Play purchase cycles, physical-device/TalkBack checks and the 12-person
   closed-test period are external acceptance blockers, not passed tests.
-- Latest suites: **544 mobile tests and 136 API tests passed**, `dart analyze` clean; server build and standalone
+- Latest suites: **549 mobile tests and 136 API tests passed**, `dart analyze` clean; server build and standalone
   learning-worker compilation passed. Android JS export passed. Previous cashflow
   coverage: **98.85% lines / 89.06% branches / 97.77% functions**. Ten local SQL
   suites passed. Mobile typecheck passed; lint has no errors and 25 pre-existing
-  warnings. Logs: `.artifacts/mobile-transaction-locales-tests.log`, `api-wallet-scope-tests.log`,
-  `mobile-transaction-locales-export.log`, `cashflow-weekly-story-coverage.log`. Earlier counts below
+  warnings. Logs: `.artifacts/mobile-management-notifications-tests.log`, `api-wallet-scope-tests.log`,
+  `mobile-management-notifications-export.log`, `management-notification-coverage.log`. Earlier counts below
   are historical.
+
+Cloud assessment research (24 October): the user requested research, not provider
+activation. The decision document `ASSESSMENT_CLOUD_PRIVACY_RESEARCH_20261024.md`
+compares Standard paid/non-Contributor with the existing unpaid synthetic lane,
+records provider retention and proposes separate consent/jobs, output validation
+and synthetic reviewer gates. No real answer submission, billing, credentials or
+production configuration was changed. Provider/budget selection remains pending.
+
+Management localization RED `20dd415`, GREEN `b181a04`; notification localization
+RED `d2eacd6`, GREEN `245de11`. The focused suite has 99.47% lines / 93.24% branches /
+96.50% functions including imported resources. Generic native copy avoids exposing
+merchant, amount or account data. These checks do not establish device acceptance.
 
 Transaction localization RED `c78b7a2`, GREEN `396a772`: runtime language switching,
 colon-containing keys, count interpolation and structured money notices pass.
