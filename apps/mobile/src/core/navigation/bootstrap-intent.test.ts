@@ -44,3 +44,13 @@ test("OAuth and password recovery payloads are returned unchanged, never parsed 
   const pending = gate.redirect({ path: recovery, initial: false });
   gate.ready(); assert.equal(await pending, recovery);
 });
+
+test("a recovery boundary can pause an already mounted stack until it is mounted again", async () => {
+  const gate = createBootstrapIntentGate(); gate.ready(); gate.notReady();
+  let settled = false;
+  const first = Promise.resolve(gate.redirect({ path: "private-account-route", initial: false })).then(path => { settled = true; return path; });
+  await Promise.resolve(); assert.equal(settled, false);
+  const latest = gate.redirect({ path: "latest-route", initial: false });
+  assert.equal(await first, ""); gate.ready();
+  assert.equal(await latest, "latest-route");
+});

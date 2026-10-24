@@ -45,7 +45,10 @@ queues, receipt/capture drafts, keepsake files, notification/lock preferences an
 system-managed image caches still require attributed cleanup and in-flight
 operation fencing. Do not delete a whole shared directory or encryption key.
 
-A fresh server-verified sign-in recovery path is still needed for an account
+Superseded on 25 October: `OWNER_CACHE_RECOVERY_CHECKPOINT_20261025.md` implements
+the following recovery gap. Native acceptance remains pending.
+
+A fresh server-verified sign-in recovery path was still needed for an account
 whose cache was retired before the app stopped and whose server deletion did
 not happen. Cached auth bootstrap/refresh must never clear a tombstone. Retrying
 the deletion screen remains idempotent, and unconfirmed remote outcomes in the

@@ -25,8 +25,29 @@ export function createOwnerCacheLifecycle(driver: Driver) {
     generations.set(owner, (generations.get(owner) ?? 0) + 1);
   }
   return {
-    isRetired: (owner: string) => driver.isRetired(owner),
-    recover: async (_owner: string, _verify: () => Promise<string | null>, _isCurrent: () => boolean): Promise<boolean> => true,
+    async isRetired(owner: string): Promise<boolean> {
+      validate(owner);
+      return blocked.has(owner) || await driver.isRetired(owner);
+    },
+    async recover(owner: string, verify: () => Promise<string | null>, isCurrent: () => boolean): Promise<boolean> {
+      validate(owner);
+      const generation = generations.get(owner) ?? 0;
+      const current = () => isCurrent() && generation === (generations.get(owner) ?? 0);
+      return enqueue(owner, async () => {
+        if (!current()) return false;
+        const retired = blocked.has(owner) || await driver.isRetired(owner);
+        if (!current()) return false;
+        const verifiedOwner = await verify();
+        if (verifiedOwner !== owner || !current()) return false;
+        if (!retired) return true;
+        await driver.resume(owner);
+        if (!current()) return false;
+        // Old callbacks queued during verification cannot repopulate the empty cache.
+        generations.set(owner, generation + 1);
+        blocked.delete(owner);
+        return true;
+      });
+    },
     async run<T>(owner: string, operation: () => Promise<T>): Promise<T> {
       validate(owner);
       if (blocked.has(owner)) throw Error("Owner cache is retired");

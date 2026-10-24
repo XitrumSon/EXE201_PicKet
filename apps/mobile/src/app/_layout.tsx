@@ -9,6 +9,7 @@ import { ActivityIndicator, View } from "react-native";
 import { canMountSessionRoutes } from "@/features/auth/session-route-policy";
 
 import { AuthProvider, useAuth } from "@/features/auth/auth-context";
+import { OwnerCacheBoundary } from "@/features/auth/owner-cache-boundary";
 import { AccountsProvider } from "@/features/accounts/accounts-context";
 import { ProfileProvider } from "@/features/profile/profile-context";
 import { TransactionsProvider } from "@/features/transactions/transactions-context";
@@ -43,8 +44,14 @@ function ProviderTree({ children }: { children: React.ReactNode }) {
 }
 
 function SessionProviders({ children }: { children: React.ReactNode }) {
+  return <OwnerCacheBoundary><ReadySessionProviders>{children}</ReadySessionProviders></OwnerCacheBoundary>;
+}
+
+function ReadySessionProviders({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
   const { localMode } = useAuth();
+  // This effect runs only after the cache boundary permits the nested Stack.
+  useEffect(() => { bootstrapIntentGate.ready(); }, []);
   return <GuestFinanceProvider key={session?.user.id ?? (localMode ? "device-guest" : "anonymous")}><ProviderTree key={session?.user.id ?? (localMode ? "device-guest" : "anonymous")}>{children}</ProviderTree></GuestFinanceProvider>;
 }
 
@@ -62,9 +69,6 @@ function SessionReadyTree() {
   const { theme, colors } = useAppTheme();
   const { t } = useTranslation("common");
   const { loading } = useAuth();
-  // Effects run after the ready render commits its Stack. Do not signal from
-  // auth recovery itself, where a nested navigator may not exist yet.
-  useEffect(() => { if (!loading) bootstrapIntentGate.ready(); }, [loading]);
   if (!canMountSessionRoutes(loading)) return <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.canvas }}>
     <ActivityIndicator accessibilityLabel={t("Đang khôi phục phiên Picket")} color={colors.primary} />
   </View>;

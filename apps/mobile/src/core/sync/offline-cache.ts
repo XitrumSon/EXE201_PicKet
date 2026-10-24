@@ -33,6 +33,8 @@ async function database() {
 const lifecycle = createOwnerCacheLifecycle(createOwnerCacheDatabaseDriver(database));
 
 export const retireOfflineCacheOwner = lifecycle.retire;
+export const isOfflineCacheOwnerRetired = lifecycle.isRetired;
+export const recoverOfflineCacheOwner = lifecycle.recover;
 // Only the account-deletion recovery flow may resume; cached auth events must not.
 export const resumeOfflineCacheOwner = lifecycle.resume;
 

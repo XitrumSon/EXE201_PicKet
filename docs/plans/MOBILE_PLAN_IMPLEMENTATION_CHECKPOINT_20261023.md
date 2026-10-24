@@ -6,6 +6,16 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- 25 October continuation: the common-cache recovery gap after interrupted
+  account deletion is implemented. Account providers/navigation wait for the
+  retirement check; explicit live server verification must return the exact owner
+  before an empty cache can reopen. Deleted users, offline errors, owner changes
+  and newer retirement keep it blocked. All **623 mobile tests** pass; focused
+  helper coverage is 100% lines / 94.87% branches / 100% functions. Typecheck and
+  Android JS export pass; lint has 0 errors/25 existing warnings. Native boundary
+  rendering/process-death/deep-link acceptance and separate media/outbox erasure
+  remain pending. See `OWNER_CACHE_RECOVERY_CHECKPOINT_20261025.md`.
+
 - Latest privacy continuation: account deletion now retires every owner-scoped
   resource in the common encrypted SQLite cache before the server request,
   superseding the forecast-only screen wiring described below. A durable marker

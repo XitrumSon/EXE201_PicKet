@@ -22,6 +22,9 @@ export function createBootstrapIntentGate() {
       pending = null;
       latest?.resolve(latest.path);
     },
+    notReady() {
+      mounted = false;
+    },
   };
 }
 

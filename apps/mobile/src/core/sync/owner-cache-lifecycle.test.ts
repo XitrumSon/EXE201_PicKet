@@ -114,7 +114,7 @@ test("verification failure or a changed session cannot reopen a retired cache", 
   assert.equal(await f.store.recover("a", async () => { throw Error("must not verify"); }, () => false), false);
 });
 
-test("a new retirement wins against verification already in flight", async () => {
+test("a new retirement wins against verification already in flight", {timeout: 2000}, async () => {
   const f = fixture(); await f.store.retire("a");
   let release!: () => void, started!: () => void;
   const entered = new Promise<void>(resolve => { started = resolve; });
@@ -126,7 +126,7 @@ test("a new retirement wins against verification already in flight", async () =>
   assert.equal(await f.store.isRetired("a"), true);
 });
 
-test("successful recovery rejects writes queued before the verified recovery finishes", async () => {
+test("successful recovery rejects writes queued before the verified recovery finishes", {timeout: 2000}, async () => {
   const f = fixture(); await f.store.retire("a");
   const restarted = createOwnerCacheLifecycle(f.driver);
   let release!: () => void, started!: () => void;
@@ -137,4 +137,12 @@ test("successful recovery rejects writes queued before the verified recovery fin
   const stale = assert.rejects(restarted.run("a", async () => f.rows.set("a", "stale")), /retired/);
   release(); assert.equal(await recovery, true); await stale;
   assert.equal(f.rows.has("a"), false);
+});
+
+test("explicit verification after a status-read error still checks the server even if no retirement marker exists", async () => {
+  const f = fixture(); let calls = 0;
+  assert.equal(await f.store.recover("a", async () => { calls++; return "b"; }, () => true), false);
+  assert.equal(calls, 1);
+  assert.equal(await f.store.recover("a", async () => "a", () => true), true);
+  assert.equal(f.rows.get("a"), "private");
 });
