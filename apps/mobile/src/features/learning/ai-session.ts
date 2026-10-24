@@ -36,6 +36,8 @@ export function createLearningAiSession(api:LearningAiApi,token:string,newKey:()
     finally{if(current())update({busy:false});}
   }
   return {
+    start:()=>undefined,
+    setAccessToken:(next:string)=>{void next;},
     snapshot:()=>state,
     subscribe:(listener:()=>void)=>{listeners.add(listener);return()=>{listeners.delete(listener);};},
     load:()=>run(async(signal,current)=>{

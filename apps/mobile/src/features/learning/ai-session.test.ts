@@ -76,3 +76,15 @@ test("quota errors preserve retry key and show dedicated status",async()=>{
   await session.load();await session.generate("en");
   assert.equal(session.snapshot().error,"quota");
 });
+test("a new effect lifetime can restart after development cleanup",async()=>{
+  const {session}=setup();session.dispose();session.start();await session.load();
+  assert.equal(session.snapshot().consent?.accepted,true);
+});
+test("same-owner token refresh preserves the pending job and updates authorization",async()=>{
+  let usedToken="";
+  const {session}=setup({learningAiJob:async token=>{usedToken=token;return {id,status:"completed",statementIds:["timing"]};}});
+  await session.load();await session.generate("vi");
+  session.setAccessToken("refreshed-token");
+  assert.equal(session.snapshot().job?.id,id);
+  await session.poll();assert.equal(usedToken,"refreshed-token");
+});
