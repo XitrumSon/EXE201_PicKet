@@ -55,7 +55,7 @@ void main() {
           ..dispatchThrows = uncertain;
         final worker = LearningWorker(
           gateway: gateway,
-          explain: (_, __) async {
+          explain: (_, _) async {
             fail('provider must not run');
           },
         );
@@ -71,7 +71,7 @@ void main() {
       var calls = 0;
       await LearningWorker(
         gateway: gateway,
-        explain: (_, __) async {
+        explain: (_, _) async {
           calls++;
           throw StateError('provider failed');
         },
@@ -81,13 +81,13 @@ void main() {
     },
   );
   test(
-    'uncertain completion never retries provider or marks successful job failed',
+    'uncertain completion never retries or overwrites success',
     () async {
       final gateway = Gateway()..completionThrows = true;
       var calls = 0;
       await LearningWorker(
         gateway: gateway,
-        explain: (_, __) async {
+        explain: (_, _) async {
           calls++;
           return ['buffer'];
         },
@@ -101,7 +101,7 @@ void main() {
     expect(
       await LearningWorker(
         gateway: gateway,
-        explain: (_, __) async => ['timing'],
+        explain: (_, _) async => ['timing'],
       ).runOnce(),
       false,
     );
@@ -112,7 +112,7 @@ void main() {
       ..job = const LearningJob('job', 'lease', 'private text', 'vi');
     await LearningWorker(
       gateway: gateway,
-      explain: (_, __) async {
+      explain: (_, _) async {
         fail('invalid input');
       },
     ).runOnce();
@@ -122,7 +122,7 @@ void main() {
     final gateway = Gateway();
     await LearningWorker(
       gateway: gateway,
-      explain: (_, __) async => ['raw model prose'],
+      explain: (_, _) async => ['raw model prose'],
     ).runOnce();
     expect(gateway.events, ['dispatch', 'fail']);
   });
