@@ -115,3 +115,59 @@ test("a replay acknowledged after another device changes the cloud advances the 
   });
   assert.equal((await store.status("ownerA")).pending,0);
 });
+
+test("cloud adoption never rolls back local edit revisions",async()=>{
+  let value:unknown={schemaVersion:1,revision:10,schedules:[row],owner:"ownerA",cloud:{baseRevision:2,pending:[]}};
+  const store=createScheduleSyncStore({read:async()=>value,write:async(_,next)=>{value=next;}},()=>"revision-safe-key");
+  const remote={schemaVersion:1 as const,revision:3,schedules:[{...row,amount:-49000}]};
+  const result=await store.sync("ownerA",async()=>remote,async()=>{throw new Error("No pending changes");});
+  assert.ok(result.revision>10,"old editor revisions must not become valid again");
+  await assert.rejects(store.save("ownerA",3,row));
+});
+
+test("reviewed reconciliation keeps chosen rows and an encrypted-store recovery copy",async()=>{
+  let value:unknown,key=0;
+  const store=createScheduleSyncStore({read:async()=>value,write:async(_,next)=>{value=next;}},()=>`resolution-key-${++key}`);
+  await store.save("ownerA",0,row);
+  let remote={schemaVersion:1 as const,revision:4,schedules:[{...row,amount:-49000}]};
+  const review=await store.reviewConflict("ownerA",async()=>remote);
+  await store.resolveConflict("ownerA",review,{[row.id]:"cloud"},async()=>remote);
+  assert.equal((await store.load("ownerA")).schedules[0].amount,-49000);
+  assert.equal((await store.recovery("ownerA"))?.schedules[0].amount,-19000);
+  const revision=(await store.load("ownerA")).revision;
+  assert.ok(revision>1);
+  await store.save("ownerA",revision,{...row,amount:-59000});
+  await store.sync("ownerA",async()=>remote,async op=>{
+    assert.equal(op.expectedRevision,4);
+    remote={schemaVersion:1,revision:5,schedules:[op.schedule as typeof row]};return {...remote,appliedRevision:5};
+  });
+});
+
+test("reconciliation rejects missing choices and changes since review",async()=>{
+  let value:unknown,key=0;
+  const store=createScheduleSyncStore({read:async()=>value,write:async(_,next)=>{value=next;}},()=>`resolution-key-${++key}`);
+  await store.save("ownerA",0,row);
+  const remote={schemaVersion:1 as const,revision:4,schedules:[{...row,amount:-49000}]};
+  const review=await store.reviewConflict("ownerA",async()=>remote);
+  await assert.rejects(store.resolveConflict("ownerA",review,{},async()=>remote));
+  await assert.rejects(store.resolveConflict("ownerA",review,{[row.id]:"local"},async()=>({...remote,revision:5})));
+  await store.save("ownerA",1,{...row,amount:-29000});
+  await assert.rejects(store.resolveConflict("ownerA",review,{[row.id]:"local"},async()=>remote));
+  assert.equal((await store.load("ownerA")).schedules[0].amount,-29000);
+});
+
+test("choosing local after a lost acknowledgment rebases new stable operations",async()=>{
+  let value:unknown,key=0;
+  const store=createScheduleSyncStore({read:async()=>value,write:async(_,next)=>{value=next;}},()=>`resolution-key-${++key}`);
+  await store.save("ownerA",0,row);
+  await assert.rejects(store.sync("ownerA",async()=>empty,async()=>{throw new Error("lost response");}));
+  const remote={schemaVersion:1 as const,revision:4,schedules:[{...row,amount:-49000}]};
+  const review=await store.reviewConflict("ownerA",async()=>remote);
+  await store.resolveConflict("ownerA",review,{[row.id]:"local"},async()=>remote);
+  await store.sync("ownerA",async()=>({...remote,revision:5,schedules:[row]}),async op=>{
+    assert.equal(op.expectedRevision,4);
+    assert.equal(op.action,"save");
+    return {...remote,revision:5,appliedRevision:5,schedules:[row]};
+  });
+  assert.equal((await store.status("ownerA")).pending,0);
+});

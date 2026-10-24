@@ -1,6 +1,7 @@
 import type { CashflowScheduleDocument, CashflowSchedule } from "@picket/domain";
 import { parseScheduleDocument } from "./schedule-store";
 export type ScheduleOperation={key:string;expectedRevision:number;action:"save"|"remove";schedule:CashflowSchedule|{id:string}};
+export type ScheduleConflictReview={local:CashflowScheduleDocument;remote:CashflowScheduleDocument};
 type State=CashflowScheduleDocument&{owner?:string;cloud?:{baseRevision:number;pending:ScheduleOperation[]}};
 const maxRevision=Number.MAX_SAFE_INTEGER;
 function parse(value:unknown,owner:string):State{
@@ -115,6 +116,9 @@ export function createScheduleSyncStore(storage:{read(owner:string):Promise<unkn
     return operation;
   }
   return{load,
+    reviewConflict:async(owner:string,fetchRemote:()=>Promise<CashflowScheduleDocument>):Promise<ScheduleConflictReview>=>{void owner;void fetchRemote;throw new Error("Reconciliation not implemented");},
+    resolveConflict:async(owner:string,review:ScheduleConflictReview,choices:Record<string,"local"|"cloud"|"omit">,fetchRemote:()=>Promise<CashflowScheduleDocument>):Promise<CashflowScheduleDocument>=>{void owner;void review;void choices;void fetchRemote;throw new Error("Reconciliation not implemented");},
+    recovery:async(owner:string):Promise<CashflowScheduleDocument|null>=>{void owner;return null;},
     save:(owner:string,revision:number,schedule:CashflowSchedule)=>mutate(owner,revision,"save",schedule),
     remove:(owner:string,revision:number,id:string)=>mutate(owner,revision,"remove",{id}),sync,
     status:(owner:string)=>queue(owner,async()=>{const state=await read(owner);return{linked:!!state.cloud,pending:state.cloud?.pending.length??0};}),
