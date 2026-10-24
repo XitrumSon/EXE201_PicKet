@@ -11,7 +11,7 @@ void main() {
     expect(parseLearningAiConsent({'accepted': false}), false);
     for (final value in [
       null,
-      {},
+      <String, Object?>{},
       {'accepted': 'true'},
       {'accepted': true, 'owner': 'other'},
     ]) {
@@ -28,15 +28,16 @@ void main() {
         client: MockClient((request) async {
           expect(request.headers['authorization'], 'Bearer user-token');
           expect(request.headers['apikey'], 'sb_publishable_test');
-          if (request.url.path == '/auth/v1/user')
+          if (request.url.path == '/auth/v1/user') {
             return http.Response('{"id":"owner"}', 200);
+          }
           expect(
             request.url.path,
             '/rest/v1/rpc/${accepted == null ? 'load' : 'set'}_learning_ai_consent',
           );
           expect(
             jsonDecode(request.body),
-            accepted == null ? {} : {'p_accepted': accepted},
+            accepted == null ? <String, Object?>{} : {'p_accepted': accepted},
           );
           return http.Response(
             '{"accepted":false,"generation":2,"policyVersion":1}',
@@ -52,6 +53,16 @@ void main() {
         2,
       );
       gateway.close();
+    });
+    test('malformed upstream consent cannot be trusted', () {
+      for (final value in [
+        null,
+        {'accepted': true, 'generation': -1, 'policyVersion': 1},
+        {'accepted': 'true', 'generation': 1, 'policyVersion': 1},
+        {'accepted': true, 'generation': 1, 'policyVersion': 2},
+      ]) {
+        expect(() => validateLearningAiConsent(value), throwsFormatException);
+      }
     });
   }
 }

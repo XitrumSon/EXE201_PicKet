@@ -14,6 +14,7 @@ import 'package:picket_api/src/category_contract.dart';
 import 'package:picket_api/src/entitlement_contract.dart';
 import 'package:picket_api/src/finance_contract.dart';
 import 'package:picket_api/src/keepsake_contract.dart';
+import 'package:picket_api/src/learning_ai_consent.dart';
 import 'package:picket_api/src/learning_contract.dart';
 import 'package:picket_api/src/ocr_job_contract.dart';
 import 'package:picket_api/src/profile_contract.dart';
@@ -82,6 +83,31 @@ class SupabaseGateway {
       throw const GatewayException(
         HttpStatus.badGateway,
         'Invalid schedule response.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> learningAiConsent(
+    String token, {
+    bool? accepted,
+  }) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri(
+            '/rest/v1/rpc/${accepted == null ? 'load' : 'set'}_learning_ai_consent',
+          ),
+          headers: _headers(token),
+          body: jsonEncode(accepted == null ? {} : {'p_accepted': accepted}),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    try {
+      return validateLearningAiConsent(jsonDecode(response.body));
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid consent response.',
       );
     }
   }
