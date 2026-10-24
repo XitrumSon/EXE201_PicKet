@@ -15,9 +15,11 @@ test("wallet assignment survives the durable outbox and cloud acknowledgement",a
  let value:unknown;
  const store=createScheduleSyncStore({read:async()=>value,write:async(_owner,next)=>{value=next;}},()=>"wallet-scope-operation");
  await store.save("owner",0,row);
- const result=await store.sync("owner",async()=>({schemaVersion:1,revision:0,schedules:[]}),async operation=>{
+ let remote={schemaVersion:1 as const,revision:0,schedules:[] as typeof row[]};
+ const result=await store.sync("owner",async()=>remote,async operation=>{
   assert.equal((operation.schedule as typeof row).walletId,cash);
-  return {schemaVersion:1,revision:1,appliedRevision:1,schedules:[row]};
+  remote={schemaVersion:1,revision:1,schedules:[row]};
+  return {...remote,appliedRevision:1};
  });
  assert.equal(result.schedules[0].walletId,cash);
  assert.equal((await store.load("owner")).schedules[0].walletId,cash);
