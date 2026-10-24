@@ -25,6 +25,8 @@ export function createOwnerCacheLifecycle(driver: Driver) {
     generations.set(owner, (generations.get(owner) ?? 0) + 1);
   }
   return {
+    isRetired: (owner: string) => driver.isRetired(owner),
+    recover: async (_owner: string, _verify: () => Promise<string | null>, _isCurrent: () => boolean): Promise<boolean> => true,
     async run<T>(owner: string, operation: () => Promise<T>): Promise<T> {
       validate(owner);
       if (blocked.has(owner)) throw Error("Owner cache is retired");

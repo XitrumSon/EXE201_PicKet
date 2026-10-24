@@ -93,3 +93,48 @@ test("invalid owners cannot reach the persistence driver", async () => {
   }
   assert.equal(f.retired.size, 0);
 });
+
+test("interrupted deletion requires matching live verification before recovery and starts empty", async () => {
+  const f = fixture(); await f.store.retire("a");
+  const restarted = createOwnerCacheLifecycle(f.driver);
+  assert.equal(await restarted.isRetired("a"), true);
+  assert.equal(await restarted.recover("a", async () => "b", () => true), false);
+  assert.equal(await restarted.recover("a", async () => null, () => true), false);
+  assert.equal(await restarted.isRetired("a"), true);
+  assert.equal(await restarted.recover("a", async () => "a", () => true), true);
+  assert.equal(await restarted.isRetired("a"), false);
+  assert.equal(await restarted.run("a", async () => f.rows.get("a")), undefined);
+});
+
+test("verification failure or a changed session cannot reopen a retired cache", async () => {
+  const f = fixture(); await f.store.retire("a"); let current = true;
+  await assert.rejects(f.store.recover("a", async () => { throw Error("offline"); }, () => true), /offline/);
+  assert.equal(await f.store.recover("a", async () => { current = false; return "a"; }, () => current), false);
+  assert.equal(await f.store.isRetired("a"), true);
+  assert.equal(await f.store.recover("a", async () => { throw Error("must not verify"); }, () => false), false);
+});
+
+test("a new retirement wins against verification already in flight", async () => {
+  const f = fixture(); await f.store.retire("a");
+  let release!: () => void, started!: () => void;
+  const entered = new Promise<void>(resolve => { started = resolve; });
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const recovery = f.store.recover("a", async () => { started(); await gate; return "a"; }, () => true);
+  await entered;
+  const retirement = f.store.retire("a"); release();
+  assert.equal(await recovery, false); await retirement;
+  assert.equal(await f.store.isRetired("a"), true);
+});
+
+test("successful recovery rejects writes queued before the verified recovery finishes", async () => {
+  const f = fixture(); await f.store.retire("a");
+  const restarted = createOwnerCacheLifecycle(f.driver);
+  let release!: () => void, started!: () => void;
+  const entered = new Promise<void>(resolve => { started = resolve; });
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const recovery = restarted.recover("a", async () => { started(); await gate; return "a"; }, () => true);
+  await entered;
+  const stale = assert.rejects(restarted.run("a", async () => f.rows.set("a", "stale")), /retired/);
+  release(); assert.equal(await recovery, true); await stale;
+  assert.equal(f.rows.has("a"), false);
+});
