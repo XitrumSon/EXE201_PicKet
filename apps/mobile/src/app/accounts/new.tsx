@@ -1,3 +1,4 @@
+import { useManagementCopy } from "@/core/i18n/use-management-copy";
 import { TopAppBar , PicketScreen, Surface } from "@/core/ui/picket-ui";
 import { colors, radii } from "@picket/design-tokens";
 import type { AccountKind } from "@picket/domain";
@@ -20,6 +21,7 @@ const kinds: { value: AccountKind; label: string; symbol: IconName }[] = [
 ];
 
 export default function NewAccountScreen() {
+  const tx=useManagementCopy();
   const { session, localMode } = useAuth();
   const { create } = useAccounts();
   const [name, setName] = useState("");
@@ -39,14 +41,14 @@ export default function NewAccountScreen() {
     finally { setBusy(false); }
   }
   return <PicketScreen>
-    <TopAppBar title="Thêm tài khoản" subtitle="Gom tiền mặt, ngân hàng và ví điện tử vào cùng một nơi." backDisabled={busy} />
+    <TopAppBar title={tx("Thêm tài khoản")} subtitle={tx("Gom tiền mặt, ngân hàng và ví điện tử vào cùng một nơi.")} backDisabled={busy} />
     <Surface>
-      <Text style={styles.label}>Tên tài khoản</Text><TextInput accessibilityLabel="Tên tài khoản" autoCapitalize="words" onChangeText={setName} placeholder="Ví dụ: Ví hàng ngày" placeholderTextColor={colors.muted} style={styles.input} value={name} />
-      <Text style={styles.label}>Loại tài khoản</Text><View accessibilityRole="radiogroup" style={styles.kindGrid}>{kinds.map((item) => { const selected=kind===item.value; return <Pressable accessibilityRole="radio" accessibilityState={{checked:selected}} key={item.value} onPress={() => setKind(item.value)} style={[styles.kind,selected&&styles.kindSelected]}><AppIcon name={item.symbol} color={selected ? colors.white : colors.mauve} size={24} /><Text style={[styles.kindLabel,selected&&styles.kindSelectedText]}>{item.label}</Text></Pressable>; })}</View>
-      <View style={styles.twoColumns}><View style={styles.column}><Text style={styles.label}>Tiền tệ</Text><TextInput accessibilityLabel="Mã tiền tệ" autoCapitalize="characters" maxLength={3} onChangeText={(value)=>setCurrencyCode(value.toUpperCase())} placeholder="VND" placeholderTextColor={colors.muted} style={styles.input} value={currencyCode} /></View><View style={styles.wideColumn}><Text style={styles.label}>Số dư ban đầu</Text><TextInput money accessibilityLabel="Số dư ban đầu" keyboardType="number-pad" onChangeText={setOpeningBalance} placeholder="0" placeholderTextColor={colors.muted} style={styles.input} value={openingBalance} /></View></View>
-      <Text style={styles.help}>Số dư này là điểm bắt đầu để Picket tính tổng tiền hiện tại.</Text>
-      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text> : null}
-      <Pressable accessibilityRole="button" accessibilityState={{busy}} disabled={busy} onPress={() => void submit()} style={({pressed})=>[styles.primary,pressed&&styles.pressed]}>{busy?<ActivityIndicator accessibilityLabel="Đang tạo tài khoản" color={colors.white}/>:<Text style={styles.primaryText}>Tạo tài khoản</Text>}</Pressable>
+      <Text style={styles.label}>{tx("Tên tài khoản")}</Text><TextInput accessibilityLabel={tx("Tên tài khoản")} autoCapitalize="words" onChangeText={setName} placeholder={tx("Ví dụ: Ví hàng ngày")} placeholderTextColor={colors.muted} style={styles.input} value={name} />
+      <Text style={styles.label}>{tx("Loại tài khoản")}</Text><View accessibilityRole="radiogroup" style={styles.kindGrid}>{kinds.map((item) => { const selected=kind===item.value; return <Pressable accessibilityRole="radio" accessibilityState={{checked:selected}} key={item.value} onPress={() => setKind(item.value)} style={[styles.kind,selected&&styles.kindSelected]}><AppIcon name={item.symbol} color={selected ? colors.white : colors.mauve} size={24} /><Text style={[styles.kindLabel,selected&&styles.kindSelectedText]}>{tx(item.label)}</Text></Pressable>; })}</View>
+      <View style={styles.twoColumns}><View style={styles.column}><Text style={styles.label}>{tx("Tiền tệ")}</Text><TextInput accessibilityLabel={tx("Mã tiền tệ")} autoCapitalize="characters" maxLength={3} onChangeText={(value)=>setCurrencyCode(value.toUpperCase())} placeholder="VND" placeholderTextColor={colors.muted} style={styles.input} value={currencyCode} /></View><View style={styles.wideColumn}><Text style={styles.label}>{tx("Số dư ban đầu")}</Text><TextInput money accessibilityLabel={tx("Số dư ban đầu")} keyboardType="number-pad" onChangeText={setOpeningBalance} placeholder="0" placeholderTextColor={colors.muted} style={styles.input} value={openingBalance} /></View></View>
+      <Text style={styles.help}>{tx("Số dư này là điểm bắt đầu để Picket tính tổng tiền hiện tại.")}</Text>
+      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{tx(message)}</Text> : null}
+      <Pressable accessibilityRole="button" accessibilityState={{busy}} disabled={busy} onPress={() => void submit()} style={({pressed})=>[styles.primary,pressed&&styles.pressed]}>{busy?<ActivityIndicator accessibilityLabel={tx("Đang tạo tài khoản")} color={colors.white}/>:<Text style={styles.primaryText}>{tx("Tạo tài khoản")}</Text>}</Pressable>
     </Surface>
   </PicketScreen>;
 }

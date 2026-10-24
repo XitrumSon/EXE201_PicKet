@@ -1,3 +1,4 @@
+import { useManagementCopy } from "@/core/i18n/use-management-copy";
 import { TopAppBar , ChoiceChip, DangerAction, FieldLabel, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
 import { colors, radii } from "@picket/design-tokens";
 import type { AccountKind, FinancialAccount } from "@picket/domain";
@@ -17,17 +18,19 @@ const kinds: { value: AccountKind; label: string }[] = [
 ];
 
 export default function AccountDetailScreen() {
+  const tx=useManagementCopy();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, localMode } = useAuth();
   const { accounts, loading } = useAccounts();
   const account = accounts.find((item) => item.id === id);
   if (!session && !localMode) return <Redirect href={routes.login} />;
-  if (!account && loading) return <SafeAreaView style={styles.loading}><ActivityIndicator accessibilityLabel="Đang tải tài khoản" color={colors.mauve} /></SafeAreaView>;
+  if (!account && loading) return <SafeAreaView style={styles.loading}><ActivityIndicator accessibilityLabel={tx("Đang tải tài khoản")} color={colors.mauve} /></SafeAreaView>;
   if (!account) return <Redirect href={routes.home} />;
   return <AccountForm account={account} />;
 }
 
 function AccountForm({ account }: { account: FinancialAccount }) {
+  const tx=useManagementCopy();
   const { archive, update } = useAccounts();
   const [initialAccount] = useState(account);
   const [name, setName] = useState(initialAccount.name);
@@ -61,21 +64,21 @@ function AccountForm({ account }: { account: FinancialAccount }) {
   }
 
   function confirmArchive() {
-    Alert.alert("Lưu trữ tài khoản?", "Tài khoản sẽ không còn xuất hiện trong danh sách. Giao dịch lịch sử vẫn được giữ lại.", [
-      { text: "Hủy", style: "cancel" }, { text: "Lưu trữ", style: "destructive", onPress: () => void archiveAccount() },
+    Alert.alert(tx("Lưu trữ tài khoản?"), tx("Tài khoản sẽ không còn xuất hiện trong danh sách. Giao dịch lịch sử vẫn được giữ lại."), [
+      { text: tx("Hủy"), style: "cancel" }, { text: tx("Lưu trữ"), style: "destructive", onPress: () => void archiveAccount() },
     ]);
   }
 
   return <PicketScreen>
-    <TopAppBar title="Chỉnh sửa tài khoản" backDisabled={busy} />
-    <Text style={styles.subtitle}>Số dư đầu kỳ được giữ nguyên để lịch sử giao dịch luôn nhất quán.</Text>
+    <TopAppBar title={tx("Chỉnh sửa tài khoản")} backDisabled={busy} />
+    <Text style={styles.subtitle}>{tx("Số dư đầu kỳ được giữ nguyên để lịch sử giao dịch luôn nhất quán.")}</Text>
     <Surface>
-      <FieldLabel>Tên tài khoản</FieldLabel><TextInput accessibilityLabel="Tên tài khoản" maxLength={80} onChangeText={setName} placeholder="Tên tài khoản" placeholderTextColor={colors.muted} style={styles.input} value={name} />
-      <FieldLabel>Loại tài khoản</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <ChoiceChip checked={kind === item.value} key={item.value} label={item.label} onPress={() => setKind(item.value)} />)}</View>
-      <FieldLabel>Tiền tệ</FieldLabel><TextInput accessibilityLabel="Mã tiền tệ" autoCapitalize="characters" maxLength={3} onChangeText={(value) => setCurrencyCode(value.toUpperCase())} placeholder="VND" placeholderTextColor={colors.muted} style={styles.input} value={currencyCode} />
-      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text> : null}
-      <PrimaryAction busy={busy} label="Lưu thay đổi" onPress={() => void save()} />
-      <DangerAction disabled={busy} label="Lưu trữ tài khoản" onPress={confirmArchive} />
+      <FieldLabel>{tx("Tên tài khoản")}</FieldLabel><TextInput accessibilityLabel={tx("Tên tài khoản")} maxLength={80} onChangeText={setName} placeholder={tx("Tên tài khoản")} placeholderTextColor={colors.muted} style={styles.input} value={name} />
+      <FieldLabel>{tx("Loại tài khoản")}</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <ChoiceChip checked={kind === item.value} key={item.value} label={tx(item.label)} onPress={() => setKind(item.value)} />)}</View>
+      <FieldLabel>{tx("Tiền tệ")}</FieldLabel><TextInput accessibilityLabel={tx("Mã tiền tệ")} autoCapitalize="characters" maxLength={3} onChangeText={(value) => setCurrencyCode(value.toUpperCase())} placeholder="VND" placeholderTextColor={colors.muted} style={styles.input} value={currencyCode} />
+      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{tx(message)}</Text> : null}
+      <PrimaryAction busy={busy} label={tx("Lưu thay đổi")} onPress={() => void save()} />
+      <DangerAction disabled={busy} label={tx("Lưu trữ tài khoản")} onPress={confirmArchive} />
     </Surface>
   </PicketScreen>;
 }

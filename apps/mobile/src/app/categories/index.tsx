@@ -1,3 +1,4 @@
+import { useManagementCopy } from "@/core/i18n/use-management-copy";
 import { colors } from "@picket/design-tokens";
 import { Redirect, router } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
@@ -10,12 +11,13 @@ import { useTransactions } from "@/features/transactions/transactions-context";
 const kindLabels = { expense: "Khoản chi", income: "Khoản thu", both: "Thu và chi" } as const;
 
 export default function CategoriesScreen() {
+  const tx=useManagementCopy();
   const { session, localMode } = useAuth();
   const { categories } = useTransactions();
   if (!session && !localMode) return <Redirect href={routes.login} />;
   return <PicketScreen>
-    <TopAppBar title="Danh mục" subtitle="Phân loại các khoản thu và chi theo cách của bạn." action={<IconButton icon="plus" label="Thêm danh mục" onPress={() => router.push(routes.newCategory)} />} />
-    {categories.length === 0 ? <EmptyState action="Tạo danh mục" description="Thêm danh mục đầu tiên để phân loại giao dịch." onAction={() => router.push(routes.newCategory)} symbol="◌" title="Chưa có danh mục" /> : <Surface style={styles.list}>{categories.map((category,index)=><Pressable accessibilityHint={category.custom?"Mở để chỉnh sửa":"Danh mục mặc định không thể chỉnh sửa"} accessibilityRole="button" disabled={!category.custom} key={category.id} onPress={()=>router.push(routes.category(category.id))} style={[styles.row,index>0&&styles.border]}><View style={[styles.dot,{backgroundColor:category.color??colors.mauve}]} /><View style={styles.copy}><Text style={styles.name}>{category.name}</Text><Text style={styles.hint}>{kindLabels[category.kind]} · {category.custom?"Tùy chỉnh":"Mặc định"}</Text></View>{category.custom?<Text style={styles.chevron}>›</Text>:<Text style={styles.lock}>●</Text>}</Pressable>)}</Surface>}
+    <TopAppBar title={tx("Danh mục")} subtitle={tx("Phân loại các khoản thu và chi theo cách của bạn.")} action={<IconButton icon="plus" label={tx("Thêm danh mục")} onPress={() => router.push(routes.newCategory)} />} />
+    {categories.length === 0 ? <EmptyState action={tx("Tạo danh mục")} description={tx("Thêm danh mục đầu tiên để phân loại giao dịch.")} onAction={() => router.push(routes.newCategory)} symbol="◌" title={tx("Chưa có danh mục")} /> : <Surface style={styles.list}>{categories.map((category,index)=><Pressable accessibilityHint={category.custom?tx("Mở để chỉnh sửa"):tx("Danh mục mặc định không thể chỉnh sửa")} accessibilityRole="button" disabled={!category.custom} key={category.id} onPress={()=>router.push(routes.category(category.id))} style={[styles.row,index>0&&styles.border]}><View style={[styles.dot,{backgroundColor:category.color??colors.mauve}]} /><View style={styles.copy}><Text style={styles.name}>{category.name}</Text><Text style={styles.hint}>{tx(kindLabels[category.kind])} · {category.custom?tx("Tùy chỉnh"):tx("Mặc định")}</Text></View>{category.custom?<Text style={styles.chevron}>›</Text>:<Text style={styles.lock}>●</Text>}</Pressable>)}</Surface>}
   </PicketScreen>;
 }
 

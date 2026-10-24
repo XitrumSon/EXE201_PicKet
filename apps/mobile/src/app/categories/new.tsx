@@ -1,3 +1,4 @@
+import { useManagementCopy } from "@/core/i18n/use-management-copy";
 import { TopAppBar , ChoiceChip, FieldLabel, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
 import { colors, radii } from "@picket/design-tokens";
 import type { Category } from "@picket/domain";
@@ -20,6 +21,7 @@ const kinds: { value: Category["kind"]; label: string }[] = [
 const swatches = ["#8C6A7D", "#D46A6A", "#4F8A6B", "#C98A3D", "#5577A8"];
 
 export default function NewCategoryScreen() {
+  const tx=useManagementCopy();
   const { session, localMode } = useAuth();
   const { createCategory } = useTransactions();
   const [name, setName] = useState("");
@@ -48,17 +50,17 @@ export default function NewCategoryScreen() {
   }
 
   return <PicketScreen>
-    <TopAppBar title="Danh mục mới" backDisabled={busy} />
-    <Text style={styles.subtitle}>Tạo nhóm riêng để theo dõi thu chi đúng với thói quen của bạn.</Text>
+    <TopAppBar title={tx("Danh mục mới")} backDisabled={busy} />
+    <Text style={styles.subtitle}>{tx("Tạo nhóm riêng để theo dõi thu chi đúng với thói quen của bạn.")}</Text>
     <Surface>
-      <FieldLabel>Tên danh mục</FieldLabel>
-      <TextInput accessibilityLabel="Tên danh mục" autoCapitalize="sentences" maxLength={80} onChangeText={setName} placeholder="Ví dụ: Ăn uống" placeholderTextColor={colors.muted} style={styles.input} value={name} />
-      <FieldLabel>Áp dụng cho</FieldLabel>
-      <View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <ChoiceChip checked={kind === item.value} key={item.value} label={item.label} onPress={() => setKind(item.value)} />)}</View>
-      <FieldLabel>Màu sắc</FieldLabel>
-      <View accessibilityRole="radiogroup" style={styles.choices}>{swatches.map((item) => <Pressable accessibilityLabel={`Màu ${item}`} accessibilityRole="radio" accessibilityState={{ checked: color === item }} key={item} onPress={() => setColor(item)} style={[styles.swatch, { backgroundColor: item }, color === item && styles.swatchSelected]} />)}</View>
-      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text> : null}
-      <PrimaryAction busy={busy} label="Tạo danh mục" onPress={() => void submit()} />
+      <FieldLabel>{tx("Tên danh mục")}</FieldLabel>
+      <TextInput accessibilityLabel={tx("Tên danh mục")} autoCapitalize="sentences" maxLength={80} onChangeText={setName} placeholder={tx("Ví dụ: Ăn uống")} placeholderTextColor={colors.muted} style={styles.input} value={name} />
+      <FieldLabel>{tx("Áp dụng cho")}</FieldLabel>
+      <View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <ChoiceChip checked={kind === item.value} key={item.value} label={tx(item.label)} onPress={() => setKind(item.value)} />)}</View>
+      <FieldLabel>{tx("Màu sắc")}</FieldLabel>
+      <View accessibilityRole="radiogroup" style={styles.choices}>{swatches.map((item) => <Pressable accessibilityLabel={tx("colorOption",{color:item})} accessibilityRole="radio" accessibilityState={{ checked: color === item }} key={item} onPress={() => setColor(item)} style={[styles.swatch, { backgroundColor: item }, color === item && styles.swatchSelected]} />)}</View>
+      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{tx(message)}</Text> : null}
+      <PrimaryAction busy={busy} label={tx("Tạo danh mục")} onPress={() => void submit()} />
     </Surface>
   </PicketScreen>;
 }

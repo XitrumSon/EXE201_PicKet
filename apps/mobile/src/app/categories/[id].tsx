@@ -1,3 +1,4 @@
+import { useManagementCopy } from "@/core/i18n/use-management-copy";
 import { TopAppBar , ChoiceChip, DangerAction, FieldLabel, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
 import { colors, radii } from "@picket/design-tokens";
 import type { Category } from "@picket/domain";
@@ -18,6 +19,7 @@ const kinds: { value: Category["kind"]; label: string }[] = [
 const swatches = ["#8C6A7D", "#D46A6A", "#4F8A6B", "#C98A3D", "#5577A8"];
 
 export default function EditCategoryScreen() {
+  const tx=useManagementCopy();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, localMode } = useAuth();
   const { archiveCategory, categories, updateCategory } = useTransactions();
@@ -28,7 +30,7 @@ export default function EditCategoryScreen() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   if (!session && !localMode) return <Redirect href={routes.login} />;
-  if (!category || !category.custom) return <PicketScreen><Surface style={styles.missing}><Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>Không tìm thấy danh mục tùy chỉnh.</Text><PrimaryAction label="Về danh sách" onPress={() => router.replace(routes.categories)} /></Surface></PicketScreen>;
+  if (!category || !category.custom) return <PicketScreen><Surface style={styles.missing}><Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{tx("Không tìm thấy danh mục tùy chỉnh.")}</Text><PrimaryAction label={tx("Về danh sách")} onPress={() => router.replace(routes.categories)} /></Surface></PicketScreen>;
 
   const currentName = name ?? category.name;
   const currentKind = kind ?? category.kind;
@@ -49,22 +51,22 @@ export default function EditCategoryScreen() {
   }
 
   function confirmArchive() {
-    Alert.alert("Xóa danh mục?", "Danh mục đang được giao dịch sử dụng sẽ được lưu trữ mềm.", [
-      { text: "Hủy", style: "cancel" },
-      { text: "Xóa", style: "destructive", onPress: () => { setBusy(true); void archiveCategory(categoryId, categoryVersion).then(() => router.replace(routes.categories)).catch((error: unknown) => { if (isOfflineQueuedError(error)) { router.replace(routes.categories); return; } setMessage("Không xóa được danh mục."); setBusy(false); }); } },
+    Alert.alert(tx("Xóa danh mục?"), tx("Danh mục đang được giao dịch sử dụng sẽ được lưu trữ mềm."), [
+      { text: tx("Hủy"), style: "cancel" },
+      { text: tx("Xóa"), style: "destructive", onPress: () => { setBusy(true); void archiveCategory(categoryId, categoryVersion).then(() => router.replace(routes.categories)).catch((error: unknown) => { if (isOfflineQueuedError(error)) { router.replace(routes.categories); return; } setMessage("Không xóa được danh mục."); setBusy(false); }); } },
     ]);
   }
 
   return <PicketScreen>
-    <TopAppBar title="Sửa danh mục" backDisabled={busy} />
-    <Text style={styles.subtitle}>Điều chỉnh tên, phạm vi và màu nhận diện cho danh mục.</Text>
+    <TopAppBar title={tx("Sửa danh mục")} backDisabled={busy} />
+    <Text style={styles.subtitle}>{tx("Điều chỉnh tên, phạm vi và màu nhận diện cho danh mục.")}</Text>
     <Surface>
-      <FieldLabel>Tên danh mục</FieldLabel><TextInput accessibilityLabel="Tên danh mục" maxLength={80} onChangeText={setName} placeholder="Tên danh mục" placeholderTextColor={colors.muted} style={styles.input} value={currentName} />
-      <FieldLabel>Áp dụng cho</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <ChoiceChip checked={currentKind === item.value} key={item.value} label={item.label} onPress={() => setKind(item.value)} />)}</View>
-      <FieldLabel>Màu sắc</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{swatches.map((item) => <Pressable accessibilityLabel={`Màu ${item}`} accessibilityRole="radio" accessibilityState={{ checked: currentColor === item }} key={item} onPress={() => setColor(item)} style={[styles.swatch, { backgroundColor: item }, currentColor === item && styles.swatchSelected]} />)}</View>
-      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text> : null}
-      <PrimaryAction busy={busy} label="Lưu thay đổi" onPress={() => void save()} />
-      <DangerAction disabled={busy} label="Xóa danh mục" onPress={confirmArchive} />
+      <FieldLabel>{tx("Tên danh mục")}</FieldLabel><TextInput accessibilityLabel={tx("Tên danh mục")} maxLength={80} onChangeText={setName} placeholder={tx("Tên danh mục")} placeholderTextColor={colors.muted} style={styles.input} value={currentName} />
+      <FieldLabel>{tx("Áp dụng cho")}</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <ChoiceChip checked={currentKind === item.value} key={item.value} label={tx(item.label)} onPress={() => setKind(item.value)} />)}</View>
+      <FieldLabel>{tx("Màu sắc")}</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{swatches.map((item) => <Pressable accessibilityLabel={tx("colorOption",{color:item})} accessibilityRole="radio" accessibilityState={{ checked: currentColor === item }} key={item} onPress={() => setColor(item)} style={[styles.swatch, { backgroundColor: item }, currentColor === item && styles.swatchSelected]} />)}</View>
+      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{tx(message)}</Text> : null}
+      <PrimaryAction busy={busy} label={tx("Lưu thay đổi")} onPress={() => void save()} />
+      <DangerAction disabled={busy} label={tx("Xóa danh mục")} onPress={confirmArchive} />
     </Surface>
   </PicketScreen>;
 }
