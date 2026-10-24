@@ -63,7 +63,16 @@ export function createLearningAiSession(api:LearningAiApi,token:string,newKey:()
       const job=state.job;
       if(!job||!state.consent?.accepted||["failed","cancelled","expired"].includes(job.status)||
         (job.status==="completed"&&job.statementIds.length>0))return;
-      const result=parseJob(await api.learningAiJob(accessToken,job.id,signal));
+      let response:unknown;
+      try{response=await api.learningAiJob(accessToken,job.id,signal);}
+      catch(error){
+        if(typeof error==="object"&&error!==null&&"status" in error&&error.status===404){
+          if(current()){request=null;update({job:{id:job.id,status:"cancelled",statementIds:[]}});}
+          return;
+        }
+        throw error;
+      }
+      const result=parseJob(response);
       if(result.id!==job.id)throw new Error("Mismatched job");
       if(current()){
         update({job:result as LearningAiJob});
