@@ -4,7 +4,9 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 ## Current continuation status
 
-- Latest full checks: **505 mobile tests and 106 Dart API tests passed**. Mobile typecheck passes; lint has **0 errors / 25 existing warnings**; `dart analyze` has no issues. Android Kotlin/manifest integration passed in **3m36s**. This is not a new released APK or device acceptance.
+- AI continuation: explicit owner-scoped consent GET/PUT API, default-off consent, monotonic consent generations, local PostgreSQL queue with atomic daily caps (3 per owner / 100 global), request-key replay and mismatch protection. Service-only claim/dispatch/finalize RPCs recheck consent and active account. Revocation clears results and cancels work under the same owner lock as dispatch/finalize. Dispatched/expired jobs cannot invoke the provider again. Dart worker orchestration passes timeout/uncertain acknowledgement/invalid case/output tests. **Still pending:** HTTP worker gateway/executable, enqueue/poll/history deletion API, mobile consent UI, retention, real concurrency acceptance and deployment. No AI production activation occurred.
+
+- Latest full checks: **505 mobile tests and 119 Dart API tests passed**. Mobile typecheck passes; lint has **0 errors / 25 existing warnings**; `dart analyze` has no issues. Android Kotlin/manifest integration passed in **3m36s**. This is not a new released APK or device acceptance.
 - Learning: persistent 7/30-day review queue and quiz/save UI, preserved original/cloud completion dates, no duplicate review XP, weekly anchor refresh on resume.
 - Settings: authentication UI/errors/accessibility labels now have vi/en resources. Finance backup/restore retains optional account appearance. Guest restore retains appearance, per-wallet currency and legitimate negative opening balances; malformed values reject before replacement.
 - Cashflow: F0 schedule/purchase preview; experimental shared TypeScript/Dart F1 trailing median; explicit confirmed-ledger provenance adapter; aligned 7/30-day error metrics. Real-history calibration/backtests and production facts integration remain pending.

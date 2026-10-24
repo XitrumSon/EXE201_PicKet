@@ -54,15 +54,15 @@ void main() {
       );
       gateway.close();
     });
-    test('malformed upstream consent cannot be trusted', () {
-      for (final value in [
-        null,
-        {'accepted': true, 'generation': -1, 'policyVersion': 1},
-        {'accepted': 'true', 'generation': 1, 'policyVersion': 1},
-        {'accepted': true, 'generation': 1, 'policyVersion': 2},
-      ]) {
-        expect(() => validateLearningAiConsent(value), throwsFormatException);
-      }
-    });
   }
+  test('malformed upstream consent cannot be trusted', () {
+    for (final value in [
+      null,
+      {'accepted': true, 'generation': -1, 'policyVersion': 1},
+      {'accepted': 'true', 'generation': 1, 'policyVersion': 1},
+      {'accepted': true, 'generation': 1, 'policyVersion': 2},
+    ]) {
+      expect(() => validateLearningAiConsent(value), throwsFormatException);
+    }
+  });
 }

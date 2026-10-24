@@ -32,4 +32,19 @@ do $$ begin
  perform public.enqueue_learning_ai_job('request_3','cash-gap-v1','vi');
  begin perform public.enqueue_learning_ai_job('request_4','cash-gap-v1','vi'); raise exception 'Daily quota bypass'; exception when sqlstate 'PT429' then null; end;
 end $$;
+reset role;
+do $$ declare j jsonb; begin
+ j:=public.claim_learning_ai_job();
+ if public.dispatch_learning_ai_job((j->>'id')::uuid,gen_random_uuid()) then raise exception 'Wrong lease accepted'; end if;
+ if public.finish_learning_ai_job((j->>'id')::uuid,(j->>'leaseToken')::uuid,array['timing']) then raise exception 'Completion before dispatch'; end if;
+ if not public.dispatch_learning_ai_job((j->>'id')::uuid,(j->>'leaseToken')::uuid) then raise exception 'Valid dispatch failed'; end if;
+ begin perform public.finish_learning_ai_job((j->>'id')::uuid,(j->>'leaseToken')::uuid,array['raw prose']); raise exception 'Unapproved output'; exception when invalid_parameter_value then null; end;
+ if not public.finish_learning_ai_job((j->>'id')::uuid,(j->>'leaseToken')::uuid,array['timing','buffer']) then raise exception 'Valid completion failed'; end if;
+ if public.finish_learning_ai_job((j->>'id')::uuid,(j->>'leaseToken')::uuid,null) then raise exception 'Completed job overwritten'; end if;
+ j:=public.claim_learning_ai_job();
+ perform public.dispatch_learning_ai_job((j->>'id')::uuid,(j->>'leaseToken')::uuid);
+ update public.learning_ai_jobs set expires_at=now()-interval '1 second' where id=(j->>'id')::uuid;
+ if public.claim_learning_ai_job() is not null then raise exception 'Expired dispatched job retried'; end if;
+ if public.finish_learning_ai_job((j->>'id')::uuid,(j->>'leaseToken')::uuid,array['timing']) then raise exception 'Stale result accepted'; end if;
+end $$;
 rollback;
