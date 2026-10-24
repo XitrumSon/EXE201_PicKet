@@ -15,6 +15,6 @@ test("profile UI and its controlled messages have English resources",()=>{
     ts.forEachChild(node,visit);
   }
   visit(source);
-  for(const key of keys){assert.ok(profileVi[key],`Missing Vietnamese key: ${key}`);assert.ok(profileEn[key],`Missing English key: ${key}`);}
+  for(const key of keys){assert.ok((profileVi as Record<string,string>)[key],`Missing Vietnamese key: ${key}`);assert.ok((profileEn as Record<string,string>)[key],`Missing English key: ${key}`);}
   assert.equal(profileEn["Đi làm"],"Working");
 });
