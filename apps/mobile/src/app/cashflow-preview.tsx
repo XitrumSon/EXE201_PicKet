@@ -1,6 +1,6 @@
 import { Redirect, router } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,7 @@ import type { ScheduleDocument } from "@/features/cashflow/schedule-store";
 import { expandSchedules, type CashflowSchedule } from "@/features/cashflow/schedules";
 import { calculateCashflow } from "@/features/cashflow/forecast";
 import { parseScenarioMoney } from "@/features/cashflow/scenario-form";
+import { syncCashflowSchedules } from "@/features/cashflow/schedule-sync";
 
 export default function CashflowPreview(){
   const {session,localMode}=useAuth();
@@ -23,6 +24,8 @@ export default function CashflowPreview(){
 }
 
 function Scenario({owner}:{owner:string}){
+  const {session,localMode}=useAuth();
+  const cloudEnabled=!!session&&!localMode&&session.user.id===owner&&process.env.EXPO_PUBLIC_CASHFLOW_CLOUD_ENABLED==="true";
   const {colors:c,language,theme}=useAppTheme();
   const {t}=useTranslation("cashflow");
   const [doc,setDoc]=useState<ScheduleDocument|null>(null);
@@ -31,6 +34,15 @@ function Scenario({owner}:{owner:string}){
   const [busy,setBusy]=useState(false);
   const [saved,setSaved]=useState(false);
   const [editing,setEditing]=useState<string|null>(null);
+  const [editingRevision,setEditingRevision]=useState<number|null>(null);
+  const [syncBusy,setSyncBusy]=useState(false);
+  const [syncFailed,setSyncFailed]=useState(false);
+  const [syncStatus,setSyncStatus]=useState({linked:false,pending:0});
+  const manualSyncRequests=useRef(new AbortController());
+  useEffect(()=>{
+    if(manualSyncRequests.current.signal.aborted)manualSyncRequests.current=new AbortController();
+    return()=>manualSyncRequests.current.abort();
+  },[]);
   const [start,setStart]=useState(()=>new Date().toISOString().slice(0,10));
   const [scheduleDay,setScheduleDay]=useState(start);
   const [endDay,setEndDay]=useState("");
@@ -45,8 +57,10 @@ function Scenario({owner}:{owner:string}){
   const [result,setResult]=useState<ReturnType<typeof calculateCashflow>|null>(null);
   useEffect(()=>{
     let active=true;
-    void cashflowSchedules.load(owner).then(value=>{if(active){setDoc(value);setFailed(false);}}).catch(()=>{if(active)setFailed(true);});
-    return()=>{active=false;};
+    const refresh=()=>{void Promise.all([cashflowSchedules.load(owner),cashflowSchedules.status(owner)]).then(([value,status])=>{if(active){setDoc(value);setSyncStatus(status);setFailed(false);}}).catch(()=>{if(active)setFailed(true);});};
+    refresh();
+    const unsubscribe=cashflowSchedules.subscribe(owner,refresh);
+    return()=>{active=false;unsubscribe();};
   },[owner,revision]);
   // Clear displayed calculations when any assumption or persisted schedule changes.
   const signature=JSON.stringify([doc?.revision,start,currency,opening,days,purchaseDay,purchaseAmount]);
@@ -61,8 +75,14 @@ function Scenario({owner}:{owner:string}){
   async function mutate(change:()=>Promise<ScheduleDocument>){
     if(busy)return;
     setBusy(true);setSaved(false);
-    try{setDoc(await change());setFailed(false);setSaved(true);setEditing(null);setAmount("");setEndDay("");setEnabled(true);}
+    try{setDoc(await change());setFailed(false);setSaved(true);setEditing(null);setEditingRevision(null);setAmount("");setEndDay("");setEnabled(true);}
     catch{setFailed(true);}finally{setBusy(false);}
+  }
+  function startSync(){
+    if(!session)return;
+    const controller=manualSyncRequests.current;
+    setSyncBusy(true);setSyncFailed(false);
+    void syncCashflowSchedules(session,controller.signal).then(value=>{if(!controller.signal.aborted)setDoc(value);}).catch(()=>{if(!controller.signal.aborted)setSyncFailed(true);}).finally(()=>{if(!controller.signal.aborted)setSyncBusy(false);});
   }
   function calculate(){
     try{
@@ -82,13 +102,14 @@ function Scenario({owner}:{owner:string}){
     <Text style={{color:c.muted}}>{t("units")}</Text>
     <Text accessibilityLiveRegion="polite" style={{color:failed?c.expense:c.muted}}>{failed?t("error"):saved?t("saved"):!doc?t("loading"):""}</Text>
     {failed&&button(t("reload"),()=>setRevision(value=>value+1),busy)}
+    {cloudEnabled&&<View style={{gap:10}}><Text accessibilityLiveRegion="polite" style={{color:syncFailed?c.expense:c.muted}}>{syncFailed?t("syncError"):syncStatus.pending?t("syncPending",{count:syncStatus.pending}):syncStatus.linked?t("syncReady"):""}</Text><Pressable accessibilityRole="button" accessibilityState={{disabled:busy||syncBusy}} disabled={busy||syncBusy} onPress={startSync} style={{minHeight:48,padding:14,borderRadius:12,backgroundColor:c.surface}}><Text style={{color:c.primary}}>{t("sync")}</Text></Pressable></View>}
     {field(t("currency"),currency,value=>setCurrency(value.toUpperCase()))}
     {field(t("start"),start,setStart)}
     {field(t("opening"),opening,setOpening)}
     <View accessibilityRole="radiogroup" accessibilityLabel={t("title")} style={{gap:8}}>{[7,30].map(value=><Pressable key={value} accessibilityRole="radio" accessibilityState={{checked:days===value}} onPress={()=>setDays(value)} style={{padding:14,minHeight:48,backgroundColor:days===value?c.elevated:c.surface}}><Text style={{color:c.text}}>{t(value===7?"seven":"thirty")}</Text></Pressable>)}</View>
     <Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("schedules")}</Text>
     {doc?.schedules.length===0&&<Text style={{color:c.muted}}>{t("empty")}</Text>}
-    {doc?.schedules.map(row=><View key={row.id} style={{padding:14,gap:8,backgroundColor:c.elevated,borderRadius:12}}><Text style={{color:c.text}}>{formatCalendarDate(row.startDay,language)} · {t(row.frequency)} · {money(row.amount,row.currency)}</Text>{button(t("edit"),()=>{setEditing(row.id);setScheduleDay(row.startDay);setEndDay(row.endDay??"");setEnabled(row.active);setCurrency(row.currency);setAmount(String(row.amount));setFrequency(row.frequency);},busy)}{button(t("remove"),()=>void mutate(()=>cashflowSchedules.remove(owner,doc.revision,row.id)),busy)}</View>)}
+    {doc?.schedules.map(row=><View key={row.id} style={{padding:14,gap:8,backgroundColor:c.elevated,borderRadius:12}}><Text style={{color:c.text}}>{formatCalendarDate(row.startDay,language)} · {t(row.frequency)} · {money(row.amount,row.currency)}</Text>{button(t("edit"),()=>{setEditing(row.id);setEditingRevision(doc.revision);setScheduleDay(row.startDay);setEndDay(row.endDay??"");setEnabled(row.active);setCurrency(row.currency);setAmount(String(row.amount));setFrequency(row.frequency);},busy)}{button(t("remove"),()=>void mutate(()=>cashflowSchedules.remove(owner,doc.revision,row.id)),busy)}</View>)}
     {field(t("start"),scheduleDay,setScheduleDay)}
     {field(t("end"),endDay,setEndDay)}
     <Pressable accessibilityRole="checkbox" accessibilityState={{checked:enabled}} onPress={()=>setEnabled(value=>!value)} style={{padding:14,minHeight:48,backgroundColor:c.surface}}><Text style={{color:c.text}}>{enabled?"☑":"☐"} {t("active")}</Text></Pressable>
@@ -96,9 +117,9 @@ function Scenario({owner}:{owner:string}){
     <View accessibilityRole="radiogroup" accessibilityLabel={t("schedules")} style={{gap:8}}>{(["once","weekly","monthly"] as const).map(value=><Pressable key={value} accessibilityRole="radio" accessibilityState={{checked:frequency===value}} onPress={()=>setFrequency(value)} style={{padding:14,minHeight:48,backgroundColor:frequency===value?c.elevated:c.surface}}><Text style={{color:c.text}}>{t(value)}</Text></Pressable>)}</View>
     {button(t("save"),()=>void mutate(async()=>{
       if(!doc)throw new Error("Schedules unavailable");
-      return cashflowSchedules.save(owner,doc.revision,{id:editing??Crypto.randomUUID(),startDay:scheduleDay,frequency,amount:parseScenarioMoney(amount),currency,active:enabled,...(endDay?{endDay}:{})});
+      return cashflowSchedules.save(owner,editingRevision??doc.revision,{id:editing??Crypto.randomUUID(),startDay:scheduleDay,frequency,amount:parseScenarioMoney(amount),currency,active:enabled,...(endDay?{endDay}:{})});
     }),!doc||busy)}
-    {editing&&button(t("cancel"),()=>{setEditing(null);setAmount("");setEndDay("");setEnabled(true);},busy)}
+    {editing&&button(t("cancel"),()=>{setEditing(null);setEditingRevision(null);setAmount("");setEndDay("");setEnabled(true);},busy)}
     {field(t("purchaseDay"),purchaseDay,setPurchaseDay)}
     {field(t("purchaseAmount"),purchaseAmount,setPurchaseAmount)}
     <Text style={{color:c.muted}}>{t("purchaseHint")}</Text>

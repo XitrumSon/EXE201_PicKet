@@ -1,6 +1,8 @@
 begin;
 do $$ begin
  if to_regprocedure('public.load_cashflow_schedules()') is null then raise exception 'Missing schedule synchronization contract'; end if;
+ if has_table_privilege('authenticated','public.cashflow_schedules','INSERT') then raise exception 'Direct schedule writes bypass RPC'; end if;
+ if has_function_privilege('anon','public.mutate_cashflow_schedule(text,bigint,text,jsonb)','EXECUTE') then raise exception 'Anonymous mutation privilege'; end if;
 end $$;
 insert into auth.users(id,email) values('44444444-1234-4321-8123-123456789001','schedule-a@example.test'),('44444444-1234-4321-8123-123456789002','schedule-b@example.test');
 insert into public.profiles(id) values('44444444-1234-4321-8123-123456789001'),('44444444-1234-4321-8123-123456789002') on conflict do nothing;

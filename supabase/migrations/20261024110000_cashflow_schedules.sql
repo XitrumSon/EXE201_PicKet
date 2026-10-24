@@ -31,7 +31,7 @@ create policy cashflow_schedule_owner on public.cashflow_schedules for select to
  using(user_id=(select auth.uid()) and (select public.is_account_active()));
 create policy cashflow_attempt_owner on public.cashflow_schedule_attempts for select to authenticated
  using(user_id=(select auth.uid()) and (select public.is_account_active()));
-revoke all on public.cashflow_schedule_revisions,public.cashflow_schedules,public.cashflow_schedule_attempts from anon,authenticated;
+revoke all on public.cashflow_schedule_revisions,public.cashflow_schedules,public.cashflow_schedule_attempts from public,anon,authenticated;
 grant select on public.cashflow_schedule_revisions,public.cashflow_schedules,public.cashflow_schedule_attempts to authenticated;
 
 create function public.load_cashflow_schedules() returns jsonb

@@ -24,6 +24,7 @@ import { AppAppearanceProvider, useAppTheme } from "@/features/settings/appearan
 import { AccountAppearance } from "@/features/settings/account-appearance";
 import { LearningSync } from "@/features/learning/learning-sync";
 import { PlayBillingProvider } from "@/features/billing/play-billing-provider";
+import { ScheduleSync } from "@/features/cashflow/schedule-sync";
 import * as SplashScreen from "expo-splash-screen";
 
 void SplashScreen.preventAutoHideAsync();
@@ -33,6 +34,7 @@ function ProviderTree({ children }: { children: React.ReactNode }) {
     <ProfileProvider>
       <AccountAppearance />
       <LearningSync />
+      <ScheduleSync />
       <PlayBillingProvider><AccountsProvider>
         <TransactionsProvider><BudgetsProvider><BillsProvider><SubscriptionsProvider><SyncProvider><ReminderCoordinator />{children}</SyncProvider></SubscriptionsProvider></BillsProvider></BudgetsProvider></TransactionsProvider>
       </AccountsProvider></PlayBillingProvider>

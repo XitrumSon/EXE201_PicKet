@@ -212,3 +212,13 @@ under `packages/finance-fixtures/variable-spending-v1.json`. They require every
 day of the preceding 28-day window to be explicitly complete; unknown days cause
 abstention. They are not a calibrated forecast and are not enabled on real ledger
 data pending the quality adapter and backtest gates.
+
+Schedule cloud synchronization is gated by
+`EXPO_PUBLIC_CASHFLOW_CLOUD_ENABLED=false`. Enable it only against an environment
+with migration `20261024110000_cashflow_schedules.sql` and the matching Dart API.
+The encrypted document keeps local edits and stable request keys atomically.
+Login/resume drains up to 50 pending operations; failures keep the queue for a
+later retry. First-link conflicts preserve device data and require reconciliation.
+The preview provides a manual sync action and protects an open editor against
+background revision changes. This has local API/Auth/RLS acceptance, not remote
+production or device acceptance.
