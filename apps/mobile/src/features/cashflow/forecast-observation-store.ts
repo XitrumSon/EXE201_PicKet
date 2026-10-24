@@ -16,6 +16,8 @@ export function createObservationStore(storage:{read(owner:string):Promise<unkno
  const persist=(owner:string,value:ObservationDocument)=>storage.write(owner,parse(value,owner));
  const active=(current:()=>boolean)=>{if(!current())throw new Error("Forecast history session changed");};
  return {
+  retireOwner:async(_owner:string):Promise<void>=>{throw new Error("Not implemented");},
+  resumeOwner:async(_owner:string):Promise<void>=>{throw new Error("Not implemented");},
   load:(owner:string)=>atomic(owner,async doc=>doc),
   capture:(owner:string,input:CaptureInput,current:()=>boolean=()=>true)=>atomic(owner,async doc=>{
    active(current);const candidate=buildCapturedForecast(storage.newId(),input,storage.now());
