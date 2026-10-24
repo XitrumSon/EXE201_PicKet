@@ -88,3 +88,17 @@ test("same-owner token refresh preserves the pending job and updates authorizati
   assert.equal(session.snapshot().job?.id,id);
   await session.poll();assert.equal(usedToken,"refreshed-token");
 });
+test("deleted remote jobs stop polling and do not silently generate again",async()=>{
+  let polls=0;
+  const {session,keys}=setup({learningAiJob:async()=>{polls++;throw {status:404};}});
+  await session.load();await session.generate("vi");await session.poll();await session.poll();
+  assert.equal(session.snapshot().job?.status,"cancelled");
+  assert.equal(polls,1);assert.equal(keys.length,1);
+});
+test("malformed consent never enables generation",async()=>{
+  for(const value of [{accepted:"true",generation:1,policyVersion:1},{accepted:true,generation:-1,policyVersion:1},{accepted:true,generation:1,policyVersion:2}]){
+    const {session,keys}=setup({learningAiConsent:async()=>value});
+    await session.load();await session.generate("vi");
+    assert.equal(session.snapshot().consent,null);assert.equal(keys.length,0);
+  }
+});
