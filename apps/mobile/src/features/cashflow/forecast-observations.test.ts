@@ -36,7 +36,24 @@ test("closing balances require closed days, keep correction history and never fi
  clock="2026-10-31T00:00:00Z";let current=corrected;
  for(const row of captured.baseline.slice(1))current=await store.observe("a",captured.id,current.revision,row.day,row.balance);
  const result=evaluateCapturedForecast(current,clock);assert.equal(result.status,"evaluated");assert.equal(result.metrics?.mae,1000/7);
+ clock="2026-10-30T00:00:00Z";await assert.rejects(store.observe("a",captured.id,current.revision,"2026-10-24",88000));
  await assert.rejects(store.remove("a",captured.id,0));await store.remove("a",captured.id,current.revision);assert.equal((await store.load("a")).cases.length,0);
+});
+test("history capacity never silently evicts captures and clearing requires the reviewed document revision",async()=>{
+ let value:unknown,serial=0,clock=at;
+ const store=createObservationStore({read:async()=>structuredClone(value),write:async(_owner,next)=>{value=structuredClone(next);},newId:()=>`case-${++serial}`,now:()=>clock});
+ for(let index=0;index<50;index++){
+  clock=new Date(Date.parse(at)+index*1000).toISOString();const source=input();source.snapshot.asOf=clock;source.snapshot.confirmations[0].confirmedAt=clock;await store.capture("a",source);
+ }
+ const before=await store.load("a");assert.equal(before.cases.length,50);
+ clock=new Date(Date.parse(at)+51000).toISOString();const source=input();source.snapshot.asOf=clock;source.snapshot.confirmations[0].confirmedAt=clock;
+ await assert.rejects(store.capture("a",source));assert.equal((await store.load("a")).cases[0].id,before.cases[0].id);
+ await assert.rejects(store.clear("a",0));await store.clear("a",before.revision);assert.equal((await store.load("a")).cases.length,0);
+});
+test("thirty-day captures and malformed or future observations cannot produce premature metrics",()=>{
+ const record=buildCapturedForecast("thirty",{...input(),days:30},at);assert.equal(record.baseline.length,30);assert.equal(evaluateCapturedForecast(record,"2026-10-31T00:00:00Z").metrics,null);
+ for(const change of [{accountIds:["other"]},{engineVersion:"changed"},{revision:1},{observations:[{day:"2026-10-24",balance:0,source:"user-confirmed",observedAt:at}],revision:1}])assert.throws(()=>parseFrozenForecast({...record,...change}));
+ assert.throws(()=>evaluateCapturedForecast(record,"2026-10-24T11:00:00Z"));
 });
 test("failed persistence or corrupt predictions do not acknowledge a capture or silently reset data",async()=>{
  const store=createObservationStore({read:async()=>null,write:async()=>{throw Error("disk full");},newId:()=>"case",now:()=>at});await assert.rejects(store.capture("a",input()));

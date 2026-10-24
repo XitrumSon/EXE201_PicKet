@@ -33,6 +33,7 @@ function Scenario({owner}:{owner:string}){
   const cloudEnabled=!!session&&!localMode&&session.user.id===owner&&process.env.EXPO_PUBLIC_CASHFLOW_CLOUD_ENABLED==="true";
   const {colors:c,language,theme}=useAppTheme();
   const {t}=useTranslation("cashflow");
+  const {t:observationCopy}=useTranslation("forecastObservations");
   const [doc,setDoc]=useState<ScheduleDocument|null>(null);
   const [revision,setRevision]=useState(0);
   const [failed,setFailed]=useState(false);
@@ -119,6 +120,7 @@ function Scenario({owner}:{owner:string}){
     {cloudEnabled&&<View style={{gap:10}}><Text accessibilityLiveRegion="polite" style={{color:syncFailed?c.expense:c.muted}}>{syncFailed?t("syncError"):syncStatus.pending?t("syncPending",{count:syncStatus.pending}):syncStatus.linked?t("syncReady"):""}</Text><Pressable accessibilityRole="button" accessibilityState={{disabled:busy||syncBusy}} disabled={busy||syncBusy} onPress={startSync} style={{minHeight:48,padding:14,borderRadius:12,backgroundColor:c.surface}}><Text style={{color:c.primary}}>{t("sync")}</Text></Pressable></View>}
     {field(t("currency"),currency,value=>{invalidateLedger();setCurrency(value.toUpperCase());setWalletId(undefined);})}
     {cloudEnabled&&<ScheduleConflictCard owner={owner}/>}
+    {cloudEnabled&&button(observationCopy("open"),()=>router.push("/forecast-observations-preview"))}
     {field(t("start"),start,value=>{invalidateLedger();setStart(value);})}
     {field(t("opening"),opening,setOpening)}
     {ledgerSource&&ledgerSource.signature!==ledgerSignature&&<Text accessibilityRole="alert" style={{color:c.expense}}>{t("settlementChanged")}</Text>}

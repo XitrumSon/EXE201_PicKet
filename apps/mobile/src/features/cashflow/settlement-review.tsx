@@ -1,3 +1,4 @@
+import {ForecastCaptureCard} from "./forecast-capture-card";
 import {SettlementCloudCard} from "./settlement-cloud-card";
 import { useEffect,useRef,useState } from "react";
 import { Text,View } from "react-native";
@@ -42,6 +43,7 @@ function SettlementReviewSession({owner,snapshot,accounts,currency,schedules,day
  const includedSet=new Set(included),used=new Set(doc?.links.map(link=>link.transactionId));
  return <View style={{gap:10}}>
   <SettlementCloudCard owner={owner} onBusyChange={setCloudBusy} onChange={()=>{onChange();reload();}}/>
+  {doc&&(days===7||days===30)&&<ForecastCaptureCard owner={owner} input={{snapshot,accounts,currency,schedules,days,links:doc.links,pendingCount:0}} disabled={busy||cloudBusy||ids===null}/>}
   <Text accessibilityRole="header" style={{color:c.text,fontWeight:"700"}}>{t("settlementTitle")}</Text>
   <Text style={{color:c.muted,lineHeight:22}}>{t("settlementNotice")}</Text>
   {doc&&doc.links.length>0&&<SettlementButton label={t("settlementClear",{count:doc.links.length})} onPress={()=>void save([])} disabled={(busy)||cloudBusy}/>}

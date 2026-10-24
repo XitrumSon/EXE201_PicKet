@@ -42,7 +42,7 @@ The latest continuation below supersedes older pending lists in this file.
   block local editing until resolved; no automatic resend or merge occurs.
   Partial/combined payments remain unsupported. A payment must also match the
   occurrence's wallet. Cloud activation and native acceptance remain gated.
-- Ledger facts: an authenticated, no-store snapshot RPC/API now reads owner-scoped wallets and transactions at one database origin. The preview requires explicit wallet selection and no pending device mutations before adopting an opening assumption. It links included transactions and discards snapshots on background, queue changes, timeout or session change. Local Auth/RLS/API acceptance passes; migration remains local and the preview gate stays off. Manual settlement sync and offline backtest tooling are implemented; longitudinal capture and real-panel forecast acceptance remain pending.
+- Ledger facts: an authenticated, no-store snapshot RPC/API now reads owner-scoped wallets and transactions at one database origin. The preview requires explicit wallet selection and no pending device mutations before adopting an opening assumption. It links included transactions and discards snapshots on background, queue changes, timeout or session change. Local Auth/RLS/API acceptance passes; migration remains local and the preview gate stays off. Manual settlement sync and offline backtest tooling are implemented; manual F0 capture is now available in development; account-deletion cleanup, reviewed F1 capture and real-panel forecast acceptance remain pending.
 - Weekly Money Story: a local vi/en template now summarizes only confirmed
   selected-wallet records from UTC Monday through snapshot time. Income,
   expenses, refunds and scope transfers stay separate. Amounts hide by default
@@ -58,8 +58,15 @@ The latest continuation below supersedes older pending lists in this file.
   Missing truth excludes a horizon; F1 abstains without sufficient history.
   Grouped and paired metrics stay separate by currency, horizon, cohort and split.
   A local CLI writes reproducible synthetic reports without uploads or overwrites.
-  This does not activate F1 or establish accuracy on real users. Longitudinal
-  capture/review UI, an authorized real panel and calibration remain pending.
+  A development-only manual F0 collector now stores a versioned forecast at its
+  actual source instant, without retaining the full ledger or wallet names.
+  Signed closing balances require explicit confirmation after each UTC day closes;
+  corrections preserve history and predictions remain frozen. Encrypted owner-
+  scoped storage, 50-case capacity, stale-version checks and privacy hiding are
+  implemented, including offline inspection and vi/en controls. This does not
+  activate F1 or establish accuracy on real users. Account-deletion purge for
+  the new resource, reviewed F1 collection, an authorized panel and calibration
+  remain gates; the preview must remain off for users until lifecycle QA passes.
 - Languages: profile controls, controlled profile messages, app update phases,
   installer permissions and installed-version footer now use vi/en resources.
   New/edit transaction, transfer, refund, category splits and bulk-edit forms now
@@ -76,13 +83,24 @@ The latest continuation below supersedes older pending lists in this file.
 - User confirmed **no testing group or Android acceptance device is ready**.
   Real Play purchase cycles, physical-device/TalkBack checks and the 12-person
   closed-test period are external acceptance blockers, not passed tests.
-- Latest suites: **586 mobile tests and 140 API tests passed**, `dart analyze` clean; server build and standalone
+- Latest suites: **595 mobile tests and 140 API tests passed**, `dart analyze` clean; server build and standalone
   learning-worker compilation passed. Android JS export passed. Previous cashflow
   coverage: **98.85% lines / 89.06% branches / 97.77% functions**. Eleven local SQL
   suites passed. Mobile typecheck passed; lint has no errors and 25 pre-existing
-  warnings. Logs: `.artifacts/mobile-backtest-tests.log`, `api-settlement-tests.log`,
-  `mobile-backtest-export.log`, `forecast-backtest-coverage.log`. Earlier counts below
+  warnings. Logs: `.artifacts/mobile-observation-tests.log`, `api-settlement-tests.log`,
+  `mobile-observation-export.log`, `forecast-observation-coverage.log`. Earlier counts below
   are historical.
+
+Live observation continuation (24 October): RED `ad2ca5c`. Captures reuse F0,
+verified ledger openings and settlement resolution, retain the real capture time
+and never relabel a partial first day as midnight. Missing/unfinished UTC days
+cannot become numeric error metrics. Duplicate capture/retry, owner isolation,
+persistence failure, correction history, stale deletion, capacity and corrupt-
+prediction tests pass. Capture/store coverage is 100% lines / 87.33% branches /
+98.59% functions. The native screen has source guards and vi/en copy tests; no
+physical-device acceptance is claimed. See
+`FORECAST_OBSERVATION_CHECKPOINT_20261024.md`. Automatic purge on account deletion
+for this new local resource is still required before enabling it for users.
 
 Forecast evaluation continuation (24 October): adapter RED `1ab6832`, GREEN
 `644758b`; backtest RED `bb080de`. The offline CLI exercises 14 synthetic origins,

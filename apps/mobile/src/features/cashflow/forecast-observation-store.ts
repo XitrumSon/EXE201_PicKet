@@ -1,11 +1,48 @@
-import type {CaptureInput,FrozenForecastCase} from "./forecast-observations";
+import {buildCapturedForecast,parseFrozenForecast,evaluateCapturedForecast,observationDay,observationInstant,type CaptureInput,type FrozenForecastCase} from "./forecast-observations";
 export type ObservationDocument={schemaVersion:1;owner:string;revision:number;cases:FrozenForecastCase[]};
+function parse(value:unknown,owner:string):ObservationDocument{
+ if(value==null)return {schemaVersion:1,owner,revision:0,cases:[]};const raw=value as ObservationDocument;
+ if(raw.schemaVersion!==1||raw.owner!==owner||!Number.isSafeInteger(raw.revision)||raw.revision<0||raw.revision>Number.MAX_SAFE_INTEGER||!Array.isArray(raw.cases)||raw.cases.length>50)throw new Error("Invalid forecast history");
+ const cases=raw.cases.map(parseFrozenForecast);if(new Set(cases.map(row=>row.id)).size!==cases.length)throw new Error("Duplicate capture identity");
+ return {schemaVersion:1,owner,revision:raw.revision,cases};
+}
 export function createObservationStore(storage:{read(owner:string):Promise<unknown>;write(owner:string,value:ObservationDocument):Promise<void>;newId():string;now():string}){
- void storage;return {
-  load:async(_owner:string):Promise<ObservationDocument>=>{throw new Error("Not implemented");},
-  capture:async(_owner:string,_input:CaptureInput,_current:()=>boolean=()=>true):Promise<FrozenForecastCase>=>{throw new Error("Not implemented");},
-  observe:async(_owner:string,_id:string,_revision:number,_day:string,_balance:number,_current:()=>boolean=()=>true):Promise<FrozenForecastCase>=>{throw new Error("Not implemented");},
-  remove:async(_owner:string,_id:string,_revision:number):Promise<void>=>{throw new Error("Not implemented");},
-  clear:async(_owner:string,_revision:number):Promise<void>=>{throw new Error("Not implemented");},
+ const queues=new Map<string,Promise<unknown>>();
+ async function atomic<T>(owner:string,operation:(doc:ObservationDocument)=>Promise<T>):Promise<T>{
+  if(!/^[A-Za-z0-9_-]{1,200}$/.test(owner))throw new Error("Invalid history owner");
+  const next=(queues.get(owner)??Promise.resolve()).catch(()=>undefined).then(async()=>operation(parse(await storage.read(owner),owner)));
+  queues.set(owner,next);try{return await next;}finally{if(queues.get(owner)===next)queues.delete(owner);}
+ }
+ const persist=(owner:string,value:ObservationDocument)=>storage.write(owner,parse(value,owner));
+ const active=(current:()=>boolean)=>{if(!current())throw new Error("Forecast history session changed");};
+ return {
+  load:(owner:string)=>atomic(owner,async doc=>doc),
+  capture:(owner:string,input:CaptureInput,current:()=>boolean=()=>true)=>atomic(owner,async doc=>{
+   active(current);const candidate=buildCapturedForecast(storage.newId(),input,storage.now());
+   const existing=doc.cases.find(row=>row.sourceAsOf===candidate.sourceAsOf&&JSON.stringify(row.accountIds)===JSON.stringify(candidate.accountIds)&&JSON.stringify(row.input)===JSON.stringify(candidate.input));
+   if(existing)return parseFrozenForecast(existing);
+   if(doc.cases.length>=50||doc.cases.some(row=>row.id===candidate.id))throw new Error("Forecast history capacity or identity conflict");
+   active(current);await persist(owner,{...doc,revision:doc.revision+1,cases:[...doc.cases,candidate]});active(current);return parseFrozenForecast(candidate);
+  }),
+  observe:(owner:string,id:string,revision:number,day:string,balance:number,current:()=>boolean=()=>true)=>atomic(owner,async doc=>{
+   active(current);const record=doc.cases.find(row=>row.id===id);if(!record)throw new Error("Capture not found");
+   if(!Number.isSafeInteger(revision)||revision<0||revision>record.revision||!Number.isSafeInteger(balance)||Math.abs(balance)>9e12)throw new Error("Invalid observation revision or balance");
+   const now=storage.now(),time=observationInstant(now),start=observationDay(day);
+   evaluateCapturedForecast(record,now);
+   if(!record.baseline.some(row=>row.day===day)||time<start+86400000)throw new Error("Only closed forecast days can be confirmed");
+   const previous=record.observations.find(row=>row.day===day);
+   if(time<observationInstant(record.capturedAt)||(previous&&time<observationInstant(previous.observedAt)))throw new Error("Device clock precedes saved evidence");
+   if(previous?.balance===balance)return parseFrozenForecast(record);
+   if(revision!==record.revision||record.changes.length>=300)throw new Error("Closing changed; reload before correcting");
+   const next=parseFrozenForecast({...record,revision:record.revision+1,observations:[...record.observations.filter(row=>row.day!==day),{day,balance,observedAt:now,source:"user-confirmed"}],changes:previous?[...record.changes,{...previous,replacedAt:now}]:record.changes});
+   active(current);await persist(owner,{...doc,revision:doc.revision+1,cases:doc.cases.map(row=>row.id===id?next:row)});active(current);return parseFrozenForecast(next);
+  }),
+  remove:(owner:string,id:string,revision:number)=>atomic(owner,async doc=>{
+   const record=doc.cases.find(row=>row.id===id);if(!record||record.revision!==revision)throw new Error("Capture changed");
+   await persist(owner,{...doc,revision:doc.revision+1,cases:doc.cases.filter(row=>row.id!==id)});
+  }),
+  clear:(owner:string,revision:number)=>atomic(owner,async doc=>{
+   if(doc.revision!==revision)throw new Error("Forecast history changed");await persist(owner,{...doc,revision:doc.revision+1,cases:[]});
+  }),
  };
 }
