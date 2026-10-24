@@ -1,8 +1,12 @@
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { readFileSync } from "node:fs";
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync } from "node:fs";
+import { dirname, join, resolve, sep } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { test } from "node:test";
 import { captureOwnerSchema, purgeCaptureOwner, type CaptureRetirementSource } from "./capture-retirement";
+import { createPickerRecoveryStore } from "./capture-journal";
+import { createOwnerCacheLifecycle } from "../sync/owner-cache-lifecycle";
 
 function fixture() {
   const db = new DatabaseSync(":memory:"); db.exec(captureOwnerSchema);
@@ -48,8 +52,39 @@ test("all deletion targets are validated before touching any file and active own
       directory:(root,owner)=>root.includes("/cache/")?bad:f.source.directory(root,owner),removeDirectory:async()=>{deleted++;},
     }),/directory/);
     for (const owner of ["../b", "", "a/b", "a%2fb"]) await assert.rejects(purgeCaptureOwner(owner,f.source),/owner/);
+    for (const roots of [[],["file:///one/"],["file:///same/","file:///same/"], ["file:///same/","file:///same"], ["not-a-url",f.source.roots[1]], ["file://foreign/private/",f.source.roots[1]], ["file:///private/../other/",f.source.roots[1]], ["file:///private/%2f/",f.source.roots[1]]]) {
+      await assert.rejects(purgeCaptureOwner("a",{...f.source,roots,removeDirectory:async()=>{deleted++;}}),/directory/);
+    }
     assert.equal(deleted,0);
   } finally { f.db.close(); }
+});
+
+test("real filesystem deletion stays in attributed app directories and preserves another owner, guest and source photo", async () => {
+  const f=fixture();
+  const artifacts=resolve(fileURLToPath(new URL("../../../../../.artifacts/",import.meta.url)));
+  mkdirSync(artifacts,{recursive:true});
+  const temporary=mkdtempSync(join(artifacts,"capture-erasure-"));
+  const documentRoot=join(temporary,"documents"),cacheRoot=join(temporary,"cache");
+  const roots=[documentRoot,cacheRoot].map(path=>pathToFileURL(path).href+"/");
+  const owned=[join(documentRoot,"capture-drafts","a"),join(cacheRoot,"capture-drafts","a")];
+  const preserved=[join(documentRoot,"capture-drafts","b"),join(documentRoot,"capture-drafts","device-guest")];
+  try {
+    for (const path of [...owned,...preserved]) {mkdirSync(path,{recursive:true});writeFileSync(join(path,"synthetic.enc"),"synthetic private bytes");}
+    const sourcePhoto=join(temporary,"original-photo.jpg");writeFileSync(sourcePhoto,"synthetic original");
+    const source={...f.source,roots,removeDirectory:async(uri:string)=>{
+      const target=resolve(fileURLToPath(uri));
+      assert.ok(target.startsWith(resolve(temporary)+sep));
+      assert.ok(owned.includes(target));
+      rmSync(target,{recursive:true,force:true});
+    }};
+    await purgeCaptureOwner("a",source);await purgeCaptureOwner("a",source);
+    assert.ok(owned.every(path=>!existsSync(path)));
+    assert.ok(preserved.every(path=>existsSync(join(path,"synthetic.enc"))));assert.ok(existsSync(sourcePhoto));
+  } finally {
+    f.db.close();
+    assert.equal(dirname(resolve(temporary)),artifacts);
+    rmSync(temporary,{recursive:true,force:true});
+  }
 });
 
 test("image deletion failure retains journal references; SQL failure rolls back and remains retryable", async () => {
@@ -74,4 +109,22 @@ test("native capture writers and picker recovery share the retirement fence befo
   assert.match(capture,/withLocalOwnerAccess\(owner,.*restoreCaptureImageWithLease/);
   assert.match(fallback,/withLocalOwnerAccess\(intent.owner/);
   assert.match(retirement,/await purgeRetiredCaptureOwner\(owner\)/);
+});
+
+test("late picker begin/complete and pending reads cannot recreate a retired owner's interruption marker", async () => {
+  const f = fixture(); const retired = new Set<string>();
+  const access=createOwnerCacheLifecycle({isRetired:async owner=>retired.has(owner),retire:async owner=>{retired.add(owner);},resume:async owner=>{retired.delete(owner);}});
+  const store=createPickerRecoveryStore(async()=>({
+    execAsync:async sql=>{f.db.exec(sql);},
+    runAsync:async(sql,...args)=>f.db.prepare(sql).run(...args),
+    getFirstAsync:async<T>(sql:string,...args:string[]) => (f.db.prepare(sql).get(...args)??null) as T|null,
+  }),access.run);
+  try {
+    await store.begin("a","old-picker"); await access.retire("a"); await purgeCaptureOwner("a",f.source);
+    await assert.rejects(store.begin("a","late-picker"),/retired/);
+    await assert.rejects(store.complete("a","old-picker"),/retired/);
+    await assert.rejects(store.pending("a"),/retired/);
+    await store.begin("b","other-picker"); assert.equal(await store.pending("b"),true);
+    assert.equal(f.db.prepare("SELECT COUNT(*) AS count FROM capture_picker_attempts WHERE owner_id='a'").get()?.count,0);
+  } finally {f.db.close();}
 });

@@ -6,6 +6,16 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Latest capture continuation: deletion now drains/fences capture file and
+  journal writers, erases the exact owned document/cache capture directories,
+  then transactionally removes capture/OCR/picker rows before the server call.
+  Corrupt records, file/SQL failures, retry and other-owner preservation are
+  covered by real SQLite and isolated real-filesystem tests. All **634 mobile
+  tests** pass; purge coverage is 94.74% lines / 94.74% branches / 100% functions.
+  Typecheck/Android JS export pass; lint has 0 errors/25 existing warnings.
+  Receipt/keepsake/notification/lock cleanup, unattributed legacy system caches
+  and native acceptance remain pending. See `CAPTURE_RETIREMENT_CHECKPOINT_20261025.md`.
+
 - Latest 25 October continuation: the general financial mutation outbox now
   shares the durable owner fence. Account deletion drains pending writes, then
   transactionally erases owned pending mutations, conflicts and mappings before

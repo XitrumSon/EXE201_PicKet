@@ -1,5 +1,5 @@
 import * as SQLite from "expo-sqlite";
-import { decryptLocalPayload, encryptLocalPayload } from "@/core/sync/offline-cache";
+import { decryptLocalPayload, encryptLocalPayload, withLocalOwnerAccess } from "@/core/sync/offline-cache";
 import { createFallbackOutbox, type FallbackIntent } from "./fallback-outbox";
 import { capturePhotoLeases } from "./capture-photo-cleanup";
 
@@ -16,15 +16,18 @@ function database() {
   return databasePromise;
 }
 
-export async function readFallbackIntent(owner: string, captureId: string) {
+async function readStoredFallbackIntent(owner: string, captureId: string) {
   const row = await (await database()).getFirstAsync<{ payload: string }>(
     "SELECT payload FROM capture_ocr_intents WHERE owner_id=? AND capture_id=?", owner, captureId);
   if (!row) return null;
   if (!row.payload.startsWith("enc-v1:")) throw new Error("Invalid encrypted OCR intent");
   return decryptLocalPayload<FallbackIntent>(row.payload, `capture-ocr:${owner}:${captureId}`);
 }
+export function readFallbackIntent(owner:string,captureId:string) {
+  return withLocalOwnerAccess(owner,()=>readStoredFallbackIntent(owner,captureId));
+}
 
-export async function fallbackImageReferences(owner: string): Promise<string[]> {
+async function storedFallbackImageReferences(owner: string): Promise<string[]> {
   const rows = await (await database()).getAllAsync<{ capture_id: string; payload: string }>(
     "SELECT capture_id,payload FROM capture_ocr_intents WHERE owner_id=?", owner);
   return Promise.all(rows.map(async row => {
@@ -36,13 +39,16 @@ export async function fallbackImageReferences(owner: string): Promise<string[]> 
     return intent.imageRef;
   }));
 }
+export function fallbackImageReferences(owner:string) {
+  return withLocalOwnerAccess(owner,()=>storedFallbackImageReferences(owner));
+}
 
 export const fallbackOutbox = createFallbackOutbox({
   read: readFallbackIntent,
-  write: intent => capturePhotoLeases.use(intent.owner, async () => {
+  write: intent => capturePhotoLeases.use(intent.owner, () => withLocalOwnerAccess(intent.owner, async () => {
     const payload = await encryptLocalPayload(intent, `capture-ocr:${intent.owner}:${intent.captureId}`);
     await (await database()).runAsync(`INSERT INTO capture_ocr_intents(owner_id,capture_id,payload)
       VALUES(?,?,?) ON CONFLICT(owner_id,capture_id) DO UPDATE SET payload=excluded.payload`,
     intent.owner, intent.captureId, payload);
-  }),
+  })),
 });

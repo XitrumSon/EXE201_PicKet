@@ -5,7 +5,7 @@ export function createPickerRecoveryStore(open: () => Promise<{
   execAsync(sql: string): Promise<void>;
   runAsync(sql: string, ...values: string[]): Promise<unknown>;
   getFirstAsync<T>(sql: string, ...values: string[]): Promise<T | null>;
-}>) {
+}>, access: <T>(owner:string, operation:()=>Promise<T>)=>Promise<T> = (_owner,operation)=>operation()) {
   let ready: ReturnType<typeof open> | null = null;
   function database() {
     ready ??= open().then(async db => {
@@ -20,15 +20,15 @@ export function createPickerRecoveryStore(open: () => Promise<{
   return {
     async begin(owner: string, operation: string) {
       validate(owner); validate(operation);
-      await (await database()).runAsync("INSERT INTO capture_picker_attempts(owner_id,operation_id) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET operation_id=excluded.operation_id", owner, operation);
+      await access(owner, async()=>{ await (await database()).runAsync("INSERT INTO capture_picker_attempts(owner_id,operation_id) VALUES(?,?) ON CONFLICT(owner_id) DO UPDATE SET operation_id=excluded.operation_id", owner, operation); });
     },
     async pending(owner: string) {
       validate(owner);
-      return (await (await database()).getFirstAsync<{ operation_id: string }>("SELECT operation_id FROM capture_picker_attempts WHERE owner_id=?", owner)) !== null;
+      return access(owner, async()=>(await (await database()).getFirstAsync<{ operation_id: string }>("SELECT operation_id FROM capture_picker_attempts WHERE owner_id=?", owner)) !== null);
     },
     async complete(owner: string, operation: string) {
       validate(owner); validate(operation);
-      await (await database()).runAsync("DELETE FROM capture_picker_attempts WHERE owner_id=? AND operation_id=?", owner, operation);
+      await access(owner, async()=>{ await (await database()).runAsync("DELETE FROM capture_picker_attempts WHERE owner_id=? AND operation_id=?", owner, operation); });
     },
   };
 }
