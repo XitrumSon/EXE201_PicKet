@@ -14,6 +14,21 @@ Map<String, dynamic> valid() => {
   },
 };
 void main() {
+  test('wallet scope round trips and malformed identities reject', () {
+    final input = valid();
+    (input['schedule'] as Map)['walletId'] = id;
+    expect(
+      CashflowScheduleMutation.fromJson(input, id).schedule['walletId'],
+      id,
+    );
+    for (final wallet in [42, '', 'other-wallet']) {
+      (input['schedule'] as Map)['walletId'] = wallet;
+      expect(
+        () => CashflowScheduleMutation.fromJson(input, id),
+        throwsFormatException,
+      );
+    }
+  });
   test('schedule request preserves scope and stable mutation key', () {
     final result = CashflowScheduleMutation.fromJson(
       valid(),
