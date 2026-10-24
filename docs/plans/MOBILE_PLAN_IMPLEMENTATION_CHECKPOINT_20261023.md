@@ -23,22 +23,23 @@ The latest continuation below supersedes older pending lists in this file.
 - Schedules: reviewed per-row device/cloud/omit reconciliation is implemented,
   with revalidation of both copies and an encrypted local recovery copy. A
   reproduced local revision rollback bug is fixed; stale editors remain stale.
+- Ledger facts: an authenticated, no-store snapshot RPC/API now reads owner-scoped wallets and transactions at one database origin. The preview requires explicit wallet selection and no pending device mutations before adopting an opening assumption. It links included transactions and discards snapshots on background, queue changes, timeout or session change. Local Auth/RLS/API acceptance passes; migration remains local and the preview gate stays off. Settlement links and completeness/backtest acceptance remain pending.
 - Languages: profile controls, controlled profile messages, app update phases,
   installer permissions and installed-version footer now use vi/en resources.
   Other untranslated product screens/errors still require migration.
 - User confirmed **no testing group or Android acceptance device is ready**.
   Real Play purchase cycles, physical-device/TalkBack checks and the 12-person
   closed-test period are external acceptance blockers, not passed tests.
-- Latest suites: **528 mobile tests and 134 API tests passed**, `dart analyze` clean; server build and standalone
+- Latest suites: **530 mobile tests and 135 API tests passed**, `dart analyze` clean; server build and standalone
   learning-worker compilation passed. Android JS export passed. Learning/cashflow
-  coverage: **99.20% lines / 84.80% branches / 86.27% functions**. Eight local SQL
+  coverage: **99.20% lines / 84.80% branches / 86.27% functions**. Nine local SQL
   suites passed. Mobile typecheck passed; lint has no errors and 25 pre-existing
-  warnings. Logs: `.artifacts/mobile-final-check.log`, `api-plan-latest-tests.log`,
-  `mobile-plan-export.log`, `learning-cashflow-coverage.log`. Earlier counts below
+  warnings. Logs: `.artifacts/mobile-ledger-final-tests.log`, `api-ledger-tests.log`,
+  `mobile-ledger-export.log`, `learning-cashflow-coverage.log`. Earlier counts below
   are historical.
 
 Still required before full P1–P5 completion: remaining screen/error/notification
-localization; production entry/device settings acceptance; runtime financial facts,
+localization; production entry/device settings acceptance; financial-fact completeness,
 wallet scope/settlement links and real backtests; assessment/report/regrade and
 personal-data-compatible provider decision; independent lesson/AI evaluation;
 staging/production deployment review; device/billing/pilot acceptance. The free
