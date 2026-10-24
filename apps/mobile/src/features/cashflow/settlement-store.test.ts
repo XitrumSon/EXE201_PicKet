@@ -18,3 +18,11 @@ test("settlements persist per owner, serialize edits and reject stale or corrupt
  await assert.rejects(store.load("broken"));
  await assert.rejects(store.load(""));
 });
+test("failed persistence does not acknowledge a save and the owner queue recovers",async()=>{
+ let data:unknown=null,fail=true;
+ const store=createSettlementStore({read:async()=>data,write:async(_owner,value)=>{if(fail)throw new Error("Disk full");data=value;}});
+ await assert.rejects(store.save("owner",0,[link]));
+ assert.equal((await store.load("owner")).revision,0);
+ fail=false;await store.save("owner",0,[link]);
+ assert.equal((await store.load("owner")).revision,1);
+});

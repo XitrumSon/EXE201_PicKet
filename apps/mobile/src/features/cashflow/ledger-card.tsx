@@ -9,14 +9,16 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { localeFor } from "@/core/i18n/formatters";
 import { ledgerOpening,parseLedgerSnapshot,type LedgerSnapshot } from "./ledger-snapshot";
+import { SettlementReview } from "./settlement-review";
+import type { CashflowSchedule } from "./schedules";
 
-type Props={owner:string;currency:string;onUse:(balance:number,day:string)=>void};
+type Props={owner:string;currency:string;schedules:CashflowSchedule[];days:number;onInvalidate:()=>void;onUse:(balance:number,day:string,settledIds:string[])=>void};
 export function LedgerFactsCard(props:Props){
  const {session,localMode}=useAuth();
  if(!session||localMode||session.user.id!==props.owner)return null;
  return <LedgerFactsSession key={session.access_token} {...props}/>;
 }
-function LedgerFactsSession({owner,currency,onUse}:Props){
+function LedgerFactsSession({owner,currency,schedules,days,onInvalidate,onUse}:Props){
  const {session,localMode}=useAuth();
  const {colors:c,language}=useAppTheme();const {t}=useTranslation("cashflow");
  const [snapshot,setSnapshot]=useState<LedgerSnapshot|null>(null);
@@ -29,17 +31,17 @@ function LedgerFactsSession({owner,currency,onUse}:Props){
   if(requests.current.signal.aborted)requests.current=new AbortController();
 
   const epoch=generation;
-  const invalidate=()=>{epoch.current++;setSnapshot(null);};
+  const invalidate=()=>{epoch.current++;setSnapshot(null);onInvalidate();};
   const listener=AppState.addEventListener("change",state=>{if(state!=="active")invalidate();});
   const stop=subscribeToMutationQueue(invalidate);
   const timer=setInterval(invalidate,60000);
-  return()=>{epoch.current++;requests.current.abort();listener.remove();stop();clearInterval(timer);};
- },[owner,session?.access_token]);
+  return()=>{epoch.current++;requests.current.abort();listener.remove();stop();clearInterval(timer);onInvalidate();};
+ },[owner,session?.access_token,onInvalidate]);
  async function load(){
   const api=picketApi;if(!session||session.user.id!==owner||localMode||!api||busy)return;
   const controller=requests.current;
   const origin=generation.current;
-  setBusy(true);setFailed(false);setSnapshot(null);
+  setBusy(true);setFailed(false);setSnapshot(null);onInvalidate();
   try{
    const before=await listPendingMutations(owner);
    if(before.length){setPending(before.length);throw new Error("Pending changes");}
@@ -65,14 +67,14 @@ function LedgerFactsSession({owner,currency,onUse}:Props){
   {failed&&<Text accessibilityRole="alert" style={{color:c.expense}}>{t(pending?"ledgerPending":"ledgerError")}</Text>}
   {snapshot&&<>
    <Text style={{color:c.muted}}>{t("ledgerOrigin",{time:new Intl.DateTimeFormat(localeFor(language),{dateStyle:"medium",timeStyle:"short"}).format(new Date(snapshot.asOf))})}</Text>
-   {snapshot.wallets.filter(row=>!row.archived&&!row.deletedAt&&row.currencyCode===currency).map(row=><Pressable key={row.id} accessibilityRole="checkbox" accessibilityLabel={row.name} accessibilityState={{checked:selected.includes(row.id)}} onPress={()=>setSelected(old=>old.includes(row.id)?old.filter(id=>id!==row.id):[...old,row.id])} style={{minHeight:48,padding:12,borderWidth:1,borderColor:selected.includes(row.id)?c.primary:c.border,borderRadius:10}}><Text style={{color:c.text}}>{selected.includes(row.id)?"☑":"☐"} {row.name}</Text></Pressable>)}
+   {snapshot.wallets.filter(row=>!row.archived&&!row.deletedAt&&row.currencyCode===currency).map(row=><Pressable key={row.id} accessibilityRole="checkbox" accessibilityLabel={row.name} accessibilityState={{checked:selected.includes(row.id)}} onPress={()=>{onInvalidate();setSelected(old=>old.includes(row.id)?old.filter(id=>id!==row.id):[...old,row.id]);}} style={{minHeight:48,padding:12,borderWidth:1,borderColor:selected.includes(row.id)?c.primary:c.border,borderRadius:10}}><Text style={{color:c.text}}>{selected.includes(row.id)?"☑":"☐"} {row.name}</Text></Pressable>)}
    {selected.length>0&&!facts&&<Text style={{color:c.expense}}>{t("ledgerError")}</Text>}
    {facts&&<>
     <Text accessibilityLiveRegion="polite" style={{color:c.text,fontWeight:"700"}}>{t("ledgerBalance")}: {money(facts.balance)}</Text>
     <Pressable accessibilityRole="button" onPress={()=>setShowEntries(value=>!value)} style={{minHeight:48,padding:12}}><Text style={{color:c.primary}}>{t("ledgerRecords",{count:facts.includedTransactionIds.length})}</Text></Pressable>
     {showEntries&&facts.includedTransactionIds.map((id,index)=><Pressable key={id} accessibilityRole="button" onPress={()=>router.push({pathname:"/transactions/[id]",params:{id}})} style={{minHeight:48,padding:12}}><Text style={{color:c.primary}}>{t("ledgerRecord",{count:index+1})}</Text></Pressable>)}
     <Text style={{color:c.muted,lineHeight:22}}>{t("ledgerUseHint")}</Text>
-    <Pressable accessibilityRole="button" onPress={()=>{if(facts&&snapshot)onUse(facts.balance,new Date(snapshot.asOf).toISOString().slice(0,10));}} style={{minHeight:48,padding:14,backgroundColor:c.surface}}><Text style={{color:c.primary}}>{t("ledgerUse")}</Text></Pressable>
+    <SettlementReview key={JSON.stringify([selected,currency,schedules,days])} owner={owner} snapshot={snapshot} accounts={selected} currency={currency} schedules={schedules} days={days} onChange={onInvalidate} onUse={ids=>{if(facts&&snapshot)onUse(facts.balance,new Date(snapshot.asOf).toISOString().slice(0,10),ids);}}/>
    </>}
   </>}
  </View>;

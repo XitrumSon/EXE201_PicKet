@@ -1,6 +1,6 @@
 import { Redirect, router } from "expo-router";
 import * as Crypto from "expo-crypto";
-import { useEffect, useRef, useState } from "react";
+import { useCallback,useEffect, useRef, useState } from "react";
 import { ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -50,13 +50,19 @@ function Scenario({owner}:{owner:string}){
   const [endDay,setEndDay]=useState("");
   const [enabled,setEnabled]=useState(true);
   const [currency,setCurrency]=useState("VND");
-  const [opening,setOpening]=useState("");
+  const [openingState,setOpeningState]=useState<{value:string;ledgerSource:{signature:string;settledIds:string[]}|null}>({value:"",ledgerSource:null});
+  const opening=openingState.value,ledgerSource=openingState.ledgerSource;
+  const setOpening=(value:string)=>setOpeningState({value,ledgerSource:null});
   const [amount,setAmount]=useState("");
   const [frequency,setFrequency]=useState<CashflowSchedule["frequency"]>("once");
   const [days,setDays]=useState(7);
   const [purchaseDay,setPurchaseDay]=useState("");
   const [purchaseAmount,setPurchaseAmount]=useState("");
   const [result,setResult]=useState<ReturnType<typeof calculateCashflow>|null>(null);
+  const invalidateLedger=useCallback(()=>{
+    setOpeningState(current=>current.ledgerSource?{value:"",ledgerSource:null}:current);setResult(null);
+  },[]);
+  const ledgerSignature=JSON.stringify([doc?.revision,currency,days]);
   useEffect(()=>{
     let active=true;
     const refresh=()=>{void Promise.all([cashflowSchedules.load(owner),cashflowSchedules.status(owner)]).then(([value,status])=>{if(active){setDoc(value);setSyncStatus(status);setFailed(false);}}).catch(()=>{if(active)setFailed(true);});};
@@ -65,7 +71,7 @@ function Scenario({owner}:{owner:string}){
     return()=>{active=false;unsubscribe();};
   },[owner,revision]);
   // Clear displayed calculations when any assumption or persisted schedule changes.
-  const signature=JSON.stringify([doc?.revision,start,currency,opening,days,purchaseDay,purchaseAmount]);
+  const signature=JSON.stringify([doc?.revision,start,currency,opening,days,purchaseDay,purchaseAmount,ledgerSource]);
   const [calculatedSignature,setCalculatedSignature]=useState("");
   const visible=result&&calculatedSignature===signature?result:null;
   const money=(value:number,code:string)=>{
@@ -89,9 +95,10 @@ function Scenario({owner}:{owner:string}){
   function calculate(){
     try{
       if(!doc)throw new Error("Schedules unavailable");
+      if(ledgerSource&&ledgerSource.signature!==ledgerSignature)throw new Error("Recheck settlement evidence after schedules change");
       formatCalendarDate(start,language);
       const through=new Date(Date.parse(`${start}T00:00:00Z`)+(days-1)*86400000).toISOString().slice(0,10);
-      const occurrences=expandSchedules(doc.schedules.filter(row=>row.currency===currency),start,through);
+      const occurrences=expandSchedules(doc.schedules.filter(row=>row.currency===currency),start,through,ledgerSource?.settledIds??[]);
       const purchase=purchaseDay||purchaseAmount?{day:purchaseDay,amount:parseScenarioMoney(purchaseAmount)}:undefined;
       setResult(calculateCashflow({startDay:start,days,currency,openingBalance:parseScenarioMoney(opening),occurrences},purchase));
       setCalculatedSignature(signature);setFailed(false);
@@ -105,11 +112,12 @@ function Scenario({owner}:{owner:string}){
     <Text accessibilityLiveRegion="polite" style={{color:failed?c.expense:c.muted}}>{failed?t("error"):saved?t("saved"):!doc?t("loading"):""}</Text>
     {failed&&button(t("reload"),()=>setRevision(value=>value+1),busy)}
     {cloudEnabled&&<View style={{gap:10}}><Text accessibilityLiveRegion="polite" style={{color:syncFailed?c.expense:c.muted}}>{syncFailed?t("syncError"):syncStatus.pending?t("syncPending",{count:syncStatus.pending}):syncStatus.linked?t("syncReady"):""}</Text><Pressable accessibilityRole="button" accessibilityState={{disabled:busy||syncBusy}} disabled={busy||syncBusy} onPress={startSync} style={{minHeight:48,padding:14,borderRadius:12,backgroundColor:c.surface}}><Text style={{color:c.primary}}>{t("sync")}</Text></Pressable></View>}
-    {field(t("currency"),currency,value=>setCurrency(value.toUpperCase()))}
+    {field(t("currency"),currency,value=>{invalidateLedger();setCurrency(value.toUpperCase());})}
     {cloudEnabled&&<ScheduleConflictCard owner={owner}/>}
-    {field(t("start"),start,setStart)}
+    {field(t("start"),start,value=>{invalidateLedger();setStart(value);})}
     {field(t("opening"),opening,setOpening)}
-    {cloudEnabled&&<LedgerFactsCard owner={owner} currency={currency} onUse={(balance,day)=>{setOpening(String(balance));setStart(day);setResult(null);}}/>}
+    {ledgerSource&&ledgerSource.signature!==ledgerSignature&&<Text accessibilityRole="alert" style={{color:c.expense}}>{t("settlementChanged")}</Text>}
+    {cloudEnabled&&<LedgerFactsCard owner={owner} currency={currency} schedules={doc?.schedules??[]} days={days} onInvalidate={invalidateLedger} onUse={(balance,day,settledIds)=>{setOpeningState({value:String(balance),ledgerSource:{signature:ledgerSignature,settledIds}});setStart(day);setResult(null);}}/>}
     <View accessibilityRole="radiogroup" accessibilityLabel={t("title")} style={{gap:8}}>{[7,30].map(value=><Pressable key={value} accessibilityRole="radio" accessibilityState={{checked:days===value}} onPress={()=>setDays(value)} style={{padding:14,minHeight:48,backgroundColor:days===value?c.elevated:c.surface}}><Text style={{color:c.text}}>{t(value===7?"seven":"thirty")}</Text></Pressable>)}</View>
     <Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("schedules")}</Text>
     {doc?.schedules.length===0&&<Text style={{color:c.muted}}>{t("empty")}</Text>}

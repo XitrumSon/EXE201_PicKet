@@ -6,9 +6,10 @@ export function resolveSettlements(snapshot:LedgerSnapshot,accounts:string[],cur
  const facts=ledgerOpening(snapshot,accounts,currency,0);
  const included=new Set(facts.includedTransactionIds),used=new Set<string>(),settled=new Set<string>();
  const expected=new Map(occurrences.map(row=>[row.id,row]));
+ const entries=new Map(snapshot.entries.map(row=>[row.id,row]));
  if(expected.size!==occurrences.length)throw new Error("Duplicate occurrence");
  for(const link of links){
-  const occurrence=expected.get(link.occurrenceId),entry=snapshot.entries.find(row=>row.id===link.transactionId);
+  const occurrence=expected.get(link.occurrenceId),entry=entries.get(link.transactionId);
   if(!occurrence||!entry||!included.has(entry.id)||!accounts.includes(entry.accountId)||entry.kind==="transfer"||
      occurrence.currency!==currency||link.currency!==currency||link.day!==occurrence.day||link.amount!==occurrence.amount||
      entry.updatedAt!==link.transactionUpdatedAt||entry.amount*(entry.kind==="expense"?-1:1)!==occurrence.amount||
