@@ -2,8 +2,9 @@ import * as Crypto from "expo-crypto";
 import { Directory, File, Paths } from "expo-file-system";
 import * as SQLite from "expo-sqlite";
 import type { CreateTransactionRequest, ReceiptLineItemInput } from "@picket/domain";
-import { decryptLocalPayload, encryptLocalPayload } from "@/core/sync/offline-cache";
+import { decryptLocalPayload, encryptLocalPayload, withLocalOwnerAccess, isOfflineCacheOwnerRetired } from "@/core/sync/offline-cache";
 import { createReceiptRequestJournal, parseReceiptRequest } from "./receipt-request-journal";
+import { purgeReceiptOwner, receiptImageIsOwned } from "./receipt-retirement";
 
 export type PendingReceiptDraft = {
   id: string;
@@ -62,7 +63,8 @@ async function database() {
     if (!columns.some((column) => column.name === "transaction_attempt_id")) await db.execAsync("ALTER TABLE pending_receipt_drafts ADD COLUMN transaction_attempt_id TEXT");
     return db;
   });
-  return databasePromise;
+  const attempt=databasePromise;
+  try{return await attempt;}catch(error){if(databasePromise===attempt)databasePromise=null;throw error;}
 }
 
 function extensionOf(uri: string) {
@@ -76,8 +78,9 @@ const handoffs = new Map<string, Promise<PendingReceiptDraft>>();
 export function savePendingReceiptDraft(input: PendingReceiptInput) {
   const id = input.id ?? Crypto.randomUUID();
   if (!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(id)) return Promise.reject(new Error("Invalid pending receipt identity"));
-  const operation = (handoffs.get(id) ?? Promise.resolve()).catch(() => undefined)
-    .then(() => persistPendingReceiptDraft({ ...input, id }));
+  const previous=handoffs.get(id)??Promise.resolve();
+  const operation = withLocalOwnerAccess(input.userId,()=>previous.catch(() => undefined)
+    .then(() => persistPendingReceiptDraft({ ...input, id })));
   handoffs.set(id, operation);
   void operation.finally(() => { if (handoffs.get(id) === operation) handoffs.delete(id); }).catch(() => undefined);
   return operation;
@@ -88,13 +91,14 @@ async function persistPendingReceiptDraft(input: PendingReceiptInput & { id: str
   const db = await database();
   const claimed = await db.getFirstAsync<{ user_id: string }>("SELECT user_id FROM pending_receipt_drafts WHERE id=?", id);
   if (claimed && claimed.user_id !== input.userId) throw new Error("Pending receipt owner mismatch");
-  const existing = claimed ? await getPendingReceiptDraft(id, input.userId) : null;
+  const existing = claimed ? await getStoredPendingReceiptDraft(id, input.userId) : null;
   // Keep the original image/payload once upload or transaction submission has
   // made progress. A retry must not acquire a new idempotency identity.
   if (existing?.storagePath || existing?.transactionId || existing?.transactionRequest) return existing;
-  const folder = new Directory(Paths.document, "receipt-drafts");
+  const folder = new Directory(Paths.document, "receipt-drafts", input.userId);
   folder.create({ idempotent: true, intermediates: true });
   const destination = existing ? new File(existing.imageUri) : new File(folder, `${id}.${extensionOf(input.imageUri)}`);
+  if(!receiptImageIsOwned(Paths.document.uri,input.userId,id,destination.uri))throw Error("Invalid pending receipt image");
   // A process interrupted before submission may have left metadata without
   // its copy. The intact capture can repair it, but never replace an image
   // once a canonical request or remote progress has been pinned above.
@@ -151,20 +155,20 @@ async function persistPendingReceiptDraft(input: PendingReceiptInput & { id: str
       draft.transactionId,
       draft.createdAt,
     );
-    const persisted = await getPendingReceiptDraft(id, input.userId);
+    const persisted = await getStoredPendingReceiptDraft(id, input.userId);
     if (!persisted) throw new Error("Pending receipt was not persisted");
     return persisted;
   } catch (error) {
     // An ambiguous local write must not delete an image referenced by a row
     // that actually committed. Keep the file if even the readback fails.
     if (createdImage) {
-      try { if (!await getPendingReceiptDraft(id, input.userId) && destination.exists) destination.delete(); } catch { /* Safe orphan cleanup can retry later. */ }
+      try { if (!await getStoredPendingReceiptDraft(id, input.userId) && destination.exists) destination.delete(); } catch { /* Safe orphan cleanup can retry later. */ }
     }
     throw error;
   }
 }
 
-export async function getPendingReceiptDraft(id: string, userId: string) {
+async function getStoredPendingReceiptDraft(id: string, userId: string) {
   const db = await database();
   const row = await db.getFirstAsync<{
     id: string;
@@ -192,6 +196,7 @@ export async function getPendingReceiptDraft(id: string, userId: string) {
     userId,
   );
   if (!row) return null;
+  if(!receiptImageIsOwned(Paths.document.uri,userId,id,row.image_uri))throw Error("Pending receipt image ownership mismatch");
   return {
     id: row.id,
     userId: row.user_id,
@@ -212,20 +217,27 @@ export async function getPendingReceiptDraft(id: string, userId: string) {
   } satisfies PendingReceiptDraft;
 }
 
+export function getPendingReceiptDraft(id:string,userId:string){
+ return withLocalOwnerAccess(userId,()=>getStoredPendingReceiptDraft(id,userId));
+}
+
 const receiptRequestJournal = createReceiptRequestJournal({
-  read: async (owner,id) => (await getPendingReceiptDraft(id,owner))?.transactionRequest ?? null,
+  read: async (owner,id) => (await getStoredPendingReceiptDraft(id,owner))?.transactionRequest ?? null,
   saveFirst: async (owner,id,request) => {
     const payload = await encryptLocalPayload(request, `pending-receipt-request:${owner}:${id}`);
     await (await database()).runAsync("UPDATE pending_receipt_drafts SET transaction_request_payload=COALESCE(transaction_request_payload,?) WHERE id=? AND user_id=?",payload,id,owner);
   },
 });
 export async function pinPendingReceiptRequest(draft: PendingReceiptDraft, request: CreateTransactionRequest) {
+  return withLocalOwnerAccess(draft.userId,async()=>{
   const transactionRequest = await receiptRequestJournal.pin(draft.userId,draft.id,request);
   return { ...draft, transactionRequest };
+  });
 }
 
 /** Call only after the server permanently fenced this exact old attempt. */
 export async function resetPendingReceiptAttempt(draft: PendingReceiptDraft) {
+  return withLocalOwnerAccess(draft.userId,async()=>{
   const db = await database();
   const row = await db.getFirstAsync<{ transaction_request_payload: string | null }>(
     "SELECT transaction_request_payload FROM pending_receipt_drafts WHERE id=? AND user_id=?", draft.id,draft.userId,
@@ -236,9 +248,10 @@ export async function resetPendingReceiptAttempt(draft: PendingReceiptDraft) {
     AND COALESCE(transaction_attempt_id,id)=? AND transaction_request_payload=?`,
     Crypto.randomUUID(),draft.id,draft.userId,draft.transactionAttemptId ?? draft.id,row.transaction_request_payload);
   if (result.changes !== 1) throw new Error("Receipt attempt changed");
-  const next = await getPendingReceiptDraft(draft.id,draft.userId);
+  const next = await getStoredPendingReceiptDraft(draft.id,draft.userId);
   if (!next) throw new Error("Receipt draft disappeared");
   return next;
+  });
 }
 
 function parseLineItems(raw: string): ReceiptLineItemInput[] {
@@ -267,6 +280,7 @@ export async function updatePendingReceiptProgress(
   draft: PendingReceiptDraft,
   progress: { storagePath?: string; transactionId?: string },
 ) {
+  return withLocalOwnerAccess(draft.userId,async()=>{
   const next = {
     storagePath: progress.storagePath ?? draft.storagePath,
     transactionId: progress.transactionId ?? draft.transactionId,
@@ -282,15 +296,37 @@ export async function updatePendingReceiptProgress(
     draft.userId,
   );
   return { ...draft, ...next };
+  });
 }
 
 export async function removePendingReceiptDraft(draft: PendingReceiptDraft) {
+  return withLocalOwnerAccess(draft.userId,async()=>{
   const db = await database();
+  const stored=await db.getFirstAsync<{image_uri:string}>("SELECT image_uri FROM pending_receipt_drafts WHERE id = ? AND user_id = ?",draft.id,draft.userId);
+  if(!stored)return;
+  const otherReference=await db.getFirstAsync("SELECT id FROM pending_receipt_drafts WHERE user_id <> ? AND lower(image_uri) = lower(?)",draft.userId,stored.image_uri);
+  if(!otherReference&&receiptImageIsOwned(Paths.document.uri,draft.userId,draft.id,stored.image_uri)){
+    const file=new File(stored.image_uri);
+    if(file.exists){try{file.delete();}catch(error){if(file.exists)throw error;}}
+  }
   await db.runAsync(
     "DELETE FROM pending_receipt_drafts WHERE id = ? AND user_id = ?",
     draft.id,
     draft.userId,
   );
-  const file = new File(draft.imageUri);
-  if (file.exists) file.delete();
+  });
+}
+
+export async function purgeRetiredReceiptOwner(owner:string){
+  await purgeReceiptOwner(owner,{
+    root:Paths.document.uri,isRetired:isOfflineCacheOwnerRetired,
+    directory:(root,id)=>new Directory(root,"receipt-drafts",id).uri.replace(/\/$/,""),
+    files:async root=>{
+      const dir=new Directory(root);
+      return dir.exists?dir.list().filter((entry):entry is File=>entry instanceof File).map(file=>file.uri):[];
+    },
+    removeFile:async uri=>{const file=new File(uri);if(file.exists){try{file.delete();}catch(error){if(file.exists)throw error;}}},
+    removeDirectory:async uri=>{const dir=new Directory(uri);if(dir.exists){try{dir.delete();}catch(error){if(dir.exists)throw error;}}},
+    database,
+  });
 }

@@ -6,6 +6,16 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Latest pending-receipt continuation: draft reads/writes, canonical pin/reset,
+  progress and removal now share the durable owner fence. New copied images use
+  owner directories; deletion also erases attributable legacy shared UUID files
+  and pending rows while preserving another owner, guest, source photos and
+  ambiguous/unattributed legacy files. All **642 mobile tests** pass; helper
+  coverage is 100% lines / 97.92% branches / 100% functions. Typecheck/Android JS
+  export pass; lint has 0 errors/25 existing warnings. Keepsake/preferences
+  cleanup, unknown legacy system/shared caches and native acceptance remain
+  pending. See `RECEIPT_RETIREMENT_CHECKPOINT_20261025.md`.
+
 - Latest capture continuation: deletion now drains/fences capture file and
   journal writers, erases the exact owned document/cache capture directories,
   then transactionally removes capture/OCR/picker rows before the server call.

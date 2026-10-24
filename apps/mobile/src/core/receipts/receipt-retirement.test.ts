@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { readFileSync } from "node:fs";
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, existsSync, rmSync, readdirSync } from "node:fs";
+import { dirname, join, resolve, sep } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { test } from "node:test";
-import { purgeReceiptOwner, type ReceiptRetirementSource } from "./receipt-retirement";
+import { purgeReceiptOwner, receiptImageIsOwned, type ReceiptRetirementSource } from "./receipt-retirement";
 
 const a="aaaaaaaa-1111-4111-8111-111111111111", b="bbbbbbbb-1111-4111-8111-111111111111";
 const temp="cccccccc-1111-4111-8111-111111111111";
@@ -88,4 +90,41 @@ test("native receipt writes/readbacks, stable request pinning and progress all u
   assert.match(source,/new Directory\(Paths.document, "receipt-drafts", input.userId\)/);
   assert.match(source,/getStoredPendingReceiptDraft/);
   assert.match(retire,/await purgeRetiredReceiptOwner\(owner\)/);
+});
+
+test("pending receipt image ownership accepts only its UUID filename in the current or legacy app namespace",()=>{
+  const root="file:///private/documents/";
+  assert.equal(receiptImageIsOwned(root,"a",a,root+"receipt-drafts/a/"+a+".jpg"),true);
+  assert.equal(receiptImageIsOwned(root,"a",a,root+"receipt-drafts/"+a+".webp"),true);
+  for(const uri of [root+"receipt-drafts/b/"+a+".jpg",root+"receipt-drafts/a/"+b+".jpg",root+"receipt-drafts/a/../b/"+a+".jpg",root+"receipt-drafts/a/"+a+".jpg?copy=1","file:///source/original.jpg"])
+    assert.equal(receiptImageIsOwned(root,"a",a,uri),false);
+});
+
+test("real filesystem legacy and private receipt cleanup preserves other owners and original photos",async()=>{
+  const f=fixture();
+  const artifacts=resolve(fileURLToPath(new URL("../../../../../.artifacts/",import.meta.url)));
+  mkdirSync(artifacts,{recursive:true});const temporary=mkdtempSync(join(artifacts,"receipt erasure-"));
+  const documentRoot=join(temporary,"documents"),shared=join(documentRoot,"receipt-drafts");
+  const privateDirectory=join(shared,"a"),guestDirectory=join(shared,"device-guest");
+  const root=pathToFileURL(documentRoot).href+"/";
+  try{
+    mkdirSync(privateDirectory,{recursive:true});mkdirSync(guestDirectory,{recursive:true});
+    for(const file of [join(shared,a+".jpg"),join(shared,a+"-"+temp+".tmp"),join(shared,b+".jpg"),join(shared,"unattributed.jpg"),join(privateDirectory,"orphan.jpg"),join(guestDirectory,"guest.jpg"),join(temporary,"original.jpg")])writeFileSync(file,"synthetic receipt");
+    f.db.prepare("UPDATE pending_receipt_drafts SET image_uri=? WHERE user_id='a'").run(pathToFileURL(join(shared,a+".jpg")).href);
+    f.db.prepare("UPDATE pending_receipt_drafts SET image_uri=? WHERE user_id='b'").run(pathToFileURL(join(shared,b+".jpg")).href);
+    const source={...f.source,root,
+      files:async()=>readdirSync(shared,{withFileTypes:true}).filter(entry=>entry.isFile()).map(entry=>pathToFileURL(join(shared,entry.name)).href),
+      removeDirectory:async(uri:string)=>{
+        const target=resolve(fileURLToPath(uri));assert.equal(target,privateDirectory);
+        assert.ok(target.startsWith(resolve(temporary)+sep));rmSync(target,{recursive:true,force:true});
+      },
+      removeFile:async(uri:string)=>{
+        const target=resolve(fileURLToPath(uri));assert.equal(dirname(target),shared);
+        assert.ok(target.startsWith(resolve(temporary)+sep));rmSync(target,{force:true});
+      },
+    };
+    await purgeReceiptOwner("a",source);await purgeReceiptOwner("a",source);
+    assert.equal(existsSync(privateDirectory),false);assert.equal(existsSync(join(shared,a+".jpg")),false);
+    for(const file of [join(shared,b+".jpg"),join(shared,"unattributed.jpg"),join(guestDirectory,"guest.jpg"),join(temporary,"original.jpg")])assert.equal(existsSync(file),true);
+  }finally{f.db.close();assert.equal(dirname(resolve(temporary)),artifacts);rmSync(temporary,{recursive:true,force:true});}
 });
