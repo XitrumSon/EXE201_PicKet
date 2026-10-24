@@ -24,7 +24,6 @@ export function createBudgetNoticeDelivery<Context=undefined>(io: DeliveryIO<Con
   const acknowledged = new Map<string, Set<string>>();
   return {
     deliver(owner: string, ids: string[], isCurrent = () => true,context?:Context): Promise<void> {
-      void context;
       const operation = pending.catch(() => undefined).then(async () => {
         if (!isCurrent()) return;
         const stored = await io.read(owner);
@@ -35,7 +34,7 @@ export function createBudgetNoticeDelivery<Context=undefined>(io: DeliveryIO<Con
         for (const id of new Set(ids)) {
           if (!isCurrent()) return;
           if (!/^budget:[A-Za-z0-9_-]+:\d{4}-(0[1-9]|1[0-2])$/.test(id) || seen.has(id)) continue;
-          await io.show(owner, id, isCurrent,undefined);
+          await io.show(owner, id, isCurrent,context);
           seen.add(id);
           await persist();
         }

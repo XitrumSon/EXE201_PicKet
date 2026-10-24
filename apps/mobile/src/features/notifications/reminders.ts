@@ -5,6 +5,8 @@ import * as SecureStore from "expo-secure-store";
 import type { Keepsake } from "@/features/keepsakes/keepsake-store";
 import { budgetWarnings } from "./budget-warnings";
 import { createBudgetNoticeDelivery, scheduleOwnedReminder } from "./budget-notice-delivery";
+import type { AppLanguage } from "@/core/i18n/formatters";
+import { privateReminderCopy,reminderLabel } from "./notification-copy";
 
 Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }) });
 
@@ -19,7 +21,7 @@ const settingsKey = (userId: string) => `picket_reminders_${userId.replace(/[^a-
 const readKey = (userId: string) => `picket_reminder_read_${userId.replace(/[^a-zA-Z0-9]/g, "_")}`;
 const prefix = (userId: string) => `picket-${userId}-`;
 const deliveredKey = (userId: string) => `picket_budget_delivered_${userId.replace(/[^a-zA-Z0-9]/g, "_")}`;
-const budgetNoticeDelivery = createBudgetNoticeDelivery({
+const budgetNoticeDelivery = createBudgetNoticeDelivery<AppLanguage>({
   read: async userId => {
     const raw = await SecureStore.getItemAsync(deliveredKey(userId));
     const value: unknown = JSON.parse(raw ?? "[]");
@@ -27,10 +29,10 @@ const budgetNoticeDelivery = createBudgetNoticeDelivery({
     return value;
   },
   save: (userId, ids) => SecureStore.setItemAsync(deliveredKey(userId), JSON.stringify(ids)),
-  show: async (userId, id, isCurrent) => {
+  show: async (userId, id, isCurrent, language="vi") => {
     const identifier = `${prefix(userId)}${id}`;
     await Notifications.scheduleNotificationAsync({ identifier,
-      content: { title: "Picket · Ngân sách", body: "Một ngân sách đã chạm ngưỡng cảnh báo. Mở Picket để kiểm tra." },
+      content: { title:privateReminderCopy("budget",language).title, body:privateReminderCopy("budget",language).body },
       trigger: { channelId: "picket-reminders" },
     });
     if (!isCurrent()) await Notifications.dismissNotificationAsync(identifier);
@@ -40,10 +42,10 @@ const budgetNoticeDelivery = createBudgetNoticeDelivery({
 export async function remindersEnabled(userId: string) {
   return (await SecureStore.getItemAsync(settingsKey(userId))) === "enabled";
 }
-export async function setRemindersEnabled(userId: string, enabled: boolean) {
+export async function setRemindersEnabled(userId: string, enabled: boolean,language:AppLanguage="vi") {
   if (enabled) {
     await Notifications.setNotificationChannelAsync("picket-reminders", {
-      name: "Nhắc việc Picket", importance: Notifications.AndroidImportance.DEFAULT,
+      name: privateReminderCopy("reminder",language).channel, importance: Notifications.AndroidImportance.DEFAULT,
       lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
     });
     const permission = await Notifications.requestPermissionsAsync();
@@ -73,29 +75,29 @@ function notifyDate(iso: string, daysBefore: number): Date | null {
   return date > new Date() ? date : null;
 }
 
-export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceSubscription[]; keepsakes: Keepsake[]; budgets: Budget[]; transactions: Transaction[]; periodLimits?: Record<string, number>; splits?: TransactionSplit[] }): ReminderItem[] {
+export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceSubscription[]; keepsakes: Keepsake[]; budgets: Budget[]; transactions: Transaction[]; periodLimits?: Record<string, number>; splits?: TransactionSplit[] },language:AppLanguage="vi"): ReminderItem[] {
   const notices: ReminderItem[] = [];
   const now = Date.now();
   for (const bill of input.bills) {
     if (bill.status === "paid" || bill.status === "cancelled" || bill.paidTransactionId) continue;
     const due = new Date(bill.dueAt).getTime();
-    if (Number.isFinite(due) && due >= now - 86400000) notices.push({ id:`bill:${bill.id}:${bill.dueAt}`, label:`${bill.title} · hạn ${new Date(bill.dueAt).toLocaleDateString("vi-VN")}`, dueAt:bill.dueAt, notifyAt:notifyDate(bill.dueAt, 1) });
+    if (Number.isFinite(due) && due >= now - 86400000) notices.push({ id:`bill:${bill.id}:${bill.dueAt}`, label:reminderLabel("bill",bill.title,bill.dueAt,language), dueAt:bill.dueAt, notifyAt:notifyDate(bill.dueAt, 1) });
   }
   for (const plan of input.subscriptions) {
     if (!plan.active) continue;
     const due = new Date(plan.nextDueAt).getTime();
-    if (Number.isFinite(due) && due >= now - 86400000) notices.push({ id:`sub:${plan.id}:${plan.nextDueAt}`, label:`${plan.title} sắp đến kỳ thanh toán`, dueAt:plan.nextDueAt, notifyAt:notifyDate(plan.nextDueAt, plan.alertDays) });
+    if (Number.isFinite(due) && due >= now - 86400000) notices.push({ id:`sub:${plan.id}:${plan.nextDueAt}`, label:reminderLabel("subscription",plan.title,plan.nextDueAt,language), dueAt:plan.nextDueAt, notifyAt:notifyDate(plan.nextDueAt, plan.alertDays) });
   }
   for (const item of input.keepsakes) {
     for (const [kind, iso] of [["return", item.returnUntil], ["warranty", item.warrantyUntil]] as const) {
       if (!iso) continue;
       const due = new Date(`${iso}T12:00:00`).getTime();
-      if (Number.isFinite(due) && due >= now) notices.push({ id:`${kind}:${item.id}:${iso}`, label:`${item.title} sắp hết hạn ${kind === "return" ? "đổi trả" : "bảo hành"}`, dueAt:iso, notifyAt:notifyDate(`${iso}T12:00:00`, kind === "return" ? 1 : 7) });
+      if (Number.isFinite(due) && due >= now) notices.push({ id:`${kind}:${item.id}:${iso}`, label:reminderLabel(kind,item.title,iso,language), dueAt:iso, notifyAt:notifyDate(`${iso}T12:00:00`, kind === "return" ? 1 : 7) });
     }
   }
   const month = new Date().toISOString().slice(0, 7);
   for (const budget of budgetWarnings({ ...input, month })) {
-    notices.push({ id:`budget:${budget.id}:${month}`, label:`${budget.name} đã chạm ngưỡng cảnh báo`, dueAt:new Date().toISOString(), notifyAt:null });
+    notices.push({ id:`budget:${budget.id}:${month}`, label:reminderLabel("budget",budget.name,new Date().toISOString(),language), dueAt:new Date().toISOString(), notifyAt:null });
   }
   return notices;
 }
@@ -111,17 +113,17 @@ export async function cancelUserReminders(userId: string, dismissPresented = fal
 }
 
 let scheduling: Promise<void> = Promise.resolve();
-export function scheduleUserReminders(userId: string, items: ReminderItem[], isCurrent = () => true) {
-  const operation = scheduling.catch(() => undefined).then(() => scheduleNow(userId, items, isCurrent));
+export function scheduleUserReminders(userId: string, items: ReminderItem[], isCurrent = () => true,language:AppLanguage="vi") {
+  const operation = scheduling.catch(() => undefined).then(() => scheduleNow(userId, items, isCurrent,language));
   scheduling = operation;
   return operation;
 }
-async function scheduleNow(userId: string, items: ReminderItem[], isCurrent: () => boolean) {
+async function scheduleNow(userId: string, items: ReminderItem[], isCurrent: () => boolean,language:AppLanguage) {
   if (!isCurrent()) return;
   await cancelUserReminders(userId);
   if (!(await remindersEnabled(userId)) || !isCurrent()) return;
   await Notifications.setNotificationChannelAsync("picket-reminders", {
-    name: "Nhắc việc Picket", importance: Notifications.AndroidImportance.DEFAULT,
+    name: privateReminderCopy("reminder",language).channel, importance: Notifications.AndroidImportance.DEFAULT,
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
   });
   for (const item of items.filter((entry) => entry.notifyAt !== null && entry.notifyAt > new Date()).slice(0, 50)) {
@@ -129,7 +131,7 @@ async function scheduleNow(userId: string, items: ReminderItem[], isCurrent: () 
     const scheduled = await scheduleOwnedReminder(`${prefix(userId)}${item.id}`, isCurrent, {
       schedule: async identifier => {
         await Notifications.scheduleNotificationAsync({ identifier,
-          content: { title: "Picket · Nhắc việc", body: "Bạn có khoản thanh toán hoặc hạn món đồ cần xem. Mở Picket để kiểm tra." },
+          content: { title:privateReminderCopy("reminder",language).title, body:privateReminderCopy("reminder",language).body },
           trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: item.notifyAt!, channelId: "picket-reminders" },
         });
       },
@@ -137,5 +139,5 @@ async function scheduleNow(userId: string, items: ReminderItem[], isCurrent: () 
     });
     if (!scheduled) return;
   }
-  await budgetNoticeDelivery.deliver(userId, items.map(item => item.id), isCurrent);
+  await budgetNoticeDelivery.deliver(userId, items.map(item => item.id), isCurrent,language);
 }

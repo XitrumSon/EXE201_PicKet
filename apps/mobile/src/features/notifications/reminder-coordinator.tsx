@@ -11,8 +11,10 @@ import { useSubscriptions } from "@/features/subscriptions/subscriptions-context
 import { useTransactionHistory } from "@/features/transactions/use-transaction-history";
 import { useSpendingSplits } from "@/features/transactions/use-spending-splits";
 import { useReminderPeriods } from "./use-reminder-periods";
+import { useAppTheme } from "@/features/settings/appearance-provider";
 
 export function ReminderCoordinator() {
+  const {language}=useAppTheme();
   const { session } = useAuth();
   const { bills } = useBills();
   const { budgets } = useBudgets();
@@ -50,11 +52,11 @@ export function ReminderCoordinator() {
   const userId = session?.user.id;
   useEffect(() => () => { if (userId) void cancelUserReminders(userId, true).catch(() => undefined); }, [userId]);
   useEffect(() => { if (session) void refreshHistory().catch(() => undefined); }, [session, bills, budgets, subscriptions, keepsakes, refreshHistory]);
-  const items = useMemo(() => collectReminders({ bills, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, subscriptions, transactions: history, keepsakes, periodLimits, splits }), [bills, budgets, subscriptions, history, historyLoading, historyError, splitLoading, splitError, periodsReady, keepsakes, periodLimits, splits]);
+  const items = useMemo(() => collectReminders({ bills, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, subscriptions, transactions: history, keepsakes, periodLimits, splits },language), [bills, budgets, subscriptions, history, historyLoading, historyError, splitLoading, splitError, periodsReady, keepsakes, periodLimits, splits,language]);
   useEffect(() => {
     let active = true;
-    if (session) void scheduleUserReminders(session.user.id, items, () => active).catch(() => undefined);
+    if (session) void scheduleUserReminders(session.user.id, items, () => active,language).catch(() => undefined);
     return () => { active = false; };
-  }, [session, items]);
+  }, [session, items,language]);
   return null;
 }

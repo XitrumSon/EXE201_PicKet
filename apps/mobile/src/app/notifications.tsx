@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { useAppTheme } from "@/features/settings/appearance-provider";
 import { colors } from "@picket/design-tokens";
 import { Redirect, useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -21,15 +23,17 @@ import { useReminderPeriods } from "@/features/notifications/use-reminder-period
 
 
 export default function NotificationsScreen() {
+  const {t:tx}=useTranslation("notifications");
+  const {language}=useAppTheme();
   const { session, localMode } = useAuth();
   const ownerId = session?.user.id ?? (localMode ? guestOwnerId : null);
-  const deliveryScope = useRef({ ownerId, active: true });
+  const deliveryScope = useRef({ ownerId, language,active: true });
   useEffect(() => {
     const scope = deliveryScope.current;
-    scope.ownerId = ownerId; scope.active = true;
+    scope.ownerId = ownerId; scope.language=language;scope.active = true;
     return () => { scope.active = false; };
-  }, [ownerId]);
-  const isCurrentOwner = () => deliveryScope.current.active && deliveryScope.current.ownerId === ownerId;
+  }, [ownerId,language]);
+  const isCurrentOwner = () => deliveryScope.current.active && deliveryScope.current.ownerId === ownerId && deliveryScope.current.language===language;
   const { bills } = useBills();
   const { budgets } = useBudgets();
   const { subscriptions } = useSubscriptions();
@@ -44,7 +48,7 @@ export default function NotificationsScreen() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
-  const reminders = useMemo(() => collectReminders({ bills, subscriptions, keepsakes, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, transactions, splits, periodLimits }), [bills, subscriptions, keepsakes, budgets, transactions, splits, periodLimits, periodsReady, historyLoading, historyError, splitLoading, splitError]);
+  const reminders = useMemo(() => collectReminders({ bills, subscriptions, keepsakes, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, transactions, splits, periodLimits },language), [bills, subscriptions, keepsakes, budgets, transactions, splits, periodLimits, periodsReady, historyLoading, historyError, splitLoading, splitError,language]);
   const dueSoon = reminders.filter((item) => item.notifyAt === null || new Date(item.dueAt).getTime() <= now + 7 * 86400000);
   useFocusEffect(useCallback(() => {
     if (!ownerId) return;
@@ -71,10 +75,10 @@ export default function NotificationsScreen() {
   async function toggle(value: boolean) {
     setBusy(true); setMessage(null);
     try {
-      const saved = await setRemindersEnabled(ownerId!, value);
+      const saved = await setRemindersEnabled(ownerId!, value,language);
       if (!saved) { setMessage("Quyền thông báo chưa được cấp trong cài đặt Android."); return; }
       setEnabled(value);
-      if (value) await scheduleUserReminders(ownerId!, reminders, isCurrentOwner);
+      if (value) await scheduleUserReminders(ownerId!, reminders, isCurrentOwner,language);
     } catch { setMessage("Không cập nhật được lịch nhắc. Hãy thử lại."); }
     finally { setBusy(false); }
   }
@@ -84,18 +88,18 @@ export default function NotificationsScreen() {
   }
   async function reschedule() {
     setBusy(true); setMessage(null);
-    try { await scheduleUserReminders(ownerId!, reminders, isCurrentOwner); setMessage("Đã cập nhật lịch nhắc trên thiết bị."); }
+    try { await scheduleUserReminders(ownerId!, reminders, isCurrentOwner,language); setMessage("Đã cập nhật lịch nhắc trên thiết bị."); }
     catch { setMessage("Không cập nhật được lịch nhắc."); }
     finally { setBusy(false); }
   }
   return <PicketScreen>
-    <TopAppBar title="Thông báo" />
-    <Text style={styles.subtitle}>Các hạn thanh toán, món đồ và ngân sách cần chú ý.</Text>
-    <Surface><View style={styles.setting}><View style={styles.copy}><Text style={styles.title}>Nhắc trên điện thoại</Text><Text style={styles.hint}>Thông báo không hiển thị chi tiết tài chính khi màn hình khóa.</Text></View><Switch accessibilityLabel="Nhắc trên điện thoại" disabled={busy || settingsLoading} hitSlop={12} onValueChange={(value) => void toggle(value)} value={enabled} /></View></Surface>
-    {enabled && <Pressable accessibilityRole="button" disabled={busy} onPress={() => void reschedule()} style={styles.linkButton}><Text style={styles.link}>Cập nhật lịch nhắc</Text></Pressable>}
-    {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>}
-    {dueSoon.length === 0 ? <EmptyState title="Chưa có thông báo mới" description="Picket sẽ nhắc khi có hạn thanh toán hoặc ngân sách cần chú ý." /> :
-      <View style={styles.list}>{dueSoon.map((item) => <Pressable accessibilityRole="button" accessibilityLabel={`${item.label}, ${read.includes(item.id) ? "đã đọc" : "chưa đọc"}`} key={item.id} onPress={() => void markRead(item.id)}><Surface><Text style={styles.title}>{read.includes(item.id) ? "○" : "●"} {item.label}</Text><Text style={styles.hint}>{read.includes(item.id) ? "Đã đọc" : "Chạm để đánh dấu đã đọc"}</Text></Surface></Pressable>)}</View>}
+    <TopAppBar title={tx("Thông báo")} />
+    <Text style={styles.subtitle}>{tx("Các hạn thanh toán, món đồ và ngân sách cần chú ý.")}</Text>
+    <Surface><View style={styles.setting}><View style={styles.copy}><Text style={styles.title}>{tx("Nhắc trên điện thoại")}</Text><Text style={styles.hint}>{tx("Thông báo không hiển thị chi tiết tài chính khi màn hình khóa.")}</Text></View><Switch accessibilityLabel={tx("Nhắc trên điện thoại")} disabled={busy || settingsLoading} hitSlop={12} onValueChange={(value) => void toggle(value)} value={enabled} /></View></Surface>
+    {enabled && <Pressable accessibilityRole="button" disabled={busy} onPress={() => void reschedule()} style={styles.linkButton}><Text style={styles.link}>{tx("Cập nhật lịch nhắc")}</Text></Pressable>}
+    {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{tx(message)}</Text>}
+    {dueSoon.length === 0 ? <EmptyState title={tx("Chưa có thông báo mới")} description={tx("Picket sẽ nhắc khi có hạn thanh toán hoặc ngân sách cần chú ý.")} /> :
+      <View style={styles.list}>{dueSoon.map((item) => <Pressable accessibilityRole="button" accessibilityLabel={`${item.label}, ${read.includes(item.id) ? tx("đã đọc") : tx("chưa đọc")}`} key={item.id} onPress={() => void markRead(item.id)}><Surface><Text style={styles.title}>{read.includes(item.id) ? "○" : "●"} {item.label}</Text><Text style={styles.hint}>{read.includes(item.id) ? tx("Đã đọc") : tx("Chạm để đánh dấu đã đọc")}</Text></Surface></Pressable>)}</View>}
   </PicketScreen>;
 }
 
