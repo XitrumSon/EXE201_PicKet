@@ -101,8 +101,8 @@ export function SyncProvider({ children }: PropsWithChildren) {
     });
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") {
-        void flush();
-        void refreshRemote();
+        void flush().catch(() => undefined);
+        void refreshRemote().catch(() => undefined);
       }
     });
     const unsubscribeRealtime = subscribeToFinanceChanges({

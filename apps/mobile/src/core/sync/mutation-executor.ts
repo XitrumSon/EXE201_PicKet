@@ -3,6 +3,7 @@ import type { CreateAccountRequest, CreateBillRequest, CreateBudgetRequest, Crea
 import { resolveMutationDependencies } from "@/core/sync/mutation-dependencies";
 import { listMutationEntityMappings, listPendingMutations, markMutationRetry, moveMutationToConflict, pendingMutationCount, removeMutation, saveMutationEntityMapping, type PendingMutation } from "@/core/sync/mutation-queue";
 import { decideMutationFailure, mutationFailureReason } from "@/core/sync/mutation-policy";
+import { isOfflineCacheOwnerRetired } from "./offline-cache";
 
 function text(value: unknown) { if (typeof value !== "string" || !value) throw new Error("Invalid queued payload."); return value; }
 function number(value: unknown) { if (typeof value !== "number" || !Number.isFinite(value)) throw new Error("Invalid queued payload."); return value; }
@@ -36,11 +37,13 @@ async function execute(client: PicketApiClient, token: string, mutation: Pending
 }
 
 export async function flushPendingMutations(client: PicketApiClient, accessToken: string, userId: string) {
+  if (await isOfflineCacheOwnerRetired(userId)) return {completed:0,conflicts:0,remaining:0};
   const pending = await listPendingMutations(userId);
   const entityMappings = await listMutationEntityMappings(userId);
   let completed = 0;
   let conflicts = 0;
   for (const mutation of pending) {
+    if (await isOfflineCacheOwnerRetired(userId)) break;
     try {
       const resolved = {
         ...mutation,
@@ -68,7 +71,7 @@ export async function flushPendingMutations(client: PicketApiClient, accessToken
         );
         entityMappings.set(clientEntityId, account.id);
       }
-      await removeMutation(mutation.id);
+      await removeMutation(mutation.id, userId);
       completed += 1;
     } catch (error) {
       if (decideMutationFailure(error, mutation.attempts) === "conflict") {
@@ -78,7 +81,7 @@ export async function flushPendingMutations(client: PicketApiClient, accessToken
         // every dependent change into a second, misleading conflict.
         break;
       }
-      await markMutationRetry(mutation.id);
+      await markMutationRetry(mutation.id, userId);
       break;
     }
   }

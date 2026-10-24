@@ -7,7 +7,9 @@ test("account deletion copy explains pre-request erasure and confirmed-deletion 
  const copy=createAppI18n("vi");assert.match(copy.t("localNotice",{ns:"accountDeletion"}),/trước khi gửi/);await copy.changeLanguage("en");
  assert.match(copy.t("deletedSignOut",{ns:"accountDeletion"}),/Do not send account deletion again/);
  const screen=readFileSync(resolve(process.cwd(),"src/app/delete-account.tsx"),"utf8");
- assert.match(screen,/retireLocal:.*retireOfflineCacheOwner/);assert.match(screen,/if\(remoteDeleted\)\{await signOut\(\)/);assert.match(screen,/\{t\(message\)\}/);
+ assert.match(screen,/retireLocal:.*retireAccountLocalData/);assert.match(screen,/if\(remoteDeleted\)\{await signOut\(\)/);assert.match(screen,/\{t\(message\)\}/);
+ const retirement=readFileSync(resolve(process.cwd(),"src/features/auth/account-local-retirement.ts"),"utf8");
+ assert.ok(retirement.indexOf("await retireOfflineCacheOwner")<retirement.indexOf("await purgeRetiredMutationOwner"));
  assert.match(screen,/result\?\.deleted!==true/);
  assert.doesNotMatch(screen,/>[^<\n]*[À-ỹĐđ][^<\n]*</);
 });

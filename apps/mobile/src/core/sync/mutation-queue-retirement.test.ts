@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
-import { createMutationQueueStore, type QueueDatabase } from "./mutation-queue-store";
+import { createMutationQueueStore, eraseMutationQueueOwner, type QueueDatabase } from "./mutation-queue-store";
 import { mutationQueueSchema } from "./mutation-queue-schema";
 import { createOwnerCacheLifecycle } from "./owner-cache-lifecycle";
 
@@ -18,15 +18,16 @@ function fixture() {
     catch (error) { raw.exec("ROLLBACK"); throw error; }
   } };
   const retired = new Set<string>(); let ids = 0;
+  let beforeEncrypt: (owner: string) => Promise<void> = async () => {};
   const lifecycle = createOwnerCacheLifecycle({ isRetired: async owner => retired.has(owner), retire: async owner => { retired.add(owner); }, resume: async owner => { retired.delete(owner); } });
   const store = createMutationQueueStore({ database: async () => db,
-    encrypt: async (payload, owner) => `enc-v1:${owner}:${JSON.stringify(payload)}`,
+    encrypt: async (payload, owner) => { await beforeEncrypt(owner); return `enc-v1:${owner}:${JSON.stringify(payload)}`; },
     decrypt: async <T>(payload: string, owner: string): Promise<T> => JSON.parse(payload.startsWith(`enc-v1:${owner}:`) ? payload.slice(`enc-v1:${owner}:`.length) : payload) as T,
     newId: () => `mutation-${++ids}`, notify: () => {},
     access: lifecycle.run,
   });
   const input = (owner: string) => ({ userId: owner, kind: "transaction.create" as const, payload: { request: { amount: 19 } }, entityKey: null, idempotencyKey: "request-key" });
-  return { raw, db, lifecycle, store, input };
+  return { raw, db, lifecycle, store, input, pauseEncryption: (pause: typeof beforeEncrypt) => { beforeEncrypt = pause; } };
 }
 
 test("all outbox writers and legacy migration reads reject after owner retirement", async () => {
@@ -49,6 +50,62 @@ test("all outbox writers and legacy migration reads reject after owner retiremen
     ]) await assert.rejects(operation(), /retired/);
     const other = await f.store.enqueueMutation(f.input("b"));
     assert.equal(other.userId, "b");
+  } finally { f.raw.close(); }
+});
+
+test("retirement drains an in-flight encrypted outbox save and rejects queued stale retries before erasure", {timeout:2000}, async () => {
+  const f = fixture(); let release!: () => void, started!: () => void;
+  const entered = new Promise<void>(resolve => { started = resolve; });
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  f.pauseEncryption(async owner => { if (owner === "a") { started(); await gate; } });
+  try {
+    const writing = f.store.enqueueMutation(f.input("a")); await entered;
+    const stale = assert.rejects(f.store.enqueueMutation(f.input("a")), /retired/);
+    const retiring = f.lifecycle.retire("a").then(() => eraseMutationQueueOwner(f.db, "a"));
+    await f.store.enqueueMutation(f.input("b"));
+    release(); await writing; await Promise.all([stale, retiring]);
+    assert.equal(f.raw.prepare("SELECT COUNT(*) AS count FROM pending_mutations WHERE user_id='a'").get()?.count, 0);
+    assert.equal((await f.store.listPendingMutations("b")).length, 1);
+  } finally { release?.(); f.raw.close(); }
+});
+
+test("foreign or already resolved conflict identities cannot replace another owner's pending row", async () => {
+  const f = fixture();
+  try {
+    const row = await f.store.enqueueMutation(f.input("a"));
+    await assert.rejects(f.store.moveMutationToConflict({ ...row, userId:"b" }, "wrong owner"), /owner|missing/);
+    await f.store.moveMutationToConflict(row, "stale");
+    const [conflict] = await f.store.listMutationConflicts("a");
+    await assert.rejects(f.store.retryMutationConflict({ ...conflict, userId:"b" }, {}), /owner|missing/);
+    await f.store.retryMutationConflict(conflict, { request: { amount:8 } });
+    await assert.rejects(f.store.retryMutationConflict(conflict, {}), /owner|missing/);
+    assert.equal((await f.store.listPendingMutations("a"))[0].userId,"a");
+    assert.deepEqual((await f.store.listPendingMutations("a"))[0].payload.request,{amount:8});
+    assert.equal((await f.store.listPendingMutations("b")).length, 0);
+  } finally { f.raw.close(); }
+});
+
+test("retired outbox erasure removes pending rows, conflicts and mappings for one owner and is retryable", async () => {
+  const f = fixture();
+  try {
+    for (const owner of ["a", "b", "device-guest"]) {
+      const row = await f.store.enqueueMutation(f.input(owner));
+      await f.store.moveMutationToConflict(row, "stale");
+      await f.store.enqueueMutation(f.input(owner));
+      await f.store.saveMutationEntityMapping(owner, "client", "server", "account");
+    }
+    await f.lifecycle.retire("a");
+    f.raw.exec("CREATE TRIGGER fail_erasure BEFORE DELETE ON mutation_conflicts BEGIN SELECT RAISE(ABORT, 'disk failure'); END");
+    await assert.rejects(eraseMutationQueueOwner(f.db, "a"), /disk failure/);
+    assert.equal(f.raw.prepare("SELECT COUNT(*) AS count FROM pending_mutations WHERE user_id='a'").get()?.count, 1);
+    f.raw.exec("DROP TRIGGER fail_erasure");
+    await eraseMutationQueueOwner(f.db, "a"); await eraseMutationQueueOwner(f.db, "a");
+    for (const table of ["pending_mutations", "mutation_conflicts", "mutation_entity_mappings"]) {
+      assert.equal(f.raw.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE user_id='a'`).get()?.count, 0);
+      assert.equal(f.raw.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE user_id='b'`).get()?.count, 1);
+      assert.equal(f.raw.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE user_id='device-guest'`).get()?.count, 1);
+    }
+    await assert.rejects(f.store.retryMutationConflict({ ...f.input("a"), id:"old", attempts:0, createdAt:"2026-10-25T00:00:00Z", failedAt:"2026-10-25T00:00:00Z",reason:"late" }, {}), /retired/);
   } finally { f.raw.close(); }
 });
 

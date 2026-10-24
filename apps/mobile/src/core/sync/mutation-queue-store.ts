@@ -83,10 +83,11 @@ async function enqueueMutation(input: Omit<PendingMutation, "id" | "attempts" | 
         }
       }
       await db.runAsync(
-        "UPDATE pending_mutations SET payload = ?, idempotency_key = ?, attempts = 0 WHERE id = ?",
+        "UPDATE pending_mutations SET payload = ?, idempotency_key = ?, attempts = 0 WHERE id = ? AND user_id = ?",
         await encryptLocalPayload(replacement, mutation.userId),
         mutation.idempotencyKey,
         existing.id,
+        mutation.userId,
       );
       notifyQueueChanged();
       return { ...mutation, id: existing.id };
@@ -143,15 +144,15 @@ async function listPendingMutations(userId: string): Promise<PendingMutation[]> 
   }; }));
 }
 
-async function removeMutation(id: string, _userId: string) {
+async function removeMutation(id: string, userId: string) {
   const db = await database();
-  await db.runAsync("DELETE FROM pending_mutations WHERE id = ?", id);
+  await db.runAsync("DELETE FROM pending_mutations WHERE id = ? AND user_id = ?", id, userId);
   notifyQueueChanged();
 }
 
-async function markMutationRetry(id: string, _userId: string) {
+async function markMutationRetry(id: string, userId: string) {
   const db = await database();
-  await db.runAsync("UPDATE pending_mutations SET attempts = attempts + 1 WHERE id = ?", id);
+  await db.runAsync("UPDATE pending_mutations SET attempts = attempts + 1 WHERE id = ? AND user_id = ?", id, userId);
   notifyQueueChanged();
 }
 
@@ -162,6 +163,9 @@ async function moveMutationToConflict(
   const db = await database();
   const failedAt = new Date().toISOString();
   await db.withExclusiveTransactionAsync(async (tx) => {
+    const pending = await tx.getFirstAsync<{user_id:string}>("SELECT user_id FROM pending_mutations WHERE id = ?", mutation.id);
+    const existing = await tx.getFirstAsync<{user_id:string}>("SELECT user_id FROM mutation_conflicts WHERE id = ?", mutation.id);
+    if (pending?.user_id !== mutation.userId || (existing && existing.user_id !== mutation.userId)) throw Error("Queued mutation owner changed or row is missing");
     await tx.runAsync(
       `INSERT OR REPLACE INTO mutation_conflicts
        (id, user_id, kind, payload, idempotency_key, entity_key, attempts,
@@ -178,7 +182,7 @@ async function moveMutationToConflict(
       reason,
       failedAt,
     );
-    await tx.runAsync("DELETE FROM pending_mutations WHERE id = ?", mutation.id);
+    await tx.runAsync("DELETE FROM pending_mutations WHERE id = ? AND user_id = ?", mutation.id, mutation.userId);
   });
   notifyQueueChanged();
 }
@@ -232,6 +236,9 @@ async function retryMutationConflict(
 ) {
   const db = await database();
   await db.withExclusiveTransactionAsync(async (tx) => {
+    const current = await tx.getFirstAsync<{user_id:string}>("SELECT user_id FROM mutation_conflicts WHERE id = ?", conflict.id);
+    const pending = await tx.getFirstAsync<{user_id:string}>("SELECT user_id FROM pending_mutations WHERE id = ?", conflict.id);
+    if (current?.user_id !== conflict.userId || (pending && pending.user_id !== conflict.userId)) throw Error("Conflict owner changed or row is missing");
     await tx.runAsync(
       `INSERT OR REPLACE INTO pending_mutations
        (id, user_id, kind, payload, idempotency_key, entity_key, attempts,
@@ -300,5 +307,29 @@ async function saveMutationEntityMapping(
   );
 }
 
-return {enqueueMutation,listPendingMutations,removeMutation,markMutationRetry,moveMutationToConflict,listMutationConflicts,removeMutationConflict,retryMutationConflict,pendingMutationCount,mutationConflictCount,listMutationEntityMappings,saveMutationEntityMapping};
+function owned<Args extends unknown[], Result>(operation:(...args:Args)=>Promise<Result>, ownerOf:(...args:Args)=>string){
+ return (...args:Args)=>source.access(ownerOf(...args),()=>operation(...args));
+}
+return {
+ enqueueMutation:owned(enqueueMutation,input=>input.userId),
+ listPendingMutations:owned(listPendingMutations,owner=>owner),
+ removeMutation:owned(removeMutation,(_id,owner)=>owner),
+ markMutationRetry:owned(markMutationRetry,(_id,owner)=>owner),
+ moveMutationToConflict:owned(moveMutationToConflict,mutation=>mutation.userId),
+ listMutationConflicts:owned(listMutationConflicts,owner=>owner),
+ removeMutationConflict:owned(removeMutationConflict,(_id,owner)=>owner),
+ retryMutationConflict:owned(retryMutationConflict,conflict=>conflict.userId),
+ pendingMutationCount:owned(pendingMutationCount,owner=>owner),
+ mutationConflictCount:owned(mutationConflictCount,owner=>owner),
+ listMutationEntityMappings:owned(listMutationEntityMappings,owner=>owner),
+ saveMutationEntityMapping:owned(saveMutationEntityMapping,owner=>owner),
+};
+}
+
+export async function eraseMutationQueueOwner(db:QueueDatabase,owner:string){
+ await db.withExclusiveTransactionAsync(async tx=>{
+  await tx.runAsync("DELETE FROM pending_mutations WHERE user_id = ?",owner);
+  await tx.runAsync("DELETE FROM mutation_conflicts WHERE user_id = ?",owner);
+  await tx.runAsync("DELETE FROM mutation_entity_mappings WHERE user_id = ?",owner);
+ });
 }

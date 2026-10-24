@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { retireOfflineCacheOwner, resumeOfflineCacheOwner } from "@/core/sync/offline-cache";
+import { resumeOfflineCacheOwner } from "@/core/sync/offline-cache";
 import { deleteAccountWithLocalRetirement } from "@/features/auth/account-delete-flow";
+import { retireAccountLocalData } from "@/features/auth/account-local-retirement";
 import { colors, radii } from "@picket/design-tokens";
 import { Redirect, router } from "expo-router";
 import { useState,useEffect,useRef } from "react";
@@ -35,7 +36,7 @@ export default function DeleteAccountScreen() {
       if(remoteDeleted){await signOut();if(mounted.current)router.replace(routes.login);return;}
       const request=session!;const owner=request.user.id;
       const result=await deleteAccountWithLocalRetirement({
-        retireLocal:()=>retireOfflineCacheOwner(owner),resumeLocal:()=>resumeOfflineCacheOwner(owner),
+        retireLocal:()=>retireAccountLocalData(owner),resumeLocal:()=>resumeOfflineCacheOwner(owner),
         deleteRemote:async()=>{const result=await picketApi!.deleteAccount(request.access_token);if(result?.deleted!==true)throw new Error("Unconfirmed account deletion");},signOut,
         isCurrent:()=>mounted.current&&currentOwner.current===owner,
       });

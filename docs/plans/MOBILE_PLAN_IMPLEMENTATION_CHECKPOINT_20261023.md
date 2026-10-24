@@ -6,6 +6,16 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Latest 25 October continuation: the general financial mutation outbox now
+  shares the durable owner fence. Account deletion drains pending writes, then
+  transactionally erases owned pending mutations, conflicts and mappings before
+  the remote request. Late callbacks and foreign/resolved conflict retries reject.
+  Real SQLite tests verify erasure, rollback, owner isolation and write races.
+  All **628 mobile tests** pass; queue coverage is 97.92% lines / 88.41% branches /
+  97.67% functions. Typecheck/Android JS export pass; lint has 0 errors/25 existing
+  warnings. Separate receipt/capture/keepsake data/media, native acceptance and
+  broader release gates remain pending. See `OUTBOX_RETIREMENT_CHECKPOINT_20261025.md`.
+
 - 25 October continuation: the common-cache recovery gap after interrupted
   account deletion is implemented. Account providers/navigation wait for the
   retirement check; explicit live server verification must return the exact owner
