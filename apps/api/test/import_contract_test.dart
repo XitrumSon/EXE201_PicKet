@@ -30,6 +30,15 @@ Map<String, dynamic> validExport() => {
 };
 
 void main() {
+  test('wallet backup currency must be an uppercase currency code', () {
+    final value = validExport();
+    final data = value['data'] as Map<String, dynamic>;
+    final wallet = (data['wallets'] as List).first as Map<String, dynamic>;
+    wallet['currencyCode'] = 'usd';
+    expect(() => FinanceImportEnvelope.fromJson(value), throwsFormatException);
+    wallet['currencyCode'] = 'USD';
+    expect(FinanceImportEnvelope.fromJson(value).summary.wallets, 1);
+  });
   test('appearance restore rejects invalid fields before any write', () {
     for (final preferences in [
       {'themeMode': 'neon'},
