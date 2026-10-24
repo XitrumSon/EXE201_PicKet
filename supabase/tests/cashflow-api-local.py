@@ -9,7 +9,7 @@ import uuid
 
 status = json.loads(subprocess.run(['npx.cmd', '--yes', 'supabase', 'status', '-o', 'json'], capture_output=True, text=True, check=True).stdout)
 base = 'http://127.0.0.1:54321'
-api = 'http://127.0.0.1:8099'
+api = 'http://127.0.0.1:8102'
 created = []
 
 def req(url, method='GET', body=None, headers=None):
@@ -36,6 +36,15 @@ try:
         assert code == 200, ('login', code)
         tokens.append(session['access_token'])
     auth = {'Authorization': 'Bearer ' + tokens[0]}
+    code, ledger, ledger_headers = req(api + '/v1/cashflow-ledger', headers=auth)
+    assert code == 200 and ledger['wallets'] == [] and ledger['entries'] == [] and ledger['confirmations'] == [], ('empty ledger snapshot', code)
+    assert 'no-store' in ledger_headers.get('cache-control', ledger_headers.get('Cache-Control', ''))
+    code, account, _ = req(api + '/v1/accounts', 'POST', {'name':'Snapshot wallet','kind':'cash','currencyCode':'VND','openingBalance':100000}, {**auth,'Idempotency-Key':'ledger-account-fixture'})
+    assert code == 201, ('ledger account', code)
+    code, ledger, _ = req(api + '/v1/cashflow-ledger', headers=auth)
+    assert code == 200 and len(ledger['wallets']) == 1 and ledger['wallets'][0]['openingBalance'] == 100000
+    assert req(api + '/v1/cashflow-ledger', headers={'Authorization':'Bearer '+tokens[1]})[1]['wallets'] == []
+    assert req(api + '/v1/cashflow-ledger')[0] == 401
     item = {'id': str(uuid.uuid4()), 'startDay': '2026-10-24', 'frequency': 'monthly', 'amount': -19000, 'currency': 'VND', 'active': True}
     url = api + '/v1/cashflow-schedules/' + item['id']
     body = {'expectedRevision': 0, 'schedule': item}
@@ -57,7 +66,7 @@ try:
     assert code == 200 and replay['revision'] == 2 and replay['appliedRevision'] == 1 and replay['schedules'] == [], 'old retry resurrected deleted schedule'
     assert req(url, 'PUT', {'expectedRevision': 2, 'schedule': {**item, 'startDay': '2026-02-30'}}, {**auth, 'Idempotency-Key': 'invalid-date-1'})[0] == 400
     assert req(api + '/v1/cashflow-schedules')[0] == 401
-    print('Local Dart API + Supabase schedule CRUD, concurrent retry, conflict, owner isolation and no-store: PASS')
+    print('Local Dart API + Supabase ledger snapshot, schedule CRUD, concurrent retry, conflict, owner isolation and no-store: PASS')
 finally:
     for owner in created:
         req(base + '/auth/v1/admin/users/' + owner, 'DELETE', headers=admin)

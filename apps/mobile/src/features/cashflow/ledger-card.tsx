@@ -10,7 +10,13 @@ import { useAppTheme } from "@/features/settings/appearance-provider";
 import { localeFor } from "@/core/i18n/formatters";
 import { ledgerOpening,parseLedgerSnapshot,type LedgerSnapshot } from "./ledger-snapshot";
 
-export function LedgerFactsCard({owner,currency,onUse}:{owner:string;currency:string;onUse:(balance:number,day:string)=>void}){
+type Props={owner:string;currency:string;onUse:(balance:number,day:string)=>void};
+export function LedgerFactsCard(props:Props){
+ const {session,localMode}=useAuth();
+ if(!session||localMode||session.user.id!==props.owner)return null;
+ return <LedgerFactsSession key={session.access_token} {...props}/>;
+}
+function LedgerFactsSession({owner,currency,onUse}:Props){
  const {session,localMode}=useAuth();
  const {colors:c,language}=useAppTheme();const {t}=useTranslation("cashflow");
  const [snapshot,setSnapshot]=useState<LedgerSnapshot|null>(null);
@@ -18,23 +24,28 @@ export function LedgerFactsCard({owner,currency,onUse}:{owner:string;currency:st
  const [busy,setBusy]=useState(false),[failed,setFailed]=useState(false),[pending,setPending]=useState(0);
  const [showEntries,setShowEntries]=useState(false);
  const requests=useRef(new AbortController());
+ const generation=useRef(0);
  useEffect(()=>{
   if(requests.current.signal.aborted)requests.current=new AbortController();
-  const listener=AppState.addEventListener("change",state=>{if(state!=="active")setSnapshot(null);});
-  const stop=subscribeToMutationQueue(()=>setSnapshot(null));
-  const timer=setInterval(()=>setSnapshot(null),60000);
-  return()=>{requests.current.abort();listener.remove();stop();clearInterval(timer);};
+
+  const epoch=generation;
+  const invalidate=()=>{epoch.current++;setSnapshot(null);};
+  const listener=AppState.addEventListener("change",state=>{if(state!=="active")invalidate();});
+  const stop=subscribeToMutationQueue(invalidate);
+  const timer=setInterval(invalidate,60000);
+  return()=>{epoch.current++;requests.current.abort();listener.remove();stop();clearInterval(timer);};
  },[owner,session?.access_token]);
  async function load(){
   const api=picketApi;if(!session||session.user.id!==owner||localMode||!api||busy)return;
   const controller=requests.current;
+  const origin=generation.current;
   setBusy(true);setFailed(false);setSnapshot(null);
   try{
    const before=await listPendingMutations(owner);
    if(before.length){setPending(before.length);throw new Error("Pending changes");}
    const result=parseLedgerSnapshot(await api.cashflowLedger(session.access_token,controller.signal));
    const after=await listPendingMutations(owner);
-   if(controller.signal.aborted)return;
+   if(controller.signal.aborted||origin!==generation.current)return;
    setPending(after.length);if(after.length)throw new Error("Changes made while loading");
    setSnapshot(result);setSelected([]);
   }catch{if(!controller.signal.aborted)setFailed(true);}
