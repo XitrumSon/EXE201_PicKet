@@ -1,6 +1,8 @@
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import { useAppTheme } from "@/features/settings/appearance-provider";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, AppState, StyleSheet, Text, View } from "react-native";
-import { colors } from "@picket/design-tokens";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { AppIcon } from "@/core/ui/app-icon";
 import { SectionTitle, Surface } from "@/core/ui/picket-ui";
@@ -9,10 +11,13 @@ import { createAppUpdateController, type UpdateSnapshot } from "./app-update-con
 import { installedVersionLabel } from "./app-update-policy";
 
 export function InstalledVersion() {
+  const {language}=useAppTheme();
+  const { styles } = useMobileStyles(createStyles);
   const [installed] = useState(getInstalledAppInfo);
-  return <Text selectable style={styles.footer}>{installedVersionLabel(installed)}</Text>;
+  return <Text selectable style={styles.footer}>{installedVersionLabel(installed,language)}</Text>;
 }
 export function AppUpdateSection() {
+  const { colors, styles } = useMobileStyles(createStyles);
   const [state, setState] = useState<UpdateSnapshot>({ phase: "idle", progress: 0 });
   const [controller] = useState(() => createAppUpdateController(androidAppUpdates, setState));
   useEffect(() => {
@@ -52,12 +57,13 @@ export function AppUpdateSection() {
   </>;
 }
 function Action({ label, onPress, secondary = false, disabled = false }: { label: string; onPress(): void; secondary?: boolean; disabled?: boolean }) {
+  const { styles } = useMobileStyles(createStyles);
   return <Pressable disabled={disabled} onPress={onPress} style={[styles.button, secondary && styles.secondary, disabled && styles.disabled]}><Text style={[styles.buttonText, secondary && styles.secondaryText]}>{label}</Text></Pressable>;
 }
-const styles = StyleSheet.create({
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   heading: { flexDirection: "row", alignItems: "center", gap: 10 }, title: { flex: 1, color: colors.ink, fontSize: 17, fontWeight: "700" },
   description: { color: colors.muted, fontSize: 14, lineHeight: 22, marginVertical: 12 }, percent: { textAlign: "center", color: colors.mauve, fontSize: 14, marginBottom: 8 },
   button: { backgroundColor: colors.mauve, borderRadius: 28, paddingHorizontal: 18, paddingVertical: 14, minHeight: 52, alignItems: "center", justifyContent: "center", marginTop: 8 },
-  buttonText: { color: colors.white, fontSize: 15, fontWeight: "700", textAlign: "center" }, secondary: { backgroundColor: colors.cream }, secondaryText: { color: colors.mauve }, disabled: { opacity: 0.5 },
+  buttonText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700", textAlign: "center" }, secondary: { backgroundColor: colors.cream }, secondaryText: { color: colors.mauve }, disabled: { opacity: 0.5 },
   footer: { color: colors.muted, fontSize: 13, textAlign: "center", paddingVertical: 20, paddingHorizontal: 16 },
 });
