@@ -1,5 +1,6 @@
 import { Redirect, router } from "expo-router";
 import { LearningAiCard } from "@/features/learning/ai-card";
+import { LearningAchievements } from "@/features/learning/achievements";
 import { useEffect, useRef, useState } from "react";
 import * as Crypto from "expo-crypto";
 import { AppState, ScrollView, Text, View } from "react-native";
@@ -81,9 +82,10 @@ function LearningSession({ owner }: { owner: string }) {
     <Text accessibilityRole="header" style={{ color: c.text, fontSize: 26, fontWeight: "800" }}>{lesson?.title ?? t("title")}</Text>
     <Text style={{ color: c.muted }}>{t("underReview")}</Text>
     {!lesson && <WeeklyPractice owner={owner} />}
+    {!lesson && progress && <LearningAchievements owner={owner} progress={progress}/>}
     {!lesson && <LearningAiCard />}
     {!lesson && reviews.length>0 && <View style={{gap:12}}><Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("reviewTitle")}</Text>{reviews.map(review=><Pressable key={`${review.lessonId}:${review.version}:${review.offset}`} accessibilityRole="button" onPress={()=>{setLessonIndex(curriculum.lessons.findIndex(item=>item.lessonId===review.lessonId));setReviewOffset(review.offset);setReviewSaved(false);setAnswers({});setSubmitted(false);}} style={{padding:16,backgroundColor:c.surface,borderRadius:12}}><Text style={{color:c.primary}}>{t("reviewOpen")} · {curriculum.lessons.find(item=>item.lessonId===review.lessonId)?.title} · {review.dueDay}</Text></Pressable>)}</View>}
-    <Text accessibilityLiveRegion="polite" style={{ color: c.muted }}>{storageError ? t("storageError") : progress ? `${progress.completed.reduce((sum,row) => sum + row.xp,0)} XP · ${progress.completed.length}/12` : t("loading")}</Text>
+    <Text accessibilityLiveRegion="polite" style={{ color: c.muted }}>{storageError ? t("storageError") : progress ? `${progress.completed.length}/12` : t("loading")}</Text>
     {!lesson ? curriculum.lessons.map((item,i) => <Pressable key={item.lessonId} accessibilityRole="button" onPress={() => { setLessonIndex(i); setAnswers({}); setSubmitted(false); }} style={{ backgroundColor: c.surface, borderRadius: 14, padding: 18, minHeight: 56 }}><Text style={{ color: c.text, fontWeight: "700" }}>{i+1}. {item.title}</Text><Text style={{ color: c.muted }}>{item.objective}</Text></Pressable>) : <>
       <Text style={{ color: c.muted }}>{lesson.objective}</Text>
       <Text style={{ color: c.text, lineHeight: 25 }}>{lesson.body}</Text>

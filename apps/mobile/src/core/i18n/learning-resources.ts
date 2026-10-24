@@ -1,4 +1,5 @@
 export const learningVi = {
+  achievements:"Dấu mốc học tập",learningXp:"{{count}} XP học tập",xpNotice:"XP và dấu mốc chỉ ghi nhận học tập, không quy đổi thành tiền hay quyền lợi gói. Bạn không cần chi tiền thật hoặc duy trì chuỗi ngày.",firstLesson:"Hoàn thành bài đầu tiên",threeLessons:"Hoàn thành ba bài",allLessons:"Hoàn thành mười hai bài",reviewedLesson:"Quay lại ôn tập",practicedWeek:"Thử một thực hành tuần",
   reviewTitle:"Ôn tập đến hạn",reviewOpen:"Ôn lại bài",reviewSave:"Lưu lần ôn tập",reviewSaved:"Đã lưu lần ôn tập. XP hoàn thành bài không đổi.",
   back: "Quay lại", title: "Học tài chính",
   underReview: "Bản nội dung đang thẩm định, chưa phát hành giáo trình.",
@@ -11,6 +12,7 @@ export const learningVi = {
   weeklySkipped:"Đã bỏ qua. Bạn có thể quay lại bất cứ lúc nào trong tuần.",weeklyComplete:"Đã hoàn thành thực hành tuần · 10 XP",weeklySave:"Tôi đã thực hành",weeklySkip:"Bỏ qua tuần này",
 };
 export const learningEn: Record<keyof typeof learningVi, string> = {
+  achievements:"Learning milestones",learningXp:"{{count}} learning XP",xpNotice:"XP and milestones record learning only. They cannot be exchanged for money or subscription benefits. No real spending or daily streak is required.",firstLesson:"First lesson completed",threeLessons:"Three lessons completed",allLessons:"Twelve lessons completed",reviewedLesson:"Returned for a review",practicedWeek:"Tried a weekly practice",
   reviewTitle:"Reviews due",reviewOpen:"Review lesson",reviewSave:"Save review",reviewSaved:"Review saved. Lesson completion XP is unchanged.",
   back: "Back", title: "Financial learning",
   underReview: "Content under review; curriculum not yet published.",

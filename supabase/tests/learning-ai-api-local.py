@@ -99,5 +99,3 @@ finally:
         for owner in created:
             req(base+'/auth/v1/admin/users/'+owner,'DELETE',headers=admin)
     print('Disposable local AI users removed.')
-
-
