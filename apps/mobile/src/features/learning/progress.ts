@@ -17,6 +17,11 @@ function parseProgress(value: unknown, owner: string): LearningProgress {
 }
 export function createLearningProgressStore(storage: { read(owner: string): Promise<unknown>; write(owner: string, progress: LearningProgress): Promise<void> }, now=()=>new Date()) {
   const queues = new Map<string, Promise<void>>();
+  const listeners=new Map<string,Set<()=>void>>();
+  async function write(owner:string,value:LearningProgress){
+    await storage.write(owner,value);
+    for(const listener of listeners.get(owner)??[]){try{listener();}catch{/* Persisted learning must survive UI errors. */}}
+  }
   const validateOwner = (owner: string) => { if (!/^[A-Za-z0-9_-]{1,200}$/.test(owner)) throw new Error("Invalid learning owner"); };
   async function load(owner: string) {
     validateOwner(owner); await queues.get(owner)?.catch(() => undefined);
@@ -28,7 +33,7 @@ export function createLearningProgressStore(storage: { read(owner: string): Prom
     const operation = (queues.get(owner) ?? Promise.resolve()).catch(() => undefined).then(async () => {
       const previous = parseProgress(await storage.read(owner),owner);
       const completed=recordCompletion(previous.completed,owner,lessonId,version).map(row=>previous.completed.includes(row)?row:{...row,completedAt:now().toISOString()});
-      await storage.write(owner, { version: 1, completed });
+      await write(owner, { version: 1, completed });
     });
     queues.set(owner,operation);
     try { await operation; } finally { if (queues.get(owner) === operation) queues.delete(owner); }
@@ -49,7 +54,7 @@ export function createLearningProgressStore(storage: { read(owner: string): Prom
         const existing=completed.find(item=>item.lessonId===row.lessonId&&item.version===row.version);
         completed=existing?completed.map(item=>item===existing?{...item,completedAt:item.completedAt??row.completedAt}:item):[...completed,row];
       }
-      await storage.write(owner,{version:1,completed});
+      await write(owner,{version:1,completed});
     });
     queues.set(owner,operation);
     try{await operation;}finally{if(queues.get(owner)===operation)queues.delete(owner);}
@@ -68,7 +73,7 @@ export function createLearningProgressStore(storage: { read(owner: string): Prom
       const previous=parseProgress(await storage.read(owner),owner);
       const row=previous.completed.find(item=>item.lessonId===lessonId&&item.version===version);
       if(!row?.completedAt||(offset!==7&&offset!==30)||reviewDueDays(new Date(row.completedAt).toISOString().slice(0,10))[offset===7?0:1]>now().toISOString().slice(0,10))throw new Error("Review is not due");
-      await storage.write(owner,{version:1,completed:previous.completed.map(item=>item===row?{...item,reviewedOffsets:[...new Set([...(item.reviewedOffsets??[]),offset])]}:item)});
+      await write(owner,{version:1,completed:previous.completed.map(item=>item===row?{...item,reviewedOffsets:[...new Set([...(item.reviewedOffsets??[]),offset])]}:item)});
     });
     queues.set(owner,operation);
     try{await operation;}finally{if(queues.get(owner)===operation)queues.delete(owner);}
@@ -89,11 +94,13 @@ export function createLearningProgressStore(storage: { read(owner: string): Prom
     const operation=(queues.get(owner)??Promise.resolve()).catch(()=>undefined).then(async()=>{
       const previous=parseProgress(await storage.read(owner),owner);
       const completed=previous.completed.map(row=>({...row,reviewedOffsets:[...new Set([...(row.reviewedOffsets??[]),...incoming.filter(item=>item.lessonId===row.lessonId&&item.version===row.version).map(item=>item.offset)])].sort((a,b)=>a-b)}));
-      await storage.write(owner,{version:1,completed});
+      await write(owner,{version:1,completed});
     });
     queues.set(owner,operation);
     try{await operation;}finally{if(queues.get(owner)===operation)queues.delete(owner);}
     return load(owner);
   }
-  return { load, complete, mergeVerified, mergeReviews, dueReviews, review };
+  return { load, complete, mergeVerified, mergeReviews, dueReviews, review,
+    subscribe:(owner:string,listener:()=>void)=>{validateOwner(owner);const set=listeners.get(owner)??new Set<()=>void>();set.add(listener);listeners.set(owner,set);return()=>{set.delete(listener);if(!set.size)listeners.delete(owner);};},
+  };
 }

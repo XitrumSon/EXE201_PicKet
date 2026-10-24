@@ -14,6 +14,11 @@ function parse(value:unknown,owner:string):Document {
 }
 export function createWeeklyPracticeStore(storage:{read(owner:string):Promise<unknown>;write(owner:string,value:Document):Promise<void>}) {
   const pending=new Map<string,Promise<void>>();
+  const listeners=new Map<string,Set<()=>void>>();
+  async function write(owner:string,value:Document){
+    await storage.write(owner,value);
+    for(const listener of listeners.get(owner)??[]){try{listener();}catch{/* Keep successful persistence authoritative. */}}
+  }
   const checkOwner=(owner:string)=>{if(!/^[A-Za-z0-9_-]{1,200}$/.test(owner))throw new Error("Invalid learning owner");};
   async function load(owner:string) {
     checkOwner(owner);await pending.get(owner)?.catch(()=>undefined);
@@ -25,7 +30,7 @@ export function createWeeklyPracticeStore(storage:{read(owner:string):Promise<un
       const previous=parse(await storage.read(owner),owner);
       const events=completeWeeklyPractice(previous.events,{owner,weekStart,action:"review-records"},skipped);
       const next=parse({schemaVersion:1,events},owner);
-      await storage.write(owner,next);
+      await write(owner,next);
     });
     pending.set(owner,operation);
     try{await operation;}finally{if(pending.get(owner)===operation)pending.delete(owner);}
@@ -43,11 +48,13 @@ export function createWeeklyPracticeStore(storage:{read(owner:string):Promise<un
       const previous=parse(await storage.read(owner),owner);
       let events=previous.events;
       for(const row of incoming)events=completeWeeklyPractice(events,{owner,weekStart:row.weekStart,action:"review-records"},row.skipped);
-      await storage.write(owner,parse({schemaVersion:1,events},owner));
+      await write(owner,parse({schemaVersion:1,events},owner));
     });
     pending.set(owner,operation);
     try{await operation;}finally{if(pending.get(owner)===operation)pending.delete(owner);}
     return load(owner);
   }
-  return {load,record,mergeVerified};
+  return {load,record,mergeVerified,
+    subscribe:(owner:string,listener:()=>void)=>{checkOwner(owner);const set=listeners.get(owner)??new Set<()=>void>();set.add(listener);listeners.set(owner,set);return()=>{set.delete(listener);if(!set.size)listeners.delete(owner);};},
+  };
 }

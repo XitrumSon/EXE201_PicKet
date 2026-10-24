@@ -27,8 +27,10 @@ export function WeeklyPractice({owner}:{owner:string}) {
   const [revision,setRevision]=useState(0);
   useEffect(()=>{
     let active=true;
-    void weeklyPractice.load(owner).then(value=>{if(active){setEvents(value);setError(false);}}).catch(()=>{if(active)setError(true);});
-    return ()=>{active=false;};
+    const refresh=()=>{void weeklyPractice.load(owner).then(value=>{if(active){setEvents(value);setError(false);}}).catch(()=>{if(active)setError(true);});};
+    refresh();
+    const stop=weeklyPractice.subscribe(owner,refresh);
+    return ()=>{active=false;stop();};
   },[owner,revision]);
   const current=events?.find(row=>row.weekStart===week);
   async function record(skipped:boolean) {

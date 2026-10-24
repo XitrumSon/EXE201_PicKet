@@ -1,7 +1,7 @@
 export const learningAiVi={
   title:"Giải thích tình huống với AI",case:"Ví dụ giả định: có 100.000 ₫; tiền thuê 300.000 ₫ đến hạn trước khi nhận thu nhập 1.000.000 ₫. Số dư có thể xuống −200.000 ₫ trước khi thu nhập về.",
   consent:"Nếu đồng ý, PicKet gửi tình huống giả định này và ngôn ngữ bạn chọn đến Google Gemini. Không gửi giao dịch, hóa đơn, số dư ví thực, thông tin tài khoản hay câu hỏi cá nhân. AI chỉ chọn các đoạn giải thích có sẵn.",
-  retention:"Kết quả khả dụng tối đa 24 giờ. Khi xóa lịch sử hoặc thu hồi đồng ý, kết quả bị xóa và yêu cầu đang chạy bị hủy. Thông tin tối thiểu để chống gửi lặp và giữ hạn mức được lưu tối đa 30 ngày. Một yêu cầu đã gửi đến Google không thể thu hồi.",
+  retention:"Kết quả khả dụng tối đa 24 giờ. Khi xóa lịch sử hoặc thu hồi đồng ý, kết quả bị xóa và yêu cầu đang chạy bị hủy. Thông tin tối thiểu để chống gửi lặp và giữ hạn mức được lên lịch xóa tự động sau 30 ngày. Một yêu cầu đã gửi đến Google không thể thu hồi.",
   limits:"Tối đa 3 yêu cầu mỗi ngày theo giờ UTC. Yêu cầu lỗi vẫn tính vào hạn mức. Bạn vẫn có thể học bằng nội dung có sẵn.",
   accept:"Đồng ý sử dụng AI cho ví dụ này",revoke:"Thu hồi đồng ý và xóa kết quả",generate:"Yêu cầu giải thích",clear:"Xóa lịch sử AI",refresh:"Thử kết nối lại",loading:"Đang xử lý…",
   disabled:"Giải thích AI chưa được bật. Nội dung bài học vẫn sử dụng được.",signIn:"Đăng nhập để quản lý đồng ý và yêu cầu giải thích AI.",
@@ -15,7 +15,7 @@ export const learningAiVi={
 export const learningAiEn:Record<keyof typeof learningAiVi,string>={
   title:"Explain a learning example with AI",case:"Synthetic example: an opening balance of VND 100,000; VND 300,000 rent is due before VND 1,000,000 income arrives. The balance may reach −VND 200,000 before income arrives.",
   consent:"With your consent, PicKet sends this synthetic example and your selected language to Google Gemini. No transactions, receipts, real wallet balances, account details or personal questions are sent. AI only selects predefined explanations.",
-  retention:"Results are available for up to 24 hours. Deleting history or withdrawing consent clears results and cancels pending work. Minimal records for deduplication and daily limits remain for up to 30 days. A request already sent to Google cannot be recalled.",
+  retention:"Results are available for up to 24 hours. Deleting history or withdrawing consent clears results and cancels pending work. Minimal records for deduplication and daily limits are scheduled for automatic deletion after 30 days. A request already sent to Google cannot be recalled.",
   limits:"Up to 3 requests per UTC day. Failed requests count toward the limit. Existing lessons remain available.",
   accept:"Agree to AI for this example",revoke:"Withdraw consent and clear results",generate:"Request explanation",clear:"Delete AI history",refresh:"Reconnect",loading:"Working…",
   disabled:"AI explanations are not enabled yet. Existing lessons remain available.",signIn:"Sign in to manage consent and request AI explanations.",

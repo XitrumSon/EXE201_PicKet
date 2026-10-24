@@ -41,6 +41,11 @@ function LearningSession({ owner }: { owner: string }) {
   const [reviews,setReviews]=useState<Awaited<ReturnType<typeof learningProgress.dueReviews>>>([]);
   useEffect(()=>{
     let active=true;
+    const stop=learningProgress.subscribe(owner,()=>{void learningProgress.load(owner).then(value=>{if(active)setProgress(value);}).catch(()=>{if(active)setStorageError(true);});});
+    return()=>{active=false;stop();};
+  },[owner]);
+  useEffect(()=>{
+    let active=true;
     const refresh=()=>{void learningProgress.dueReviews(owner,new Date().toISOString().slice(0,10)).then(value=>{if(active)setReviews(value);}).catch(()=>{if(active)setStorageError(true);});};
     refresh();
     const subscription=AppState.addEventListener("change",state=>{if(state==="active")refresh();});
