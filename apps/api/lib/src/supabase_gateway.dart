@@ -15,6 +15,7 @@ import 'package:picket_api/src/entitlement_contract.dart';
 import 'package:picket_api/src/finance_contract.dart';
 import 'package:picket_api/src/keepsake_contract.dart';
 import 'package:picket_api/src/learning_ai_consent.dart';
+import 'package:picket_api/src/learning_ai_jobs.dart';
 import 'package:picket_api/src/learning_contract.dart';
 import 'package:picket_api/src/ocr_job_contract.dart';
 import 'package:picket_api/src/profile_contract.dart';
@@ -108,6 +109,90 @@ class SupabaseGateway {
       throw const GatewayException(
         HttpStatus.badGateway,
         'Invalid consent response.',
+      );
+    }
+  }
+
+  Future<Object?> _learningAiRpc(
+    String token,
+    String name,
+    Map<String, Object?> body,
+  ) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/$name'),
+          headers: _headers(token),
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    try {
+      return jsonDecode(response.body);
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid educational response.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> enqueueLearningAi(
+    String token,
+    LearningAiRequest request,
+    String key,
+  ) async {
+    if (!RegExp(r'^[a-zA-Z0-9_-]{8,100}$').hasMatch(key)) {
+      throw const FormatException('An idempotency key is required.');
+    }
+    final result = await _learningAiRpc(token, 'enqueue_learning_ai_job', {
+      'p_request_key': key,
+      'p_scenario_id': request.scenarioId,
+      'p_locale': request.locale,
+    });
+    try {
+      return validateLearningAiJob(result, queued: true);
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid educational response.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> learningAiJob(String token, String id) async {
+    if (!validLearningAiId(id)) {
+      throw const FormatException('Invalid educational job ID.');
+    }
+    final result = await _learningAiRpc(token, 'load_learning_ai_job', {
+      'p_id': id,
+    });
+    if (result == null) {
+      throw const GatewayException(
+        HttpStatus.notFound,
+        'Educational job not found.',
+      );
+    }
+    try {
+      return validateLearningAiJob(result);
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid educational response.',
+      );
+    }
+  }
+
+  Future<void> deleteLearningAiHistory(String token) async {
+    final result = await _learningAiRpc(
+      token,
+      'delete_learning_ai_history',
+      {},
+    );
+    if (result is! Map || result['deleted'] != true) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'History deletion not confirmed.',
       );
     }
   }

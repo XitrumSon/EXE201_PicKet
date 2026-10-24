@@ -69,8 +69,9 @@ void main() {
         ),
         client: MockClient((request) async {
           expect(request.headers['authorization'], 'Bearer user-token');
-          if (request.url.path == '/auth/v1/user')
+          if (request.url.path == '/auth/v1/user') {
             return http.Response('{"id":"owner"}', 200);
+          }
           calls.add(request.url.path);
           final body = jsonDecode(request.body) as Map<String, dynamic>;
           expect(body.containsKey('owner'), false);
@@ -82,8 +83,9 @@ void main() {
             });
             return http.Response('{"id":"$jobId","status":"queued"}', 200);
           }
-          if (request.url.path.endsWith('delete_learning_ai_history'))
+          if (request.url.path.endsWith('delete_learning_ai_history')) {
             return http.Response('{"deleted":true}', 200);
+          }
           return http.Response(
             '{"id":"$jobId","status":"completed","statementIds":["timing"]}',
             200,
