@@ -65,7 +65,7 @@ void main() {
       expect(
         () => validateSettlementMutation({
           'expectedRevision': 0,
-          'links': [],
+          'links': <Object>[],
           'owner': 'other',
         }),
         throwsFormatException,
@@ -74,7 +74,7 @@ void main() {
         () => validateSettlementDocument({
           'schemaVersion': 1,
           'revision': 2,
-          'links': [],
+          'links': <Object>[],
           'appliedRevision': 3,
         }),
         throwsFormatException,

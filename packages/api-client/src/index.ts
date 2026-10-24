@@ -312,6 +312,12 @@ export class PicketApiClient {
       headers: this.authHeaders(accessToken), signal,
     });
   }
+  cashflowSettlements(accessToken:string,signal?:AbortSignal):Promise<unknown>{
+    return this.request('/v1/cashflow-settlements',{headers:this.authHeaders(accessToken),signal});
+  }
+  saveCashflowSettlements(accessToken:string,expectedRevision:number,links:unknown[],key:string,signal?:AbortSignal):Promise<unknown>{
+    return this.request('/v1/cashflow-settlements',{method:'PUT',headers:{...this.jsonAuthHeaders(accessToken),'idempotency-key':key},body:JSON.stringify({expectedRevision,links}),signal});
+  }
   cashflowSchedules(accessToken:string,signal?:AbortSignal):Promise<CashflowScheduleDocument>{
     return this.request('/v1/cashflow-schedules',{headers:this.authHeaders(accessToken),signal});
   }

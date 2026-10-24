@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {test} from "node:test";
-import {createSettlementStore} from "./settlement-store";
+import {createSettlementStore,SettlementMutationRejected} from "./settlement-store";
 const link={occurrenceId:"schedule:2026-10-24",day:"2026-10-24",amount:-19000,currency:"VND",transactionId:"tx",transactionUpdatedAt:"2026-10-24T12:00:00Z"};
 function fixture(){const data=new Map<string,unknown>();const store=createSettlementStore({read:async o=>structuredClone(data.get(o)),write:async(o,d)=>{data.set(o,structuredClone(d));}});return {store,data};}
 const empty={schemaVersion:1 as const,revision:0,links:[]};
@@ -33,4 +33,34 @@ test("owner or cancellation changes never send or adopt a stale reviewed copy",a
  await assert.rejects(store.publish("a",review,async()=>empty,async()=>{calls++;return empty;},()=>"settlement-key-2"));
  await assert.rejects(store.adopt("a",review,async()=>empty,()=>false));
  await assert.rejects(store.review("a",async()=>empty,()=>false));assert.equal(calls,0);
+});
+test("definitively rejected writes release the barrier but ambiguous acknowledgments retain it",async()=>{
+ const {store}=fixture();await store.save("a",0,[link]);const review=await store.review("a",async()=>empty);
+ await assert.rejects(store.publish("a",review,async()=>empty,async()=>{throw new SettlementMutationRejected();},()=>"settlement-key-3"));
+ assert.equal((await store.status("a")).pending,false);
+ await assert.rejects(store.publish("a",review,async()=>empty,async()=>({...empty,revision:1,appliedRevision:1}),()=>"settlement-key-4"));
+ assert.equal((await store.status("a")).pending,true);
+ await store.publish("a",null,async()=>empty,async()=>({...empty,revision:1,links:[link],appliedRevision:1}),()=>"unused-key");
+ assert.equal((await store.status("a")).pending,false);
+});
+test("invalid remote data, mismatched owner reviews and corrupt pending state cannot replace device links",async()=>{
+ const {store,data}=fixture();await store.save("a",0,[link]);const review=await store.review("a",async()=>empty);
+ await assert.rejects(store.adopt("b",review,async()=>empty));
+ await assert.rejects(store.review("a",async()=>null));
+ await assert.rejects(store.adopt("a",review,async()=>null));
+ assert.deepEqual((await store.load("a")).links,[link]);
+ const saved=data.get("a") as object;
+ for(const cloudAttempt of [null,{key:"bad",expectedRevision:0,links:[link]},{key:"settlement-valid-key",expectedRevision:-1,links:[link]},{key:"settlement-valid-key",expectedRevision:0,links:[]}]){
+  data.set("a",{...saved,cloudAttempt});await assert.rejects(store.status("a"));
+ }
+ data.set("a",{...saved,recovery:null});await assert.rejects(store.status("a"));
+ data.set("b",{...saved,owner:"a"});await assert.rejects(store.load("b"));
+});
+test("storage failure before dispatch never sends, and cancellation after dispatch keeps the saved retry",async()=>{
+ let value:unknown,fail=false,calls=0,current=true;
+ const store=createSettlementStore({read:async()=>value,write:async(_o,next)=>{if(fail)throw Error("disk full");value=structuredClone(next);}});
+ await store.save("a",0,[link]);const review=await store.review("a",async()=>empty);
+ fail=true;await assert.rejects(store.publish("a",review,async()=>empty,async()=>{calls++;return empty;},()=>"settlement-key-5"));assert.equal(calls,0);
+ fail=false;await assert.rejects(store.publish("a",review,async()=>empty,async()=>{current=false;return {...empty,revision:1,links:[link],appliedRevision:1};},()=>"settlement-key-6",()=>current));
+ assert.equal((await store.status("a")).pending,true);
 });

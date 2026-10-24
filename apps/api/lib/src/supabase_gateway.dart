@@ -10,6 +10,7 @@ import 'package:picket_api/src/bill_contract.dart';
 import 'package:picket_api/src/billing_contract.dart';
 import 'package:picket_api/src/budget_contract.dart';
 import 'package:picket_api/src/cashflow_schedule_contract.dart';
+import 'package:picket_api/src/cashflow_settlement_contract.dart';
 import 'package:picket_api/src/category_contract.dart';
 import 'package:picket_api/src/entitlement_contract.dart';
 import 'package:picket_api/src/finance_contract.dart';
@@ -85,6 +86,26 @@ class SupabaseGateway {
       throw const GatewayException(
         HttpStatus.badGateway,
         'Invalid schedule response.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> cashflowSettlements(
+    String token, {
+    Map<String, dynamic>? input,
+    String? key,
+  }) async {
+    final value = await _learningAiRpc(
+      token,
+      input == null ? 'load_cashflow_settlements' : 'save_cashflow_settlements',
+      input == null ? {} : {...input, 'p_request_key': key},
+    );
+    try {
+      return validateSettlementDocument(value);
+    } on FormatException {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid settlement response.',
       );
     }
   }

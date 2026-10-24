@@ -34,9 +34,15 @@ The latest continuation below supersedes older pending lists in this file.
   excluding an occurrence. It supports unlinking, clearing and paged review;
   transfers, duplicate payment use and changed evidence reject. No transaction
   is edited. Snapshot invalidation also clears an adopted cloud opening.
-  Links remain device-only; cloud link sync and partial/combined payments are not
-  implemented or claimed. A payment must also match the occurrence's wallet.
-- Ledger facts: an authenticated, no-store snapshot RPC/API now reads owner-scoped wallets and transactions at one database origin. The preview requires explicit wallet selection and no pending device mutations before adopting an opening assumption. It links included transactions and discards snapshots on background, queue changes, timeout or session change. Local Auth/RLS/API acceptance passes; migration remains local and the preview gate stays off. Cloud settlement sync and completeness/backtest acceptance remain pending.
+  Manual reviewed cloud sync is now implemented with owner-scoped API/RLS,
+  optimistic whole-document replacement, durable keyed retry and encrypted local
+  recovery before adopting cloud. Both copies must remain unchanged since review.
+  Server evidence checks include the owned schedule/wallet, recurrence day, signed
+  amount, currency, transaction version and deletion state. Pending ambiguous writes
+  block local editing until resolved; no automatic resend or merge occurs.
+  Partial/combined payments remain unsupported. A payment must also match the
+  occurrence's wallet. Cloud activation and native acceptance remain gated.
+- Ledger facts: an authenticated, no-store snapshot RPC/API now reads owner-scoped wallets and transactions at one database origin. The preview requires explicit wallet selection and no pending device mutations before adopting an opening assumption. It links included transactions and discards snapshots on background, queue changes, timeout or session change. Local Auth/RLS/API acceptance passes; migration remains local and the preview gate stays off. Manual settlement sync is implemented; completeness/backtest acceptance remains pending.
 - Weekly Money Story: a local vi/en template now summarizes only confirmed
   selected-wallet records from UTC Monday through snapshot time. Income,
   expenses, refunds and scope transfers stay separate. Amounts hide by default
@@ -60,13 +66,31 @@ The latest continuation below supersedes older pending lists in this file.
 - User confirmed **no testing group or Android acceptance device is ready**.
   Real Play purchase cycles, physical-device/TalkBack checks and the 12-person
   closed-test period are external acceptance blockers, not passed tests.
-- Latest suites: **561 mobile tests and 136 API tests passed**, `dart analyze` clean; server build and standalone
+- Latest suites: **569 mobile tests and 140 API tests passed**, `dart analyze` clean; server build and standalone
   learning-worker compilation passed. Android JS export passed. Previous cashflow
-  coverage: **98.85% lines / 89.06% branches / 97.77% functions**. Ten local SQL
+  coverage: **98.85% lines / 89.06% branches / 97.77% functions**. Eleven local SQL
   suites passed. Mobile typecheck passed; lint has no errors and 25 pre-existing
-  warnings. Logs: `.artifacts/mobile-reconciliation-complete-tests.log`, `api-wallet-scope-tests.log`,
-  `mobile-reconciliation-export.log`, `management-notification-coverage.log`. Earlier counts below
+  warnings. Logs: `.artifacts/mobile-settlement-cloud-tests.log`, `api-settlement-tests.log`,
+  `mobile-settlement-cloud-export.log`, `settlement-domain-coverage.log`. Earlier counts below
   are historical.
+
+Settlement cloud continuation (24 October): backend contract RED `deb76d6`,
+mobile durable/review protocol RED `7654933`. GET/PUT `/v1/cashflow-settlements`
+uses only the caller JWT and no-store responses. Lost-response retries reuse a
+persisted payload/key; an older acknowledged write returns current cloud data plus
+its original applied revision and never resurrects removed links. Definite upstream
+rejections release the write barrier; ambiguous outcomes preserve it. Review,
+replacement and recovery UI support vi/en; reviews hide on background and local
+adoption clears the old usable view until reload. This is manual sync, not an
+automatic merge. Core settlement coverage is 96.55% lines / 95.42% branches /
+93.88% functions (imported generic API client excluded from this focused metric).
+Local real HTTP/Auth/RLS acceptance passes concurrent same-key requests, revision
+conflict, foreign-owner references, no-store and non-resurrection. Synthetic users
+were deleted and the owned API process was stopped. All 11 local SQL suites pass,
+including weekly/month-end recurrence checks. Migration
+`20261024110501_cashflow_settlement_sync.sql` was applied and recorded locally;
+no production schema or data was changed. Manual cloud sync remains behind the
+existing preview gate; physical-device/privacy interaction acceptance is pending.
 
 Reconciliation continuation (24 October): vi/en controlled UI, dates, money and
 structured success/refresh notices now rerender on locale changes without changing
@@ -128,7 +152,7 @@ Weekly template RED `8ed4b93`, GREEN `e505935`; UTC boundaries, future/deleted r
 empty weeks, refunds and neutral internal transfers pass. No device acceptance
 is inferred from coverage or export.
 
-All ten 24-October local migrations were already applied and their SQL suites
+The earlier ten 24-October local migrations were already applied and their SQL suites
 pass. Their local migration-history rows were repaired to reflect that verified
 state; `supabase migration up --local` now reports no pending changes. Production
 migration history and financial data were not changed.
