@@ -5,9 +5,52 @@ type Driver = {
 };
 
 export function createOwnerCacheLifecycle(driver: Driver) {
+  const queues = new Map<string, Promise<unknown>>();
+  const blocked = new Set<string>();
+  const generations = new Map<string, number>();
+  function validate(owner: string) {
+    if (!/^[A-Za-z0-9_-]{1,128}$/.test(owner)) throw Error("Invalid cache owner");
+  }
+  function enqueue<T>(owner: string, operation: () => Promise<T>): Promise<T> {
+    const previous = queues.get(owner) ?? Promise.resolve();
+    const next = previous.catch(() => undefined).then(operation);
+    queues.set(owner, next);
+    void next.finally(() => {
+      if (queues.get(owner) === next) queues.delete(owner);
+    }).catch(() => undefined);
+    return next;
+  }
+  function invalidate(owner: string) {
+    blocked.add(owner);
+    generations.set(owner, (generations.get(owner) ?? 0) + 1);
+  }
   return {
-    run: <T>(_owner: string, operation: () => Promise<T>) => operation(),
-    retire: (owner: string) => driver.retire(owner),
-    resume: (owner: string) => driver.resume(owner),
+    async run<T>(owner: string, operation: () => Promise<T>): Promise<T> {
+      validate(owner);
+      if (blocked.has(owner)) throw Error("Owner cache is retired");
+      const generation = generations.get(owner) ?? 0;
+      return enqueue(owner, async () => {
+        if (blocked.has(owner) || generation !== (generations.get(owner) ?? 0)) throw Error("Owner cache is retired");
+        const retired = await driver.isRetired(owner);
+        // Retirement can begin while the durable marker is being read.
+        if (retired || blocked.has(owner) || generation !== (generations.get(owner) ?? 0)) throw Error("Owner cache is retired");
+        return operation();
+      });
+    },
+    async retire(owner: string): Promise<void> {
+      validate(owner);
+      // Synchronous invalidation rejects already queued work before any await.
+      invalidate(owner);
+      await enqueue(owner, () => driver.retire(owner));
+    },
+    async resume(owner: string): Promise<void> {
+      validate(owner);
+      invalidate(owner);
+      const generation = generations.get(owner);
+      await enqueue(owner, async () => {
+        await driver.resume(owner);
+        if (generation === generations.get(owner)) blocked.delete(owner);
+      });
+    },
   };
 }

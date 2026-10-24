@@ -6,6 +6,17 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Latest privacy continuation: account deletion now retires every owner-scoped
+  resource in the common encrypted SQLite cache before the server request,
+  superseding the forecast-only screen wiring described below. A durable marker
+  blocks reads and late writes after restart; owner queues drain dispatched work
+  and reject stale generations. Real SQLite erasure/rollback tests and all
+  **614 mobile tests** pass. Focused coverage is 100% lines / 96.49% branches /
+  100% functions; typecheck and Android JS export pass; lint has 0 errors and
+  25 existing warnings. Separate queues/media cleanup and fresh verified sign-in
+  recovery after interrupted deletion remain pending. See
+  `OWNER_CACHE_RETIREMENT_CHECKPOINT_20261024.md`; this is not release acceptance.
+
 - AI: the synthetic-case vertical slice now has server-only HTTP worker/executable,
   opt-in Compose profile, enqueue/poll/delete API, mobile vi/en consent and approved
   explanations. Real local Auth/RLS/worker acceptance covers concurrent same-key

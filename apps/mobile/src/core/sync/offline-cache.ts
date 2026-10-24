@@ -3,13 +3,14 @@ import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 import * as SQLite from "expo-sqlite";
 import { cacheCipher } from "./cache-cipher";
+import { createOwnerCacheLifecycle } from "./owner-cache-lifecycle";
+import { createOwnerCacheDatabaseDriver, ownerCacheRetirementSchema } from "./owner-cache-database";
 
 export type CachedResource = "forecast-observations" | "cashflow-settlements" | "cashflow-schedules" | "learning-weekly" | "learning-attempts" | "learning-draft" | "learning-progress" | "profile" | "accounts" | "categories" | "transactions" | "budgets" | "bills" | "subscriptions" | "keepsakes" | "guest-finance" | "receipt-gallery" | "receipt-images" | "receipt-thumbnails" | "reconciliation-requests" | "spending-splits";
 type CacheRow = { nonce: string; ciphertext: string; updated_at: string };
 const keyName = "picket_offline_cache_key_v1";
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
 let keyPromise: Promise<Uint8Array> | null = null;
-const pendingWrites = new Map<string, Promise<void>>();
 
 async function database() {
   databasePromise ??= SQLite.openDatabaseAsync("picket-offline.db").then(async (db) => {
@@ -17,11 +18,23 @@ async function database() {
       user_id TEXT NOT NULL, resource TEXT NOT NULL, nonce TEXT NOT NULL,
       ciphertext TEXT NOT NULL, updated_at TEXT NOT NULL,
       PRIMARY KEY (user_id, resource)
-    )`);
+    );
+    ${ownerCacheRetirementSchema}`);
     return db;
   });
-  return databasePromise;
+  const attempt = databasePromise;
+  try { return await attempt; }
+  catch (error) {
+    if (databasePromise === attempt) databasePromise = null;
+    throw error;
+  }
 }
+
+const lifecycle = createOwnerCacheLifecycle(createOwnerCacheDatabaseDriver(database));
+
+export const retireOfflineCacheOwner = lifecycle.retire;
+// Only the account-deletion recovery flow may resume; cached auth events must not.
+export const resumeOfflineCacheOwner = lifecycle.resume;
 
 async function deviceKey() {
   keyPromise ??= (async () => {
@@ -59,15 +72,17 @@ export async function decryptLocalPayload<T>(payload: string, owner: string): Pr
 }
 
 export async function readOfflineCache<T>(userId: string, resource: CachedResource): Promise<{ value: T; updatedAt: string } | null> {
-  const db = await database();
-  const row = await db.getFirstAsync<CacheRow>(
-    "SELECT nonce, ciphertext, updated_at FROM cached_resources WHERE user_id = ? AND resource = ?", userId, resource,
-  );
-  if (!row) return null;
-  const nonce = toByteArray(row.nonce);
-  if (nonce.length !== 12) throw new Error("Offline cache nonce is invalid.");
-  const plain = await cacheCipher.open(await deviceKey(), row.nonce, row.ciphertext);
-  return { value: JSON.parse(new TextDecoder().decode(plain)) as T, updatedAt: row.updated_at };
+  return lifecycle.run(userId, async () => {
+    const db = await database();
+    const row = await db.getFirstAsync<CacheRow>(
+      "SELECT nonce, ciphertext, updated_at FROM cached_resources WHERE user_id = ? AND resource = ?", userId, resource,
+    );
+    if (!row) return null;
+    const nonce = toByteArray(row.nonce);
+    if (nonce.length !== 12) throw new Error("Offline cache nonce is invalid.");
+    const plain = await cacheCipher.open(await deviceKey(), row.nonce, row.ciphertext);
+    return { value: JSON.parse(new TextDecoder().decode(plain)) as T, updatedAt: row.updated_at };
+  });
 }
 
 async function persist<T>(userId: string, resource: CachedResource, value: T) {
@@ -84,10 +99,5 @@ async function persist<T>(userId: string, resource: CachedResource, value: T) {
 }
 
 export function writeOfflineCache<T>(userId: string, resource: CachedResource, value: T): Promise<void> {
-  const key = `${userId}:${resource}`;
-  const previous = pendingWrites.get(key) ?? Promise.resolve();
-  const next = previous.catch(() => undefined).then(() => persist(userId, resource, value));
-  pendingWrites.set(key, next);
-  void next.finally(() => { if (pendingWrites.get(key) === next) pendingWrites.delete(key); }).catch(() => undefined);
-  return next;
+  return lifecycle.run(userId, () => persist(userId, resource, value));
 }
