@@ -23,27 +23,39 @@ The latest continuation below supersedes older pending lists in this file.
 - Schedules: reviewed per-row device/cloud/omit reconciliation is implemented,
   with revalidation of both copies and an encrypted local recovery copy. A
   reproduced local revision rollback bug is fixed; stale editors remain stale.
+  Wallet assignment now survives mobile storage/outbox, API and SQL. Verified
+  scenarios include only selected-wallet schedules and block active unassigned
+  schedules. Server validation rejects foreign, archived, missing and different-
+  currency wallets; a composite owner/wallet FK enforces ownership. Wallet
+  replacement during restore clears assignment instead of blocking restore.
 - Settlement continuation: explicit one-to-one full-payment links are stored in
   encrypted owner-scoped device storage. The vi/en review verifies included
   transaction/version, signed amount, currency and selected wallet before
   excluding an occurrence. It supports unlinking, clearing and paged review;
   transfers, duplicate payment use and changed evidence reject. No transaction
   is edited. Snapshot invalidation also clears an adopted cloud opening.
-  Links remain device-only; cloud link sync, partial/combined payments and
-  schedule wallet assignment are not implemented or claimed.
-- Ledger facts: an authenticated, no-store snapshot RPC/API now reads owner-scoped wallets and transactions at one database origin. The preview requires explicit wallet selection and no pending device mutations before adopting an opening assumption. It links included transactions and discards snapshots on background, queue changes, timeout or session change. Local Auth/RLS/API acceptance passes; migration remains local and the preview gate stays off. Settlement links and completeness/backtest acceptance remain pending.
+  Links remain device-only; cloud link sync and partial/combined payments are not
+  implemented or claimed. A payment must also match the occurrence's wallet.
+- Ledger facts: an authenticated, no-store snapshot RPC/API now reads owner-scoped wallets and transactions at one database origin. The preview requires explicit wallet selection and no pending device mutations before adopting an opening assumption. It links included transactions and discards snapshots on background, queue changes, timeout or session change. Local Auth/RLS/API acceptance passes; migration remains local and the preview gate stays off. Cloud settlement sync and completeness/backtest acceptance remain pending.
+- Weekly Money Story: a local vi/en template now summarizes only confirmed
+  selected-wallet records from UTC Monday through snapshot time. Income,
+  expenses, refunds and scope transfers stay separate. Amounts hide by default
+  and on background; sources open as transactions. Unknown/missing records are
+  explicit, including empty weeks. No AI call, financial write, automatic sharing
+  or affordability claim. The development route is linked from the learning hub
+  behind the existing cloud gate. Native/privacy interaction QA remains pending.
 - Languages: profile controls, controlled profile messages, app update phases,
   installer permissions and installed-version footer now use vi/en resources.
   Other untranslated product screens/errors still require migration.
 - User confirmed **no testing group or Android acceptance device is ready**.
   Real Play purchase cycles, physical-device/TalkBack checks and the 12-person
   closed-test period are external acceptance blockers, not passed tests.
-- Latest suites: **535 mobile tests and 135 API tests passed**, `dart analyze` clean; server build and standalone
+- Latest suites: **541 mobile tests and 136 API tests passed**, `dart analyze` clean; server build and standalone
   learning-worker compilation passed. Android JS export passed. Learning/cashflow
-  coverage: **99.20% lines / 84.80% branches / 86.27% functions**. Nine local SQL
+  cashflow coverage: **98.85% lines / 89.06% branches / 97.77% functions**. Ten local SQL
   suites passed. Mobile typecheck passed; lint has no errors and 25 pre-existing
-  warnings. Logs: `.artifacts/mobile-ledger-final-tests.log`, `api-ledger-tests.log`,
-  `mobile-ledger-export.log`, `learning-cashflow-coverage.log`. Earlier counts below
+  warnings. Logs: `.artifacts/mobile-weekly-story-tests.log`, `api-wallet-scope-tests.log`,
+  `mobile-weekly-story-export.log`, `cashflow-weekly-story-coverage.log`. Earlier counts below
   are historical.
 
 Settlement evidence (24 October): full suite `.artifacts/mobile-settlements-tests.log`
@@ -56,9 +68,24 @@ not establish native UI or device acceptance. RED checkpoints: `11e83b2` (missin
 settlement verification), `463dbb5` (missing durable owner store). GREEN checkpoint:
 `010c75d` (verified resolver, durable store and preview integration).
 
+Wallet/story continuation: RED `210b58f` reproduced dropped mobile wallet scope,
+rejected API fields and missing SQL column. Wallet implementation `2b0edbd` and
+the corrected remote-revision fixture `aef7b6a` pass the final suite; the first
+extra outbox fixture incorrectly kept reporting revision zero after its write,
+and was corrected without weakening the revision guard. Real local HTTP/Auth/RLS
+acceptance passes including a foreign-wallet write and concurrent same-key replay.
+Weekly template RED `8ed4b93`, GREEN `e505935`; UTC boundaries, future/deleted rows,
+empty weeks, refunds and neutral internal transfers pass. No device acceptance
+is inferred from coverage or export.
+
+All ten 24-October local migrations were already applied and their SQL suites
+pass. Their local migration-history rows were repaired to reflect that verified
+state; `supabase migration up --local` now reports no pending changes. Production
+migration history and financial data were not changed.
+
 Still required before full P1–P5 completion: remaining screen/error/notification
 localization; production entry/device settings acceptance; financial-fact completeness,
-schedule wallet scope/settlement cloud sync and real backtests; assessment/report/regrade and
+settlement cloud sync and real backtests; assessment/report/regrade and
 personal-data-compatible provider decision; independent lesson/AI evaluation;
 staging/production deployment review; device/billing/pilot acceptance. The free
 Gemini synthetic boundary must not be widened to personal text or real finance

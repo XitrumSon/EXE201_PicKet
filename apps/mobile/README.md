@@ -257,3 +257,19 @@ are not cloud-synced or a transaction mutation. Changed evidence blocks adoption
 until reviewed/unlinked. Manual opening entry removes the verified settlement
 assumption. Schedule or horizon changes require reapplying the reviewed snapshot.
 Native interaction/TalkBack acceptance still requires an Android device.
+
+Schedules can carry an optional `walletId`. Old schedules remain readable and
+usable in manual scenarios. Before a verified cloud scenario, assign a wallet to
+each active schedule in the currency; only selected-wallet schedules are included.
+The backend requires an owned, unarchived wallet in the same currency. Restore
+may replace wallets and clear assignments; review and reassign before adoption.
+This requires local migration `20261024120000_cashflow_schedule_wallet_scope.sql`
+and its matching API before enabling the existing cloud flag.
+
+The learning hub also links the development weekly-story route when cloud facts
+are enabled. It uses a deterministic local template over verified records, with
+UTC week boundaries, separate refunds/transfers, hidden amounts by default and
+source drill-down. No facts are sent to Gemini and no story is auto-shared.
+It reports only recorded movements and never treats an empty week as proof of
+zero real spending. Guest/offline history stories and human content/device QA
+are not claimed by this route.
