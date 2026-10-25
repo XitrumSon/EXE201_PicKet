@@ -85,6 +85,17 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   const checkingStore = Boolean(picketApi) && availability?.token !== accessToken;
   const processingTokens = useRef(new Set<string>());
   const fetchedProducts = useRef(false);
+  const operationScope = useRef({active:true,token:accessToken,restoring:false,purchasing:false,controller:new AbortController()});
+  useEffect(()=>{
+    const scope={active:true,token:accessToken,restoring:false,purchasing:false,controller:new AbortController()};
+    operationScope.current=scope;
+    void Promise.resolve().then(()=>{
+      if(!scope.active)return;
+      if(!scope.restoring)setRestoring(false);
+      if(!scope.purchasing)setBusyProduct(null);
+    });
+    return()=>{scope.active=false;scope.controller.abort();};
+  },[accessToken]);
 
   const {
     connected,
@@ -98,6 +109,8 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       void verifyStorePurchase(purchase);
     },
     onPurchaseError: (error) => {
+      if(!operationScope.current.active||operationScope.current.token!==accessToken)return;
+      operationScope.current.purchasing=false;
       setBusyProduct(null);
       setSuccess(false);
       setMessage(
@@ -147,12 +160,16 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     };
   }, [accessToken,revision]);
 
-  async function refreshEntitlements() {
+  async function refreshEntitlements(current:()=>boolean) {
     if (!picketApi) return;
-    setEntitlements(await picketApi.currentEntitlements(accessToken));
+    const value=await picketApi.currentEntitlements(accessToken);
+    if(current())setEntitlements(value);
   }
 
   async function verifyStorePurchase(purchase: Purchase) {
+    const scope=operationScope.current;
+    const current=()=>scope.active&&operationScope.current===scope&&scope.token===accessToken;
+    if(!current())return false;
     const token = purchase.purchaseToken;
     if (!token || processingTokens.current.has(token)) return false;
     processingTokens.current.add(token);
@@ -164,10 +181,18 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       if (!api) throw new Error("Chưa kích hoạt được gói. Hãy thử lại sau.");
       const result = await verifyAndFinishPurchase(
         purchase,
-        (request) => api.verifyPlayPurchase(accessToken, request),
-        () => finishTransaction({ purchase, isConsumable: false }),
+        (request) => {
+          if(!current())throw new Error("Billing session changed");
+          return api.verifyPlayPurchase(accessToken, request,scope.controller.signal);
+        },
+        () => {
+          if(!current())throw new Error("Billing session changed");
+          return finishTransaction({ purchase, isConsumable: false });
+        },
       );
-      await refreshEntitlements();
+      if(!current())return false;
+      await refreshEntitlements(current);
+      if(!current())return false;
       setSuccess(true);
       setMessage(
         result.active
@@ -176,6 +201,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       );
       return true;
     } catch {
+      if(!current())return false;
       setSuccess(false);
       setMessage(
         {key:"verifyError"},
@@ -183,12 +209,15 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       return false;
     } finally {
       processingTokens.current.delete(token);
-      setBusyProduct(null);
+      if(current()){scope.purchasing=false;setBusyProduct(null);}
     }
   }
 
   async function purchase(product: ProductSubscription) {
     if (Platform.OS !== "android" || product.platform !== "android") return;
+    const scope=operationScope.current;
+    const current=()=>scope.active&&operationScope.current===scope&&scope.token===accessToken;
+    if(!current()||scope.purchasing||scope.restoring||processingTokens.current.size>0)return;
     if(!canStartPlayPurchase(Platform.OS,connected,{newPurchasesEnabled:storeReady})) {
       setSuccess(false);setMessage({key:"notReady"});return;
     }
@@ -199,6 +228,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       setSuccess(false);
       return setMessage({key:"offerMissing"});
     }
+    scope.purchasing=true;
     setBusyProduct(product.id);
     setSuccess(false);
     setMessage(null);
@@ -207,6 +237,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
         Crypto.CryptoDigestAlgorithm.SHA256,
         userId,
       );
+      if(!current())return;
       await requestPurchase({
         request: {
           google: {
@@ -218,13 +249,16 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
         type: "subs",
       });
     } catch {
-      setBusyProduct(null);
-      setMessage({key:"openError"});
+      if(current()){scope.purchasing=false;setBusyProduct(null);setMessage({key:"openError"});}
     }
   }
 
   async function restore() {
     if (!connected || Platform.OS !== "android") return;
+    const scope=operationScope.current;
+    const current=()=>scope.active&&operationScope.current===scope&&scope.token===accessToken;
+    if(!current()||scope.restoring||scope.purchasing||processingTokens.current.size>0)return;
+    scope.restoring=true;
     setRestoring(true);
     setSuccess(false);
     setMessage(null);
@@ -232,6 +266,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       const purchases = await getAvailablePurchases({
         includeSuspendedAndroid: false,
       });
+      if(!current())return;
       const eligible = purchases.filter(
         (item) => isPicketSubscriptionId(item.productId) && item.purchaseToken,
       );
@@ -239,8 +274,10 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
         setMessage({key:"restoreEmpty"});
         return;
       }
-      const restored = await verifyRestoredPurchases(eligible, verifyStorePurchase);
-      await refreshEntitlements();
+      const restored = await verifyRestoredPurchases(eligible, item=>current()?verifyStorePurchase(item):Promise.resolve(false));
+      if(!current())return;
+      await refreshEntitlements(current);
+      if(!current())return;
       setSuccess(restored.failed === 0 && restored.verified > 0);
       setMessage(restored.failed === 0
         ? {key:"restoreSuccess"}
@@ -248,9 +285,10 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           ? {key:"restorePartial"}
           : {key:"restoreFailed"});
     } catch {
-      setMessage({key:"restoreError"});
+      if(current())setMessage({key:"restoreError"});
     } finally {
-      setRestoring(false);
+      scope.restoring=false;
+      if(current())setRestoring(false);
     }
   }
 
