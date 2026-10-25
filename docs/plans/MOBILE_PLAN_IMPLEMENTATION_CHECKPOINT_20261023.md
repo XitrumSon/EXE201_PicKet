@@ -6,6 +6,13 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Test discovery continuation: root `npm run test:mobile` now discovers every
+  `src/**/*.test.ts` file through the Node runner with the existing tsx loader,
+  instead of a hand-maintained directory list. The Expo CI job invokes this same
+  entrypoint, and root package script changes now trigger source validation.
+  The actual root command passed all **659 tests** locally; hosted Linux CI has
+  not been run in this session. Evidence: `.artifacts/mobile-complete-entrypoint-tests.log`.
+
 - Latest owner-lifecycle continuation: attributed capture/receipt/keepsake media
   and queues, native reminders and four owner-scoped secure preferences are now
   included before remote deletion. Remaining cloud media/restore/thumbnail/export
