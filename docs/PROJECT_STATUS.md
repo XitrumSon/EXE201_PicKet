@@ -1,8 +1,10 @@
 # Trạng thái hiện hành của Picket
 
-**Cập nhật source local 25/10/2026:** bộ kiểm tra hiện tại đạt 10 landing, 761 mobile, 54 web và 140 API test; mobile typecheck và lint các tệp vừa sửa đạt. Ngày mặc định của preview dòng tiền đã theo lịch trên thiết bị (`a9a073c7`). Đây là kiểm tra source, không phải nghiệm thu APK/AAB mới: Play internal đang ở code 7, còn source hiện tại có thay đổi sau bản build đó. `adb devices` trong lượt kiểm tra này chưa thấy thiết bị kết nối.
+**Cập nhật source local 25/10/2026:** bộ kiểm tra hiện tại đạt 10 landing, 762 mobile, 54 web và 140 API test; mobile typecheck và lint các tệp vừa sửa đạt. Preview dòng tiền dùng lịch thiết bị cho ngày mặc định (`a9a073c7`) và chặn hai lần lưu lịch liên tiếp (`6cff0f46`). Đây là kiểm tra source, không phải nghiệm thu APK/AAB mới: Play internal đang ở code 7, còn source hiện tại có thay đổi sau bản build đó. `adb devices` trong lượt kiểm tra này chưa thấy thiết bị kết nối.
 
 **Gate phát hành còn mở:** rà các thay đổi local chưa commit; nghiệm thu Android thật và nội dung học; đánh giá dự báo với dữ liệu được phép; chạy vòng đời Billing sandbox qua Play; hoàn thiện Console và nhóm người thử nghiệm kín. Bản AI miễn phí hiện chỉ dùng tình huống tổng hợp, không gửi câu trả lời cá nhân hoặc dữ liệu tài chính thật. [Checkpoint triển khai 25/10](plans/MOBILE_PLAN_IMPLEMENTATION_CHECKPOINT_20261023.md), [Play readiness 24/10](google-play/RELEASE_READINESS_20261024.md), [checklist Android thật](ANDROID_REAL_DEVICE_CHECKLIST.md). Các số liệu và giới hạn 22/10 bên dưới là snapshot lịch sử.
+
+**Đọc lại Play Console 25/10 qua MCP:** bốn gói Plus/Pro tháng/năm có giá VN 19.000/199.000/49.000/499.000 ₫, nhưng mọi base plan vẫn `DRAFT`. Kênh internal có release code 7 `completed`; alpha có code 6 `draft`, production chưa có release. API tester của alpha và internal không trả Google group nào. Không suy ra giao dịch sandbox, nhóm thử nghiệm hợp lệ hoặc quyền phát hành công khai từ những kết quả đọc này.
 
 **Web/landing production 22/10:** đã triển khai source `6993560`, có nút Đăng nhập trên landing và workspace admin riêng. GitHub đã nhận nhánh `feat/picket-platform-ocr`; smoke HTTPS đạt, không đổi mobile/API/OCR/schema. [Triển khai và rollback](migration/WEB_PRODUCTION_20261022.md). Các dòng “chưa push/deploy” của checkpoint local bên dưới là lịch sử.
 
