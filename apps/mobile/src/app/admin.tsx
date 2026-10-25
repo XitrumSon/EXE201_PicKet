@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { formatCalendarDate, formatMoney, localeFor, normalizeLanguage } from "@/core/i18n/formatters";
 import { colors } from "@picket/design-tokens";
 import type { AdminUserActionRequest } from "@picket/domain";
 import { Redirect, router } from "expo-router";
@@ -16,10 +18,12 @@ import {
 } from "@/features/admin/admin-mobile";
 
 type Tab = "users" | "ocr" | "partners" | "settings" | "audit";
-const tabs: Array<[Tab, string]> = [["users", "Người dùng"], ["ocr", "OCR"], ["partners", "Đối tác"], ["settings", "Cài đặt"], ["audit", "Nhật ký"]];
+const tabs: [Tab,string][] = [["users","users"],["ocr","ocr"],["partners","partners"],["settings","settings"],["audit","audit"]];
 const emptyAd = { id: null as string | null, title: "", body: "", url: "", active: false };
 
 export default function AdminScreen() {
+  const {t,i18n}=useTranslation("admin");
+  const language=normalizeLanguage(i18n.resolvedLanguage??i18n.language);
   const { session } = useAuth();
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [overview, setOverview] = useState<StaffOverview | null>(null);
@@ -45,7 +49,7 @@ export default function AdminScreen() {
       setMaintenance(next.settings.maintenance);
       setNotice(next.settings.notice);
       setMessage(null);
-    } catch { setMessage("Không tải được quản trị. Kiểm tra mạng và quyền nhân viên."); }
+    } catch { setMessage("loadFailed"); }
     finally { setBusy(false); }
   }, [page, session]);
   useEffect(() => {
@@ -56,12 +60,12 @@ export default function AdminScreen() {
   if (!session) return <Redirect href={routes.login} />;
   const users = overview?.users.filter((user) => `${user.email} ${user.id}`.toLowerCase().includes(search.toLowerCase())) ?? [];
   const userAction = (userId: string, request: AdminUserActionRequest, label: string) => {
-    Alert.alert("Xác nhận quản trị", `${label} cho tài khoản ${userId}? Thao tác sẽ được ghi vào nhật ký.`, [
-      { text: "Hủy", style: "cancel" },
-      { text: "Xác nhận", style: "destructive", onPress: () => void (async () => {
+    Alert.alert(t("confirmTitle"), t("confirmAction",{label,userId}), [
+      { text: t("cancel"), style: "cancel" },
+      { text: t("confirm"), style: "destructive", onPress: () => void (async () => {
         setBusy(true);
-        try { await performStaffAction(session.access_token, userId, request); await reload(); setMessage("Đã hoàn thành thao tác quản trị."); }
-        catch { setMessage("Không thực hiện được thao tác quản trị."); }
+        try { await performStaffAction(session.access_token, userId, request); await reload(); setMessage("actionDone"); }
+        catch { setMessage("actionFailed"); }
         finally { setBusy(false); }
       })() },
     ]);
@@ -69,66 +73,66 @@ export default function AdminScreen() {
   async function viewLedger(userId: string) {
     setBusy(true);
     try { setLedger((await loadStaffLedger(userId))?.entries ?? []); }
-    catch { setMessage("Không đọc được sổ đã đồng bộ."); }
+    catch { setMessage("ledgerFailed"); }
     finally { setBusy(false); }
   }
   async function persistSettings() {
     setBusy(true);
-    try { await saveStaffSettings(maintenance, notice); await reload(); setMessage("Đã lưu cài đặt hệ thống."); }
-    catch { setMessage("Không lưu được cài đặt."); }
+    try { await saveStaffSettings(maintenance, notice); await reload(); setMessage("settingsSaved"); }
+    catch { setMessage("settingsFailed"); }
     finally { setBusy(false); }
   }
   async function persistAd() {
     if (!ad) return;
-    if (!isSafeHttpsUrl(ad.url)) return setMessage("Liên kết đối tác phải là HTTPS hợp lệ.");
+    if (!isSafeHttpsUrl(ad.url)) return setMessage("invalidPartnerUrl");
     setBusy(true);
-    try { await savePartnerAd(ad); setAd(null); await reload(); setMessage("Đã lưu nội dung đối tác."); }
-    catch { setMessage("Không lưu được nội dung đối tác."); }
+    try { await savePartnerAd(ad); setAd(null); await reload(); setMessage("partnerSaved"); }
+    catch { setMessage("partnerFailed"); }
     finally { setBusy(false); }
   }
   return <PicketScreen>
-    <TopAppBar title="Quản trị Picket" />
-    {busy && <Text accessibilityLiveRegion="polite" style={styles.muted}>Đang xử lý…</Text>}
-    {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>}
-    {allowed === false ? <EmptyState title="Không có quyền quản trị" description="Màn hình này chỉ dành cho nhân viên Picket." /> : !overview ?
-      <EmptyState title="Đang tải quản trị" description="Dữ liệu chỉ mở khi máy chủ xác nhận quyền nhân viên." action="Thử lại" onAction={() => void reload()} /> : <>
-      <View style={styles.tabs}>{tabs.map(([value, label]) => <ChoiceChip checked={tab === value} key={value} label={label} onPress={() => setTab(value)} />)}</View>
+    <TopAppBar title={t("title")} />
+    {busy && <Text accessibilityLiveRegion="polite" style={styles.muted}>{t("processing")}</Text>}
+    {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{t(message)}</Text>}
+    {allowed === false ? <EmptyState title={t("forbidden")} description={t("forbiddenDescription")} /> : !overview ?
+      <EmptyState title={t("loading")} description={t("loadingDescription")} action={t("retry")} onAction={() => void reload()} /> : <>
+      <View style={styles.tabs}>{tabs.map(([value, label]) => <ChoiceChip checked={tab === value} key={value} label={t(label)} onPress={() => setTab(value)} />)}</View>
       {tab === "users" && <>
-        <Surface peach><Text style={styles.title}>{overview.total_users} tài khoản · {overview.total_ledgers} sổ legacy</Text></Surface>
-        <TextInput accessibilityLabel="Tìm tài khoản trong trang" onChangeText={setSearch} placeholder="Tìm email hoặc ID trong trang" style={styles.input} value={search} />
-        <View style={styles.row}><Text style={styles.title}>Che email</Text><Switch accessibilityLabel="Che email" hitSlop={12} onValueChange={setMaskEmail} value={maskEmail} /></View>
+        <Surface peach><Text style={styles.title}>{t("totals",{users:overview.total_users,ledgers:overview.total_ledgers})}</Text></Surface>
+        <TextInput accessibilityLabel={t("searchLabel")} onChangeText={setSearch} placeholder={t("searchPlaceholder")} style={styles.input} value={search} />
+        <View style={styles.row}><Text style={styles.title}>{t("maskEmail")}</Text><Switch accessibilityLabel={t("maskEmail")} hitSlop={12} onValueChange={setMaskEmail} value={maskEmail} /></View>
         {users.map((user) => <Surface key={user.id}>
-          <Text style={styles.title}>{maskEmail ? `Tài khoản ${user.id.slice(0, 8)}` : user.email}</Text>
-          <Text style={styles.muted}>{user.entry_count} giao dịch · {new Date(user.created_at).toLocaleDateString("vi-VN")}</Text>
-          <Text style={styles.muted}>{user.banned_until && new Date(user.banned_until) > new Date() ? "Đã khóa" : "Hoạt động"} · revision {user.revision ?? "—"}</Text>
+          <Text style={styles.title}>{maskEmail ? t("maskedAccount",{id:user.id.slice(0,8)}) : user.email}</Text>
+          <Text style={styles.muted}>{t("userSummary",{count:user.entry_count,date:new Date(user.created_at).toLocaleDateString(localeFor(language))})}</Text>
+          <Text style={styles.muted}>{user.banned_until && new Date(user.banned_until) > new Date() ? t("suspended") : t("active")} · {t("revision",{revision:user.revision??"—"})}</Text>
           <View style={styles.actions}>
-            <ChoiceChip checked={false} label="Xem sổ" onPress={() => void viewLedger(user.id)} />
+            <ChoiceChip checked={false} label={t("viewLedger")} onPress={() => void viewLedger(user.id)} />
             {user.banned_until && new Date(user.banned_until) > new Date() ?
-              <ChoiceChip checked={false} label="Mở khóa" onPress={() => userAction(user.id, { action:"restore", confirmation:"RESTORE" }, "Mở khóa")} /> :
-              <ChoiceChip checked={false} label="Tạm khóa" onPress={() => userAction(user.id, { action:"suspend", confirmation:"SUSPEND" }, "Tạm khóa")} />}
-            <ChoiceChip checked={false} label="Đặt lại mật khẩu" onPress={() => userAction(user.id, { action:"reset_password", confirmation:"RESET" }, "Gửi email đặt lại mật khẩu")} />
-            {(["free", "plus", "pro"] as const).map((tier) => <ChoiceChip checked={false} key={tier} label={tier === "free" ? "Thu hồi ưu đãi" : `Tặng ${tier.toUpperCase()} 30 ngày`} onPress={() => userAction(user.id, { action:"grant_plan", confirmation:"GRANT", tier }, `Đổi ưu đãi ${tier}`)} />)}
+              <ChoiceChip checked={false} label={t("unlock")} onPress={() => userAction(user.id, { action:"restore", confirmation:"RESTORE" }, t("unlock"))} /> :
+              <ChoiceChip checked={false} label={t("suspend")} onPress={() => userAction(user.id, { action:"suspend", confirmation:"SUSPEND" }, t("suspend"))} />}
+            <ChoiceChip checked={false} label={t("resetPassword")} onPress={() => userAction(user.id, { action:"reset_password", confirmation:"RESET" }, t("sendReset"))} />
+            {(["free", "plus", "pro"] as const).map((tier) => <ChoiceChip checked={false} key={tier} label={tier === "free" ? t("revokePlan") : t("grantPlan",{tier:tier.toUpperCase()})} onPress={() => userAction(user.id, { action:"grant_plan", confirmation:"GRANT", tier }, t("changePlan",{tier}))} />)}
           </View>
         </Surface>)}
-        <View style={styles.row}><Pressable accessibilityRole="button" disabled={page === 0 || busy} onPress={() => setPage((value) => value - 1)}><Text style={styles.link}>Trang trước</Text></Pressable><Text>Trang {page + 1}</Text><Pressable accessibilityRole="button" disabled={overview.users.length < 25 || busy} onPress={() => setPage((value) => value + 1)}><Text style={styles.link}>Trang sau</Text></Pressable></View>
+        <View style={styles.row}><Pressable accessibilityRole="button" disabled={page === 0 || busy} onPress={() => setPage((value) => value - 1)}><Text style={styles.link}>{t("previousPage")}</Text></Pressable><Text>{t("page",{page:page+1})}</Text><Pressable accessibilityRole="button" disabled={overview.users.length < 25 || busy} onPress={() => setPage((value) => value + 1)}><Text style={styles.link}>{t("nextPage")}</Text></Pressable></View>
       </>}
-      {tab === "ocr" && <><SectionTitle title="OCR trong 30 ngày" /><Text style={styles.muted}>Chỉ thống kê lượt và thời gian, không hiển thị ảnh hoặc nội dung hóa đơn.</Text>{overview.ocr.map((row) => <Surface key={row.day}><Text style={styles.title}>{new Date(row.day).toLocaleDateString("vi-VN")}</Text><Text style={styles.muted}>{row.successful}/{row.scans} thành công · trung bình {row.average_ms} ms</Text></Surface>)}</>}
+      {tab === "ocr" && <><SectionTitle title={t("ocrTitle")} /><Text style={styles.muted}>{t("ocrDescription")}</Text>{overview.ocr.map((row) => <Surface key={row.day}><Text style={styles.title}>{formatCalendarDate(row.day.slice(0,10),language)}</Text><Text style={styles.muted}>{t("ocrSummary",{successful:row.successful,scans:row.scans,average:row.average_ms})}</Text></Surface>)}</>}
       {tab === "partners" && <>
-        <PrimaryAction label="Thêm nội dung đối tác" onPress={() => setAd({ ...emptyAd })} />
-        {overview.ads.map((item) => <Pressable accessibilityRole="button" key={item.id} onPress={() => setAd({ id:item.id, title:item.title, body:item.body, url:item.url, active:item.active })}><Surface><Text style={styles.title}>{item.title}</Text><Text style={styles.muted}>{item.active ? "Đang hiển thị" : "Đang ẩn"} · {item.url}</Text></Surface></Pressable>)}
-        {ad && <Surface><SectionTitle title={ad.id ? "Sửa nội dung đối tác" : "Nội dung đối tác mới"} />
-          <TextInput accessibilityLabel="Tiêu đề đối tác" maxLength={120} onChangeText={(title) => setAd((value) => value && ({ ...value, title }))} placeholder="Tiêu đề" style={styles.input} value={ad.title} />
-          <TextInput accessibilityLabel="Nội dung đối tác" maxLength={500} multiline onChangeText={(body) => setAd((value) => value && ({ ...value, body }))} placeholder="Nội dung" style={styles.input} value={ad.body} />
-          <TextInput accessibilityLabel="Liên kết HTTPS đối tác" autoCapitalize="none" keyboardType="url" onChangeText={(url) => setAd((value) => value && ({ ...value, url }))} placeholder="https://…" style={styles.input} value={ad.url} />
-          <View style={styles.row}><Text style={styles.title}>Hiển thị</Text><Switch accessibilityLabel="Hiển thị nội dung đối tác" hitSlop={12} onValueChange={(active) => setAd((value) => value && ({ ...value, active }))} value={ad.active} /></View>
-          <PrimaryAction busy={busy} label="Lưu nội dung" onPress={() => void persistAd()} />
-          <Pressable accessibilityRole="button" onPress={() => setAd(null)}><Text style={styles.link}>Hủy</Text></Pressable>
+        <PrimaryAction label={t("addPartner")} onPress={() => setAd({ ...emptyAd })} />
+        {overview.ads.map((item) => <Pressable accessibilityRole="button" key={item.id} onPress={() => setAd({ id:item.id, title:item.title, body:item.body, url:item.url, active:item.active })}><Surface><Text style={styles.title}>{item.title}</Text><Text style={styles.muted}>{item.active ? t("visible") : t("hidden")} · {item.url}</Text></Surface></Pressable>)}
+        {ad && <Surface><SectionTitle title={ad.id ? t("editPartner") : t("newPartner")} />
+          <TextInput accessibilityLabel={t("partnerTitle")} maxLength={120} onChangeText={(title) => setAd((value) => value && ({ ...value, title }))} placeholder={t("titlePlaceholder")} style={styles.input} value={ad.title} />
+          <TextInput accessibilityLabel={t("partnerBody")} maxLength={500} multiline onChangeText={(body) => setAd((value) => value && ({ ...value, body }))} placeholder={t("bodyPlaceholder")} style={styles.input} value={ad.body} />
+          <TextInput accessibilityLabel={t("partnerUrl")} autoCapitalize="none" keyboardType="url" onChangeText={(url) => setAd((value) => value && ({ ...value, url }))} placeholder="https://…" style={styles.input} value={ad.url} />
+          <View style={styles.row}><Text style={styles.title}>{t("show")}</Text><Switch accessibilityLabel={t("showPartner")} hitSlop={12} onValueChange={(active) => setAd((value) => value && ({ ...value, active }))} value={ad.active} /></View>
+          <PrimaryAction busy={busy} label={t("savePartner")} onPress={() => void persistAd()} />
+          <Pressable accessibilityRole="button" onPress={() => setAd(null)}><Text style={styles.link}>{t("cancel")}</Text></Pressable>
         </Surface>}
       </>}
-      {tab === "settings" && <Surface><View style={styles.row}><View style={styles.flex}><Text style={styles.title}>Bảo trì đồng bộ</Text><Text style={styles.muted}>Tạm dừng ghi lên máy chủ.</Text></View><Switch accessibilityLabel="Bảo trì đồng bộ" hitSlop={12} onValueChange={setMaintenance} value={maintenance} /></View><TextInput accessibilityLabel="Thông báo hệ thống" maxLength={1000} multiline onChangeText={setNotice} placeholder="Thông báo cho người dùng" style={styles.input} value={notice} /><PrimaryAction busy={busy} label="Lưu cài đặt" onPress={() => void persistSettings()} /></Surface>}
-      {tab === "audit" && <><SectionTitle title="Nhật ký quản trị" />{overview.audit.map((item, index) => <Surface key={`${item.created_at}-${index}`}><Text style={styles.title}>{item.action}</Text><Text style={styles.muted}>{item.target ?? "Không có đối tượng"} · {new Date(item.created_at).toLocaleString("vi-VN")}</Text></Surface>)}</>}
-      {ledger && <Surface peach><SectionTitle title="Giao dịch đã đồng bộ" /><Text style={styles.muted}>Lượt xem này được ghi vào nhật ký quản trị.</Text>{ledger.map((item, index) => <View key={index} style={styles.row}><View style={styles.flex}><Text style={styles.title}>{item.title ?? "Giao dịch"}</Text><Text style={styles.muted}>{item.date ?? ""} · {item.category ?? ""}</Text></View><Text>{item.amount ?? 0} đ</Text></View>)}<Pressable accessibilityRole="button" onPress={() => setLedger(null)}><Text style={styles.link}>Đóng</Text></Pressable></Surface>}
-      <Pressable accessibilityRole="button" onPress={() => void reload()}><Text style={styles.link}>Tải lại dữ liệu quản trị</Text></Pressable>
+      {tab === "settings" && <Surface><View style={styles.row}><View style={styles.flex}><Text style={styles.title}>{t("maintenance")}</Text><Text style={styles.muted}>{t("maintenanceDescription")}</Text></View><Switch accessibilityLabel={t("maintenance")} hitSlop={12} onValueChange={setMaintenance} value={maintenance} /></View><TextInput accessibilityLabel={t("notice")} maxLength={1000} multiline onChangeText={setNotice} placeholder={t("noticePlaceholder")} style={styles.input} value={notice} /><PrimaryAction busy={busy} label={t("saveSettings")} onPress={() => void persistSettings()} /></Surface>}
+      {tab === "audit" && <><SectionTitle title={t("auditTitle")} />{overview.audit.map((item, index) => <Surface key={`${item.created_at}-${index}`}><Text style={styles.title}>{item.action}</Text><Text style={styles.muted}>{item.target ?? t("noTarget")} · {new Date(item.created_at).toLocaleString(localeFor(language))}</Text></Surface>)}</>}
+      {ledger && <Surface peach><SectionTitle title={t("ledgerTitle")} /><Text style={styles.muted}>{t("ledgerNotice")}</Text>{ledger.map((item, index) => <View key={index} style={styles.row}><View style={styles.flex}><Text style={styles.title}>{item.title ?? t("transaction")}</Text><Text style={styles.muted}>{item.date ?? ""} · {item.category ?? ""}</Text></View><Text>{formatMoney(item.amount??0,language,"VND")}</Text></View>)}<Pressable accessibilityRole="button" onPress={() => setLedger(null)}><Text style={styles.link}>{t("close")}</Text></Pressable></Surface>}
+      <Pressable accessibilityRole="button" onPress={() => void reload()}><Text style={styles.link}>{t("reload")}</Text></Pressable>
     </>}
   </PicketScreen>;
 }

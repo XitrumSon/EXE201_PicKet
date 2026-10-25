@@ -6,6 +6,18 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Admin copy continuation (25 October): staff screen tabs, permission/load states,
+  live controlled errors, action confirmations, partner/settings controls,
+  paging and summary labels now use vi/en copy. Money/dates use the selected
+  locale; OCR day buckets remain calendar dates across timezones. User email,
+  partner content, notice text, target IDs and audit action codes are preserved;
+  staff checks and literal API confirmation/action tokens remain unchanged.
+  All **683 mobile tests** pass; typecheck and Android JS export pass; lint has
+  0 errors/24 existing warnings. RED `2ccec6a`; evidence
+  `.artifacts/mobile-admin-{complete-tests,types,lint,export}.log`.
+  No real staff action, reset email, plan grant or production write was executed.
+  Native layout/accessibility and independent language review remain pending.
+
 - Restore continuation (25 October): restore UI and controlled validation/
   recovery messages now have vi/en copy, preserving filenames, passwords and
   the literal `RESTORE` confirmation. Unknown errors are not shown verbatim.
