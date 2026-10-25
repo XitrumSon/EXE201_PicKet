@@ -62,6 +62,22 @@ export function validateGuestBackupPayload(value: unknown): GuestBackupPayload {
       (transaction.kind==="transfer" && (transaction.destinationAccountId===transaction.accountId || !transaction.destinationAccountId || currencies.get(String(transaction.accountId))!==currencies.get(String(transaction.destinationAccountId)))) ||
       (transaction.kind!=="transfer"&&transaction.destinationAccountId!==null))throw new Error("Invalid transfer in backup");
   }
+  const transactionsById = new Map((finance.transactions as Record<string, unknown>[]).map(item => [item.id, item]));
+  const categoryIds = new Set((finance.categories as { id: string }[]).map(item => item.id));
+  const splitIds = new Set<string>();
+  for (const [transactionId, parts] of Object.entries(finance.splits)) {
+    const transaction = transactionsById.get(transactionId);
+    if (!transaction || !Array.isArray(parts)) throw new Error("Phân bổ trong bản sao không thuộc giao dịch hợp lệ.");
+    let total = 0n;
+    for (const part of parts) {
+      if (!object(part) || typeof part.id !== "string" || !part.id || part.transactionId !== transactionId ||
+          typeof part.categoryId !== "string" || !categoryIds.has(part.categoryId) ||
+          !validMoney(part.amount) || part.amount === 0 || splitIds.has(part.id)) throw new Error("Phân bổ danh mục trong bản sao không hợp lệ.");
+      splitIds.add(part.id);
+      if (!part.deletedAt) total += BigInt(part.amount as number);
+    }
+    if (total > BigInt(transaction.amount as number)) throw new Error("Tổng phân bổ vượt số tiền giao dịch trong bản sao.");
+  }
   for (const item of value.keepsakes) {
     if (!object(item) || !hasId(item)) throw new Error("Kỷ vật trong bản sao không hợp lệ.");
     const record = item as Record<string, unknown>;

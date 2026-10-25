@@ -17,3 +17,6 @@ Evidence: RED ba2c9c6; 33 export/restore tests and all 718 mobile tests pass. Ty
 
 ## Backup identity continuation
 All six financial collections now reject duplicate IDs before restore. IDs remain scoped to their own collection; no imported record is silently merged or discarded. RED 5190fc2c reproduced four previously accepted duplicate collections. The full mobile run passed 722 tests; an additional wallet/transaction compatibility test was then added and the 38-test export/restore suite passed. Typecheck passed. This is collection identity validation, not comprehensive validation of every backup field or native restore acceptance.
+
+## Backup allocation continuation
+Restore validates split arrays, transaction ownership, existing category references, positive bounded integer amounts and globally unique split IDs. Live split totals use integer arithmetic and cannot exceed the transaction amount; deleted splits remain preserved and excluded from live totals. Partial allocations and empty arrays remain compatible. RED f11d47e6 reproduces malformed acceptance. All 725 mobile tests passed; the 40-test export suite passed again after a TypeScript narrowing correction, and typecheck passed. This does not certify all backup fields, native restoration or full release acceptance. Evidence: .artifacts/backup-splits-{tests,focused,types}.log.
