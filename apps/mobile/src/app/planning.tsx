@@ -24,6 +24,8 @@ import { budgetOverview } from "@/core/local/budget-overview";
 const methods: [BudgetMethod,string][] = [["simple","simple"],["envelope","envelope"],["zero_based","zero_based"],["fifty_thirty_twenty","fifty_thirty_twenty"],["event","event"]];
 const monthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
+type ReviewSnapshot = { scope: string; transactions: unknown; allocations: unknown; budgets: unknown; limits: unknown };
+
 export default function PlanningScreen() {
   const {t,i18n}=useTranslation("planning");
   const language=normalizeLanguage(i18n.resolvedLanguage??i18n.language);
@@ -40,11 +42,12 @@ export default function PlanningScreen() {
   const [note, setNote] = useState("");
   const [rollover, setRollover] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [reviewedFor, setReviewedFor] = useState<ReviewSnapshot | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const selectedMonth = monthKey(month);
   const scope=(session?.user.id??(localMode?"device-guest":"anonymous"))+":"+selectedMonth;
-  const currentScope=useRef<string|null>(scope),alive=useRef(true),operationBusy=useRef(false),readGeneration=useRef(0),closeAllowed=useRef(false);
+  const currentScope=useRef<string|null>(scope),alive=useRef(true),operationBusy=useRef(false),readGeneration=useRef(0),closeAllowed=useRef<{allowed:boolean;snapshot:ReviewSnapshot|null}>({allowed:false,snapshot:null});
   useLayoutEffect(()=>{currentScope.current=scope;alive.current=true;return()=>{currentScope.current=null;alive.current=false;};},[scope]);
   const isCurrent=()=>alive.current&&currentScope.current===scope;
   const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(transactions, selectedMonth);
@@ -53,9 +56,11 @@ export default function PlanningScreen() {
     periods: budgets.map((budget) => ({ budgetId: budget.id, month: selectedMonth, limit: guest.data.planningPeriods[`${selectedMonth}:${budget.id}`] ?? budget.defaultLimit, carriedAmount: 0 })),
     close: guest.data.planningCloses[selectedMonth] ?? null,
   } : cloudPlanning;
-  const canClose=Boolean(planning&&!planning.close&&selectedMonth<monthKey(new Date())&&checked&&!historyLoading&&!historyError&&!splitLoading&&!splitError);
-  useLayoutEffect(()=>{closeAllowed.current=canClose;},[canClose]);
-  const monthly = transactions.filter((item) => item.occurredAt.slice(0, 7) === selectedMonth);
+  const limits=localMode?guest.data.planningPeriods:cloudPlanning?.periods;
+  const reviewMatches=reviewedFor!==null&&reviewedFor.scope===scope&&reviewedFor.transactions===transactions&&reviewedFor.allocations===splits&&reviewedFor.budgets===budgets&&reviewedFor.limits===limits;
+  const canClose=Boolean(planning&&!planning.close&&selectedMonth<monthKey(new Date())&&checked&&reviewMatches&&!historyLoading&&!historyError&&!splitLoading&&!splitError);
+  useLayoutEffect(()=>{closeAllowed.current={allowed:canClose,snapshot:reviewedFor};},[canClose,reviewedFor]);
+  const monthly = transactions.filter((item) => !item.deletedAt && item.occurredAt.slice(0, 7) === selectedMonth);
   const income = monthly.filter((item) => item.kind === "income").reduce((sum, item) => sum + item.amount, 0);
   const grossExpense = monthly.filter((item) => item.kind === "expense").reduce((sum, item) => sum + item.amount, 0);
   const refunds = monthly.filter((item) => item.kind === "refund").reduce((sum, item) => sum + item.amount, 0);
@@ -98,15 +103,15 @@ export default function PlanningScreen() {
     finally { operationBusy.current=false;if(isCurrent())setBusy(false); }
   }
   function confirmClose() {
-    if (operationBusy.current||!isCurrent()||!planning||planning.close || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || historyError || splitLoading || splitError) return;
+    if (operationBusy.current||!isCurrent()||!planning||planning.close || selectedMonth >= monthKey(new Date()) || !checked || !reviewMatches || historyLoading || historyError || splitLoading || splitError) return;
     Alert.alert(t("closeTitle"), t("closeDescription"), [
       { text:t("cancel"), style:"cancel" },
-      { text:t("close"), onPress:() => void closeMonth() },
+      { text:t("close"), onPress:() => void closeMonth(reviewedFor) },
     ]);
   }
-  async function closeMonth() {
+  async function closeMonth(review: ReviewSnapshot | null) {
     if(operationBusy.current||!isCurrent())return;
-    if ((!localMode && !picketApi) || !closeAllowed.current || selectedMonth>=monthKey(new Date())) return;
+    if ((!localMode && !picketApi) || !review || !closeAllowed.current.allowed || closeAllowed.current.snapshot!==review || selectedMonth>=monthKey(new Date())) return;
     operationBusy.current=true;readGeneration.current++;setBusy(true);setMessage(null);
     try { if (localMode) await guest.commit({ type: "planning.close", value: { month:selectedMonth, closedAt:new Date().toISOString(), income, expense, note:note.trim(), rollover } });
       else { await writeCloud(()=>picketApi!.closeBudgetMonth(session!.access_token, { month:selectedMonth, rollover, note:note.trim() })); if(!isCurrent())return; const next=await picketApi!.getPlanning(session!.access_token, selectedMonth);if(!isCurrent())return;setPlanning(next); }
@@ -150,7 +155,7 @@ export default function PlanningScreen() {
       <PrimaryAction busy={busy} disabled={guest.loading && localMode || Boolean(planning?.close) || !planning} label={t("transfer")} onPress={() => void transfer()} />
     </Surface>}
     <SectionTitle title={t("closeSection")} />
-    <Surface><View style={styles.monthRow}><Text style={styles.title}>{t("reviewed")}</Text><Switch accessibilityLabel={t("reviewed")} hitSlop={12} disabled={busy} onValueChange={setChecked} value={checked} /></View><View style={styles.monthRow}><Text style={styles.title}>{t("rollover")}</Text><Switch accessibilityLabel={t("rollover")} hitSlop={12} disabled={busy} onValueChange={setRollover} value={rollover} /></View><Text style={styles.label}>{t("note")}</Text><TextInput accessibilityLabel={t("note")} editable={!busy} onChangeText={setNote} style={styles.input} value={note} /><PrimaryAction busy={busy} disabled={!planning || Boolean(planning.close) || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || Boolean(historyError) || splitLoading || Boolean(splitError)} label={t("close")} onPress={confirmClose} /></Surface>
+    <Surface>{checked && !reviewMatches ? <Text accessibilityLiveRegion="polite" style={styles.message}>{t("reviewChanged")}</Text> : null}<View style={styles.monthRow}><Text style={styles.title}>{t("reviewed")}</Text><Switch accessibilityLabel={t("reviewed")} hitSlop={12} disabled={busy} onValueChange={value => { setChecked(value); setReviewedFor(value ? {scope,transactions,allocations:splits,budgets,limits} : null); }} value={checked && reviewMatches} /></View><View style={styles.monthRow}><Text style={styles.title}>{t("rollover")}</Text><Switch accessibilityLabel={t("rollover")} hitSlop={12} disabled={busy} onValueChange={setRollover} value={rollover} /></View><Text style={styles.label}>{t("note")}</Text><TextInput accessibilityLabel={t("note")} editable={!busy} onChangeText={setNote} style={styles.input} value={note} /><PrimaryAction busy={busy} disabled={!planning || Boolean(planning.close) || selectedMonth >= monthKey(new Date()) || !checked || !reviewMatches || historyLoading || Boolean(historyError) || splitLoading || Boolean(splitError)} label={t("close")} onPress={confirmClose} /></Surface>
   </PicketScreen>;
 }
 

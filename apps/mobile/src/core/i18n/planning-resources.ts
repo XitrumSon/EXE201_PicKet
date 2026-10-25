@@ -1,4 +1,5 @@
 export const planningVi = {
+  reviewChanged: "Dữ liệu đã tải lại hoặc thay đổi. Hãy kiểm tra lại trước khi chốt tháng.",
   title: "Kế hoạch ngân sách", deviceSubtitle: "Kế hoạch chỉ lưu trên thiết bị này, không đồng bộ cloud.", cloudSubtitle: "Tổ chức hạn mức, điều chuyển và chốt tháng.",
   simple: "Đơn giản", envelope: "Phong bì", zero_based: "Zero-based", fifty_thirty_twenty: "50/30/20", event: "Sự kiện",
   method: "Phương pháp lập kế hoạch", methodHelp: "Phương pháp giúp bạn tổ chức ngân sách; hạn mức và chi tiêu vẫn lấy từ giao dịch thực tế.",
@@ -16,6 +17,7 @@ export const planningVi = {
   splitsUnavailable: "Chưa tải được phân bổ danh mục. Chưa thể tính chính xác số đã chi hoặc chốt tháng.",
 };
 export const planningEn: Record<keyof typeof planningVi, string> = {
+  reviewChanged: "Data was reloaded or changed. Review it again before closing the month.",
   title: "Budget planning", deviceSubtitle: "Plans are stored only on this device and are not synced to the cloud.", cloudSubtitle: "Organize limits, transfer allocations and close the month.",
   simple: "Simple", envelope: "Envelope", zero_based: "Zero-based", fifty_thirty_twenty: "50/30/20", event: "Event",
   method: "Planning method", methodHelp: "The method helps organize budgets. Limits and spending still use actual transactions.",

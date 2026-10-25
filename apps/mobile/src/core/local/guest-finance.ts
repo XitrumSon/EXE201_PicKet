@@ -2,6 +2,7 @@ import type { Bill, Budget, BudgetMethod, Category, CurrentProfile, FinanceSubsc
 import { MAX_MONEY } from "@picket/domain";
 import {decodeReconciliationRequest} from "../../features/transactions/reconciliation-attempt";
 import {validateReconciliationReceipts,type GuestReconciliationReceipt} from "./guest-reconciliation-receipts";
+import { budgetOverview } from "./budget-overview";
 
 export type GuestCollection = "accounts" | "categories" | "transactions" | "budgets" | "bills" | "subscriptions";
 
@@ -61,19 +62,7 @@ function upsert<T extends { id: string }>(items: T[], value: T): T[] {
 }
 
 export function guestBudgetSpent(state: GuestFinance, budget: Budget, month: string) {
-  return state.transactions.filter((item) => item.occurredAt.slice(0, 7) === month)
-    .reduce((total, item) => {
-      const source = item.kind === "refund" && item.refundOfTransactionId
-        ? state.transactions.find((candidate) => candidate.id === item.refundOfTransactionId && candidate.kind === "expense") ?? item
-        : item;
-      const splits = state.splits[source.id] ?? [];
-      const categoryAmount = splits.length ? splits.filter((part) => part.categoryId === budget.categoryId).reduce((sum, part) => sum + part.amount, 0)
-        : source.categoryId === budget.categoryId ? source.amount : 0;
-      const amount = item.kind === "refund" && source !== item
-        ? Math.round(item.amount * categoryAmount / source.amount)
-        : categoryAmount;
-      return total + (item.kind === "expense" ? amount : item.kind === "refund" ? -amount : 0);
-    }, 0);
+  return budgetOverview(budget, month, state.transactions, null, Object.values(state.splits).flat()).spent;
 }
 
 export function applyGuestMutation(state: GuestFinance, mutation: GuestMutation): GuestFinance {
@@ -107,38 +96,49 @@ export function applyGuestMutation(state: GuestFinance, mutation: GuestMutation)
   if (mutation.type === "planning.method") return { ...state, planningMethod: mutation.value };
   if (mutation.type === "planning.transfer") {
     const { month, sourceBudgetId, destinationBudgetId, amount } = mutation;
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) throw new Error("Tháng không hợp lệ.");
     if (state.planningCloses[month]) throw new Error("Tháng đã chốt.");
-    if (sourceBudgetId === destinationBudgetId || !Number.isSafeInteger(amount) || amount <= 0) throw new Error("Số tiền điều chuyển không hợp lệ.");
-    const source = state.budgets.find((item) => item.id === sourceBudgetId && item.active);
-    const destination = state.budgets.find((item) => item.id === destinationBudgetId && item.active);
+    if (sourceBudgetId === destinationBudgetId || !Number.isSafeInteger(amount) || amount <= 0 || amount > MAX_MONEY) throw new Error("Số tiền điều chuyển không hợp lệ.");
+    const source = state.budgets.find((item) => item.id === sourceBudgetId && item.active && !item.deletedAt);
+    const destination = state.budgets.find((item) => item.id === destinationBudgetId && item.active && !item.deletedAt);
     if (!source || !destination) throw new Error("Không tìm thấy ngân sách.");
     const sourceKey = `${month}:${sourceBudgetId}`;
     const destinationKey = `${month}:${destinationBudgetId}`;
     const sourceLimit = state.planningPeriods[sourceKey] ?? source.defaultLimit;
     const destinationLimit = state.planningPeriods[destinationKey] ?? destination.defaultLimit;
-    if (amount > sourceLimit - guestBudgetSpent(state, source, month) || !Number.isSafeInteger(destinationLimit + amount)) throw new Error("Hạn mức không đủ hoặc vượt giới hạn.");
+    if (![sourceLimit, destinationLimit].every(limit => Number.isSafeInteger(limit) && limit >= 0 && limit <= MAX_MONEY) || amount > sourceLimit || amount > sourceLimit - guestBudgetSpent(state, source, month) || !Number.isSafeInteger(destinationLimit + amount) || destinationLimit + amount > MAX_MONEY) throw new Error("Hạn mức không đủ hoặc vượt giới hạn.");
     return { ...state, planningPeriods: { ...state.planningPeriods, [sourceKey]: sourceLimit - amount, [destinationKey]: destinationLimit + amount } };
   }
   if (mutation.type === "planning.close") {
     if (state.planningCloses[mutation.value.month]) throw new Error("Tháng đã chốt.");
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(mutation.value.month)) throw new Error("Tháng không hợp lệ.");
+    if (typeof mutation.value.note !== "string" || mutation.value.note.length > 1000 || typeof mutation.value.closedAt !== "string" || !Number.isFinite(Date.parse(mutation.value.closedAt)) || typeof mutation.value.rollover !== "boolean") throw new Error("Thông tin chốt tháng không hợp lệ.");
     const nextDate = new Date(`${mutation.value.month}-01T00:00:00Z`);
     nextDate.setUTCMonth(nextDate.getUTCMonth() + 1);
     const nextMonth = nextDate.toISOString().slice(0, 7);
-    if (nextDate.getTime() >= Date.now()) throw new Error("Chỉ chốt tháng đã qua.");
+    if (nextDate.getTime() > Date.now()) throw new Error("Chỉ chốt tháng đã qua.");
     if (mutation.value.rollover && state.planningCloses[nextMonth]) throw new Error("Không thể chuyển dư vì tháng sau đã chốt.");
+    let income = 0n, expense = 0n;
+    for (const row of state.transactions) {
+      if (row.deletedAt || row.occurredAt.slice(0, 7) !== mutation.value.month || !["income", "expense", "refund"].includes(row.kind)) continue;
+      if (!Number.isSafeInteger(row.amount) || row.amount <= 0 || row.amount > MAX_MONEY) throw new Error("Dữ liệu tiền tháng không hợp lệ.");
+      if (row.kind === "income") income += BigInt(row.amount);
+      else expense += row.kind === "expense" ? BigInt(row.amount) : -BigInt(row.amount);
+    }
+    const incomeTotal = Number(income), expenseTotal = Number(expense);
+    if (!Number.isSafeInteger(incomeTotal) || !Number.isSafeInteger(expenseTotal)) throw new Error("Tổng tiền tháng vượt giới hạn tính toán chính xác.");
     const planningPeriods = { ...state.planningPeriods };
-    if (mutation.value.rollover) for (const budget of state.budgets.filter((item) => item.active)) {
+    if (mutation.value.rollover) for (const budget of state.budgets.filter((item) => item.active && !item.deletedAt)) {
       const currentKey = `${mutation.value.month}:${budget.id}`;
       const nextKey = `${nextMonth}:${budget.id}`;
       const limit = planningPeriods[currentKey] ?? budget.defaultLimit;
       const spent = guestBudgetSpent(state, budget, mutation.value.month);
       const carried = Math.max(0, limit - spent);
       const nextLimit = (planningPeriods[nextKey] ?? budget.defaultLimit) + carried;
-      if (!Number.isSafeInteger(nextLimit)) throw new Error("Hạn mức chuyển dư vượt giới hạn.");
+      if (!Number.isSafeInteger(nextLimit) || nextLimit > MAX_MONEY) throw new Error("Hạn mức chuyển dư vượt giới hạn.");
       planningPeriods[nextKey] = nextLimit;
     }
-    return { ...state, planningPeriods, planningCloses: { ...state.planningCloses, [mutation.value.month]: mutation.value } };
+    return { ...state, planningPeriods, planningCloses: { ...state.planningCloses, [mutation.value.month]: { ...mutation.value, income: incomeTotal, expense: expenseTotal } } };
   }
   if (mutation.type === "reconcile.apply") {
     const {accountId,statementDate,statementBalance,selectedTransactionIds,reason}=mutation;
