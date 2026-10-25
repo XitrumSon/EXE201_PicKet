@@ -20,7 +20,7 @@ function plan(month: string, limit = 1000) { return { method: "simple", periods:
 /** Execute real callbacks with deterministic hooks/transport, without native rendering. */
 function harness() {
   const i18n = createAppI18n("en"); const slots: unknown[] = []; let cursor = 0;
-  const state = { transfers: 0, closes: 0, reads: 0, owner: "owner-A" };
+  const state = { transfers: 0, closes: 0, methods: 0, reads: 0, owner: "owner-A", retired: false };
   let session = { user: { id: "owner-A" }, access_token: "synthetic-A" };
   let getPlanning = async (_token: string, month: string) => plan(month);
   let transfer = async () => {};
@@ -45,6 +45,9 @@ function harness() {
     "@/core/theme/use-mobile-styles": { useMobileStyles: () => ({ colors: style, styles: style }) },
     "@/core/i18n/formatters": { formatMoney, localeFor, normalizeLanguage },
     "@/core/forms/payment-form": { parsePaymentAmount },
+    "@/core/sync/offline-cache": { withLocalOwnerAccess: async (owner: string, operation: () => Promise<unknown>) => {
+      assert.equal(owner, session.user.id); if (state.retired) throw Error("Retired owner"); return operation();
+    } },
     "@/features/auth/auth-context": { useAuth: () => ({ session, localMode: false }) },
     "@/core/local/guest-finance-context": { useGuestFinance: () => ({ data: {}, loading: false }) },
     "@/features/budgets/budgets-context": { useBudgets: () => ({ budgets: [{ id: "food", name: "Food", defaultLimit: 1000 }, { id: "travel", name: "Travel", defaultLimit: 1000 }], update: async () => {} }) },
@@ -54,7 +57,7 @@ function harness() {
     "@/core/api/client": { picketApi: {
       getPlanning: (token: string, month: string) => { state.reads++; return getPlanning(token, month); },
       transferBudgetLimit: async () => { state.transfers++; await transfer(); },
-      closeBudgetMonth: async () => { state.closes++; }, setBudgetMethod: async () => {},
+      closeBudgetMonth: async () => { state.closes++; }, setBudgetMethod: async () => { state.methods++; },
     } },
     "@/core/ui/picket-text-input": { PicketTextInput: "TextInput" },
     "@/core/ui/accessible-pressable": { AccessiblePressable: "Pressable" },
@@ -113,4 +116,43 @@ test("month-close alert cannot submit for an owner that has since changed", asyn
   (app.find("PrimaryAction", "Close month").props.onPress as () => void)();
   app.switchSession("owner-B"); app.render(); app.confirmClose(); await settle();
   assert.equal(app.state.closes, 0);
+});
+
+test("month-close rechecks the latest review checkbox when the native confirmation returns", async () => {
+  const app = harness(); app.render(); await settle();
+  (app.find("Pressable", "Previous month").props.onPress as () => void)(); app.render(); await settle();
+  const checked = elements(app.render()).find(node => node.props.accessibilityLabel === "Reviewed categories, possible duplicates and account reconciliation");
+  assert.ok(checked); (checked.props.onValueChange as (value: boolean) => void)(true);
+  (app.find("PrimaryAction", "Close month").props.onPress as () => void)();
+  (checked.props.onValueChange as (value: boolean) => void)(false); app.render();
+  app.confirmClose(); await settle(); assert.equal(app.state.closes, 0);
+});
+
+test("a previously captured next-month callback cannot bypass a running transfer", async () => {
+  const app = harness(); app.render(); await settle(); app.selectTransfer();
+  const next = app.find("Pressable", "Next month").props.onPress as () => void;
+  const held = deferred<void>(); app.setTransfer(() => held.promise);
+  (app.find("PrimaryAction", "Transfer limit").props.onPress as () => void)();
+  const reads = app.state.reads;
+  next(); app.render(); assert.equal(app.state.reads, reads);
+  held.resolve(); await settle(); assert.equal(app.state.transfers, 1);
+  assert.equal(app.find("Pressable", "Next month").props.disabled, false);
+});
+
+test("planning write dispatch shares the owner retirement fence for transfers, methods and month close", async () => {
+  for (const action of ["transfer", "method", "close"]) {
+    const app = harness(); app.render(); await settle();
+    if (action === "transfer") app.selectTransfer();
+    if (action === "close") {
+      (app.find("Pressable", "Previous month").props.onPress as () => void)(); app.render(); await settle();
+      const checked = elements(app.render()).find(node => node.props.accessibilityLabel === "Reviewed categories, possible duplicates and account reconciliation");
+      assert.ok(checked); (checked.props.onValueChange as (value: boolean) => void)(true);
+    }
+    app.state.retired = true;
+    if (action === "transfer") (app.find("PrimaryAction", "Transfer limit").props.onPress as () => void)();
+    if (action === "method") (app.find("ChoiceChip", "Envelope").props.onPress as () => void)();
+    if (action === "close") { (app.find("PrimaryAction", "Close month").props.onPress as () => void)(); app.confirmClose(); }
+    await settle();
+    assert.equal(app.state.transfers + app.state.methods + app.state.closes, 0, action);
+  }
 });
