@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 const modulePath = "./restore-attempt";
 
 test("lost restore acknowledgement stays unconfirmed and never claims that data was unchanged", async () => {
@@ -37,4 +38,26 @@ test("unconfirmed restore requires a new preparation before another submit", asy
   assert.equal(await run(options), "unconfirmed");
   assert.equal(await run(options), "unconfirmed");
   assert.equal(commits, 1);
+});
+
+test("restore reload requests strict errors from every provider and drains all reloads before retry", async () => {
+  const { refreshRestoredProviders } = await import(modulePath);
+  let release!: () => void, completed = false;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  const failed = Error("Unavailable");
+  const attempt = refreshRestoredProviders([
+    async (options: { throwOnError?: boolean }) => { assert.equal(options.throwOnError, true); throw failed; },
+    async (options: { throwOnError?: boolean }) => { assert.equal(options.throwOnError, true); await pending; completed = true; },
+  ]);
+  const rejected = assert.rejects(attempt, error => error === failed);
+  assert.equal(completed, false); release(); await rejected; assert.equal(completed, true);
+  await refreshRestoredProviders([async () => {}]);
+});
+
+test("all restored finance providers expose opt-in strict reload instead of swallowing its errors", () => {
+  for (const path of ["profile/profile-context", "accounts/accounts-context", "transactions/transactions-context", "budgets/budgets-context", "bills/bills-context", "subscriptions/subscriptions-context"]) {
+    const source = readFileSync(`src/features/${path}.tsx`, "utf8");
+    assert.match(source, /refresh\(options\?:\s*\{\s*throwOnError\?:\s*boolean\s*\}\)/);
+    assert.match(source, /if\s*\(options\?\.throwOnError\)\s*throw/);
+  }
 });
