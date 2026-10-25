@@ -1,3 +1,4 @@
+import {reminderLabel} from "./notification-copy";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
@@ -21,7 +22,6 @@ test("explicit timestamp reminders keep instant-to-local-date semantics",()=>{
   assert.deepEqual([date.getMonth()+1,date.getDate(),date.getHours()],[3,10,9]);
  }finally{if(previous===undefined)delete process.env.TZ;else process.env.TZ=previous;}
 });
-import {reminderLabel} from "./notification-copy";
 test("date-only bill labels do not shift with the device timezone",()=>{
  const previous=process.env.TZ;try{process.env.TZ="America/Los_Angeles";
   assert.equal(reminderLabel("bill","Rent","2030-03-11","en"),"Rent · due 03/11/2030");

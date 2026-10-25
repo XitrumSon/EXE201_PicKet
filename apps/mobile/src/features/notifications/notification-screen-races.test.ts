@@ -13,6 +13,7 @@ function harness(){
  const effect=(fn:()=>unknown,deps:unknown[]=[])=>{const i=cursor++,old=slots[i] as {deps:unknown[];cleanup?:()=>void}|undefined;if(!old||deps.some((d,j)=>!Object.is(d,old.deps[j]))){old?.cleanup?.();slots[i]={deps,cleanup:fn()};}};
  const useCallback=(fn:unknown,deps:unknown[])=>{const i=cursor++,old=slots[i] as {deps:unknown[];fn:unknown}|undefined;if(!old||deps.some((d,j)=>!Object.is(d,old.deps[j])))slots[i]={deps,fn};return (slots[i] as {fn:unknown}).fn;};
  const adapters:Record<string,unknown>={
+ "@/features/notifications/use-reminder-calendar":{useReminderCalendar:()=>({month:"2026-10",day:"2026-10-25",offset:-420,now:Date.now()})},
  react:{useState:state,useRef:ref,useEffect:effect,useLayoutEffect:effect,useMemo:(fn:()=>unknown)=>fn(),useCallback},
  "react/jsx-runtime":{jsx:(type:unknown,props:unknown)=>({type,props}),jsxs:(type:unknown,props:unknown)=>({type,props})},
  "react-i18next":{useTranslation:()=>({t:(key:string)=>key})},

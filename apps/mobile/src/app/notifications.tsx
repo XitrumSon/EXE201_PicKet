@@ -1,3 +1,4 @@
+import { useReminderCalendar } from "@/features/notifications/use-reminder-calendar";
 import { useTranslation } from "react-i18next";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { colors } from "@picket/design-tokens";
@@ -33,7 +34,8 @@ export default function NotificationsScreen() {
   const { budgets } = useBudgets();
   const { subscriptions } = useSubscriptions();
   const { transactions, loading: historyLoading, error: historyError } = useTransactionHistory();
-  const month = String(new Date().getFullYear()) + "-" + String(new Date().getMonth() + 1).padStart(2, "0");
+  const calendar = useReminderCalendar();
+  const month = calendar.month;
   const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(transactions, month);
   const { periodLimits, periodsReady } = useReminderPeriods(budgets, month);
   const [keepsakes, setKeepsakes] = useState<Keepsake[]>([]);
@@ -42,18 +44,17 @@ export default function NotificationsScreen() {
   const [read, setRead] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [now, setNow] = useState(() => Date.now());
+  const now = calendar.now;
   useLayoutEffect(() => {
     const scope = {ownerId,language,active:true,busy:false};
     deliveryScope.current=scope;
     return () => {scope.active=false;};
   },[ownerId,language]);
-  const reminders = useMemo(() => collectReminders({ bills, subscriptions, keepsakes, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, transactions, splits, periodLimits },language), [bills, subscriptions, keepsakes, budgets, transactions, splits, periodLimits, periodsReady, historyLoading, historyError, splitLoading, splitError,language]);
+  const reminders = useMemo(() => collectReminders({ bills, subscriptions, keepsakes, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, transactions, splits, periodLimits },language,new Date(calendar.now)), [bills, subscriptions, keepsakes, budgets, transactions, splits, periodLimits, periodsReady, historyLoading, historyError, splitLoading, splitError,language,calendar.now]);
   const dueSoon = reminders.filter((item) => item.notifyAt === null || new Date(item.dueAt).getTime() <= now + 7 * 86400000);
   useFocusEffect(useCallback(() => {
     if (!ownerId) return;
     setSettingsLoading(true);
-    setNow(Date.now());
     let active = true;
     const scope=deliveryScope.current;
     const current=()=>active && deliveryScope.current===scope && scope.language===language;

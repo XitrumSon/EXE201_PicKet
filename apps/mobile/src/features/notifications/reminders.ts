@@ -86,9 +86,9 @@ function notifyDate(iso: string, daysBefore: number): Date | null {
   return date > new Date() ? date : null;
 }
 
-export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceSubscription[]; keepsakes: Keepsake[]; budgets: Budget[]; transactions: Transaction[]; periodLimits?: Record<string, number>; splits?: TransactionSplit[] },language:AppLanguage="vi"): ReminderItem[] {
+export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceSubscription[]; keepsakes: Keepsake[]; budgets: Budget[]; transactions: Transaction[]; periodLimits?: Record<string, number>; splits?: TransactionSplit[] },language:AppLanguage="vi",at=new Date()): ReminderItem[] {
   const notices: ReminderItem[] = [];
-  const now = Date.now();
+  const now = at.getTime();
   for (const bill of input.bills) {
     if (bill.deletedAt || bill.status === "paid" || bill.status === "cancelled" || bill.paidTransactionId) continue;
     const due = reminderDate(bill.dueAt).getTime();
@@ -106,9 +106,9 @@ export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceS
       if (Number.isFinite(due) && due >= now) notices.push({ id:`${kind}:${item.id}:${iso}`, label:reminderLabel(kind,item.title,iso,language), dueAt:iso, notifyAt:notifyDate(`${iso}T12:00:00`, kind === "return" ? 1 : 7) });
     }
   }
-  const month = String(new Date().getFullYear()) + "-" + String(new Date().getMonth() + 1).padStart(2, "0");
+  const month = String(at.getFullYear()) + "-" + String(at.getMonth() + 1).padStart(2, "0");
   for (const budget of budgetWarnings({ ...input, month })) {
-    notices.push({ id:`budget:${budget.id}:${month}`, label:reminderLabel("budget",budget.name,new Date().toISOString(),language), dueAt:new Date().toISOString(), notifyAt:null });
+    notices.push({ id:`budget:${budget.id}:${month}`, label:reminderLabel("budget",budget.name,at.toISOString(),language), dueAt:at.toISOString(), notifyAt:null });
   }
   return notices;
 }

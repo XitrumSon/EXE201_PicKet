@@ -1,3 +1,4 @@
+import { useReminderCalendar } from "@/features/notifications/use-reminder-calendar";
 import { useEffect, useMemo, useState } from "react";
 
 import { picketApi } from "@/core/api/client";
@@ -20,7 +21,8 @@ export function ReminderCoordinator() {
   const { budgets } = useBudgets();
   const { subscriptions } = useSubscriptions();
   const { transactions: history, loading: historyLoading, error: historyError, refresh: refreshHistory } = useTransactionHistory();
-  const month = String(new Date().getFullYear()) + "-" + String(new Date().getMonth() + 1).padStart(2, "0");
+  const calendar = useReminderCalendar();
+  const month = calendar.month;
   const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(history, month);
   const { periodLimits, periodsReady } = useReminderPeriods(budgets, month);
   const [keepsakes, setKeepsakes] = useState<Keepsake[]>([]);
@@ -52,7 +54,7 @@ export function ReminderCoordinator() {
   const userId = session?.user.id;
   useEffect(() => () => { if (userId) void cancelUserReminders(userId, true).catch(() => undefined); }, [userId]);
   useEffect(() => { if (session) void refreshHistory().catch(() => undefined); }, [session, bills, budgets, subscriptions, keepsakes, refreshHistory]);
-  const items = useMemo(() => collectReminders({ bills, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, subscriptions, transactions: history, keepsakes, periodLimits, splits },language), [bills, budgets, subscriptions, history, historyLoading, historyError, splitLoading, splitError, periodsReady, keepsakes, periodLimits, splits,language]);
+  const items = useMemo(() => collectReminders({ bills, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, subscriptions, transactions: history, keepsakes, periodLimits, splits },language,new Date(calendar.now)), [bills, budgets, subscriptions, history, historyLoading, historyError, splitLoading, splitError, periodsReady, keepsakes, periodLimits, splits,language,calendar.now]);
   useEffect(() => {
     let active = true;
     if (session) void scheduleUserReminders(session.user.id, items, () => active,language).catch(() => undefined);
