@@ -28,6 +28,8 @@ version 1.0.4, code 10, status `completed`, rollout 100%. Production remains emp
 Receipt: `.artifacts/ocr-code10-play-deploy.json`. Backup manifest includes the AAB.
 The temporary P: mapping was removed after build.
 
-Native startup acceptance on the
-updated Redmi remains required, followed by the receipt review regression.
+The owner reports code 10 opens normally on both initial and repeat launch.
+ADB independently confirms Redmi is running version 1.0.4 / code 10. These two
+reported launch attempts pass startup regression; this is not a long-run stability
+or full-product acceptance result. Receipt review regression remains required.
 Unreadable OCR dates and incomplete product extraction remain open.
