@@ -19,6 +19,8 @@ export async function recognizeReceipt(imageUri: string): Promise<ReceiptOcrResu
       text: line.text,
       top: line.frame.y,
       bottom: line.frame.y + line.frame.height,
+      left: line.frame.x,
+      right: line.frame.x + line.frame.width,
     })),
   );
 

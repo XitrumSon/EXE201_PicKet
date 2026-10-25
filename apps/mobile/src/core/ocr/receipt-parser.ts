@@ -113,12 +113,38 @@ export function parseReceiptText(rawText: string): ReceiptDraft {
   return parseReceiptLines(rawText.split(/\r?\n/).map((text) => ({ text })));
 }
 
+function spatialTotalCandidates(label:ReceiptTextLine,lines:ReceiptTextLine[]):ReceiptTextLine[]{
+  if(typeof label.top!=="number"||typeof label.bottom!=="number"||typeof label.right!=="number"||
+    ![label.top,label.bottom,label.right].every(Number.isFinite)||label.bottom<=label.top)return [];
+  const top=label.top,bottom=label.bottom,right=label.right;
+  return lines.filter(line=>{
+    if(line===label||typeof line.top!=="number"||typeof line.bottom!=="number"||typeof line.left!=="number"||
+      ![line.top,line.bottom,line.left].every(Number.isFinite)||line.bottom<=line.top||line.left<right)return false;
+    const overlap=Math.min(bottom,line.bottom)-Math.max(top,line.top);
+    return overlap>=Math.min(bottom-top,line.bottom-line.top)*0.5&&
+      /^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?\s*$/i.test(line.text)&&parseReceiptMoney(line.text)!==null;
+  });
+}
+
 /** Pure parser shared by the future native ML Kit adapter and review UI. */
 export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDraft {
   const lines = recognizedLines
     .map((line) => ({ ...line, text: line.text.trim() }))
     .filter((line) => line.text.length > 0);
-  const rawText = lines.map((line) => line.text).join("\n");
+  // Preserve an unambiguous visual total row in the text saved to drafts.
+  // Re-parsing that text after restart must not depend on lost native frames.
+  const joinedTotals=new Map<ReceiptTextLine,ReceiptTextLine>();
+  for(const line of lines){
+    const clean=normalized(line.text);
+    if(!totalWords.test(clean)||rejectedTotalWords.test(clean)||/\d/.test(line.text))continue;
+    const candidates=spatialTotalCandidates(line,lines);
+    if(candidates.length===1)joinedTotals.set(line,candidates[0]);
+  }
+  const joinedAmounts=new Set(joinedTotals.values());
+  const rawText = lines.filter(line=>!joinedAmounts.has(line)).map(line=>{
+    const amount=joinedTotals.get(line);
+    return amount?`${line.text} ${amount.text}`:line.text;
+  }).join("\n");
   const maxBottom = Math.max(0, ...lines.map((line) => line.bottom ?? 0));
   const totals: { amount: number; score: number }[] = [];
 
@@ -126,6 +152,9 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     const clean = normalized(line.text);
     if (!totalWords.test(clean) || rejectedTotalWords.test(clean)) return;
     const ownNumbers = [...line.text.matchAll(/\d[\d.,\s]*/g)];
+    const spatial=ownNumbers.length===0?spatialTotalCandidates(line,lines):[];
+    // Multiple distinct amounts beside one label require review, not a guess.
+    if(new Set(spatial.map(candidate=>parseReceiptMoney(candidate.text))).size>1)return;
     const next = lines[index + 1];
     const previous = lines[index - 1];
     const previousNumbers = previous
@@ -135,9 +164,11 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
       ownNumbers.length === 0 &&
       trailingTotalWords.test(clean) &&
       previousNumbers.length > 0;
-    const source = ownNumbers.length > 0 ? line : usePrevious ? previous : next;
+    const source = ownNumbers.length > 0 ? line : spatial[0]??(usePrevious ? previous : next);
     const numbers = ownNumbers.length > 0
       ? ownNumbers
+      : spatial[0]
+        ? [...spatial[0].text.matchAll(/\d[\d.,\s]*/g)]
       : usePrevious
         ? previousNumbers
         : next
