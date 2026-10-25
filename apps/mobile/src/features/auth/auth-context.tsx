@@ -252,6 +252,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (!storageKey) throw new Error("Supabase public configuration is missing.");
         await mutateAuth(() => signOutDeviceSession({
           auth: requireClient().auth,
+          expectedOwner: session?.user.id,
           storageKey,
           storage: secureAuthStorage,
         }));

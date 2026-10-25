@@ -36,8 +36,6 @@ export const retireOfflineCacheOwner = lifecycle.retire;
 export const isOfflineCacheOwnerRetired = lifecycle.isRetired;
 export const recoverOfflineCacheOwner = lifecycle.recover;
 export const withLocalOwnerAccess = lifecycle.run;
-// Only the account-deletion recovery flow may resume; cached auth events must not.
-export const resumeOfflineCacheOwner = lifecycle.resume;
 
 async function deviceKey() {
   keyPromise ??= (async () => {

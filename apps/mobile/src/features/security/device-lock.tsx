@@ -1,6 +1,8 @@
 import { colors } from "@picket/design-tokens";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
+import { withLocalOwnerAccess } from "@/core/sync/offline-cache";
+import { ownerPreferenceKeys } from "@/core/storage/owner-preferences";
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AppState, StyleSheet, Text, View } from "react-native";
 
@@ -11,9 +13,10 @@ type LockContextValue = {
   enabled: boolean;
   busy: boolean;
   setEnabled(value: boolean): Promise<boolean>;
+  refresh(): Promise<void>;
 };
 const LockContext = createContext<LockContextValue | null>(null);
-const keyFor = (userId: string) => `picket_device_lock_${userId.replace(/[^a-zA-Z0-9]/g, "_")}`;
+const keyFor = (userId: string) => ownerPreferenceKeys(userId).deviceLock;
 const LOCK_AFTER_BACKGROUND_MS = 30_000;
 
 async function authenticate(): Promise<boolean> {
@@ -41,10 +44,21 @@ function DeviceLockSession({ children }: PropsWithChildren) {
   const [busy, setBusy] = useState(Boolean(session));
   const [message, setMessage] = useState<string | null>(null);
   const backgroundAt = useRef<number | null>(null);
+  const refreshPreference=useCallback(async()=>{
+    if(!userId)return;
+    try {
+      const stored=await SecureStore.getItemAsync(keyFor(userId));
+      setEnabledState(stored==="enabled");
+      if(stored!=="enabled")setLocked(false);
+      setMessage(null);
+    } catch(error) {
+      setEnabledState(true);setLocked(true);setMessage("Không đọc được cài đặt khóa. Hãy xác thực để tiếp tục.");throw error;
+    }
+  },[userId]);
   useEffect(() => {
     let active = true;
     if (!userId) return;
-    void SecureStore.getItemAsync(keyFor(userId)).then((value) => {
+    void Promise.resolve().then(()=>SecureStore.getItemAsync(keyFor(userId))).then((value) => {
       if (!active) return;
       setEnabledState(value === "enabled");
       setLocked(value === "enabled");
@@ -73,21 +87,23 @@ function DeviceLockSession({ children }: PropsWithChildren) {
     } catch { setMessage("Không mở được trình xác thực trên thiết bị này."); }
     finally { setBusy(false); }
   }, []);
-  const value = useMemo<LockContextValue>(() => ({ enabled, busy,
+  const value = useMemo<LockContextValue>(() => ({ enabled, busy, refresh:refreshPreference,
     async setEnabled(next) {
       if (!session) return false;
       setBusy(true);
       try {
         if (!(await authenticate())) return false;
-        if (next) await SecureStore.setItemAsync(keyFor(session.user.id), "enabled");
-        else await SecureStore.deleteItemAsync(keyFor(session.user.id));
+        await withLocalOwnerAccess(session.user.id,async()=>{
+          if (next) await SecureStore.setItemAsync(keyFor(session.user.id), "enabled");
+          else await SecureStore.deleteItemAsync(keyFor(session.user.id));
+        });
         setEnabledState(next);
         setLocked(false);
         return true;
       } catch { return false; }
       finally { setBusy(false); }
     },
-  }), [enabled, busy, session]);
+  }), [enabled, busy, session, refreshPreference]);
   return <LockContext.Provider value={value}>
     <View style={{ flex: 1, display: locked ? "none" : "flex" }} importantForAccessibility={locked ? "no-hide-descendants" : "auto"}>{children}</View>
     {session && locked && <View style={styles.root}>

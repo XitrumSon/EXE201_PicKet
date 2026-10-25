@@ -6,6 +6,20 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Latest owner-lifecycle continuation: attributed capture/receipt/keepsake media
+  and queues, native reminders and four owner-scoped secure preferences are now
+  included before remote deletion. Remaining cloud media/restore/thumbnail/export
+  writers share the owner fence; export filenames are unique. Lost deletion
+  responses and session changes no longer automatically reopen data. Recovery
+  unmounts private providers, requires exact-owner live verification and refreshes
+  lock preferences; known deletion/sign-out failure offers sign-out only. A stale
+  A logout cannot erase B after queued sign-in. All **659 mobile tests** pass;
+  focused lifecycle helper coverage is 100% lines / 94.62% branches / 100% functions.
+  Typecheck/Android JS export pass; lint has 0 errors/25 existing warnings. Live
+  local Auth deleted-token/lost-response/device-logout acceptance passes. Unknown
+  legacy caches, physical native/server lifecycle acceptance and broader product/
+  release gates remain pending. See `OWNER_PRIVACY_LIFECYCLE_CHECKPOINT_20261025.md`.
+
 - Latest keepsake continuation: both attributed keepsake image directories and
   the keepsake/photo-cleanup outboxes are erased behind the common owner fence.
   Image/SQL writers and SDK upload dispatch are fenced; dispatched uploads drain

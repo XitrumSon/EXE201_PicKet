@@ -18,6 +18,15 @@ type DeviceSignOutSource = {
 
 export async function signOutDeviceSession(source: DeviceSignOutSource): Promise<void> {
   const before = await source.storage.getItem(source.storageKey);
+  if(source.expectedOwner!==undefined&&before!==null){
+    let storedOwner:unknown;
+    try{
+      const session:unknown=JSON.parse(before);
+      const user=session&&typeof session==="object"&&"user"in session?session.user:null;
+      if(user&&typeof user==="object"&&"id"in user)storedOwner=user.id;
+    }catch{ /* An unreadable record must not authorize removing another session. */ }
+    if(storedOwner!==source.expectedOwner)throw Error("Device sign-out owner changed");
+  }
   const { error } = await source.auth.signOut({ scope: "local" });
   if (!error) return;
   if (!isAuthRetryableFetchError(error)) throw error;

@@ -6,7 +6,7 @@ import {createOwnerCacheLifecycle} from "../../core/sync/owner-cache-lifecycle";
 
 test("a lost deletion acknowledgement never reopens local data or permits a late write",async()=>{
  const retired=new Set<string>();const cache=createOwnerCacheLifecycle({isRetired:async owner=>retired.has(owner),retire:async owner=>{retired.add(owner);},resume:async owner=>{retired.delete(owner);}});
- const steps={retireLocal:()=>cache.retire("a"),resumeLocal:()=>cache.resume("a"),deleteRemote:async()=>{throw Error("server deleted account but response was lost");},signOut:async()=>{},isCurrent:()=>true};
+ const steps={retireLocal:()=>cache.retire("a"),deleteRemote:async()=>{throw Error("server deleted account but response was lost");},signOut:async()=>{},isCurrent:()=>true};
  assert.equal((await deleteAccountWithLocalRetirement(steps)).status,"remote-unconfirmed");
  assert.equal(await cache.isRetired("a"),true);
  await assert.rejects(cache.run("a",async()=>"late saved data"),/retired/);
@@ -14,7 +14,7 @@ test("a lost deletion acknowledgement never reopens local data or permits a late
 
 test("a session change before the remote request leaves the original owner fenced until verified recovery",async()=>{
  let current=true,remote=0;const retired=new Set<string>();const cache=createOwnerCacheLifecycle({isRetired:async owner=>retired.has(owner),retire:async owner=>{retired.add(owner);},resume:async owner=>{retired.delete(owner);}});
- const steps={retireLocal:async()=>{await cache.retire("a");current=false;},resumeLocal:()=>cache.resume("a"),deleteRemote:async()=>{remote++;},signOut:async()=>{},isCurrent:()=>current};
+ const steps={retireLocal:async()=>{await cache.retire("a");current=false;},deleteRemote:async()=>{remote++;},signOut:async()=>{},isCurrent:()=>current};
  assert.equal((await deleteAccountWithLocalRetirement(steps)).status,"session-changed");
  assert.equal(remote,0);assert.equal(await cache.isRetired("a"),true);
 });
@@ -23,25 +23,25 @@ test("account deletion retires every generic cache resource before the server ca
  const retired=new Set<string>(),rows=new Map<string,string>([["a","all resource payloads"],["b","other owner"]]);
  const driver={isRetired:async(owner:string)=>retired.has(owner),retire:async(owner:string)=>{rows.delete(owner);retired.add(owner);},resume:async(owner:string)=>{retired.delete(owner);}};
  const cache=createOwnerCacheLifecycle(driver);
- const result=await deleteAccountWithLocalRetirement({retireLocal:()=>cache.retire("a"),resumeLocal:()=>cache.resume("a"),deleteRemote:async()=>{assert.equal(rows.has("a"),false);assert.equal(retired.has("a"),true);},signOut:async()=>{throw Error("device sign-out failed");},isCurrent:()=>true});
+ const result=await deleteAccountWithLocalRetirement({retireLocal:()=>cache.retire("a"),deleteRemote:async()=>{assert.equal(rows.has("a"),false);assert.equal(retired.has("a"),true);},signOut:async()=>{throw Error("device sign-out failed");},isCurrent:()=>true});
  assert.deepEqual(result,{status:"deleted",signedOut:false});
  await assert.rejects(createOwnerCacheLifecycle(driver).run("a",async()=>rows.set("a","late response")),/retired/);
  assert.equal(rows.get("b"),"other owner");
 });
 test("local retirement precedes remote deletion and sign-out failure never reclassifies a confirmed deletion",async()=>{
  const order:string[]=[];
- const result=await deleteAccountWithLocalRetirement({retireLocal:async()=>{order.push("retire");},resumeLocal:async()=>{order.push("resume");},deleteRemote:async()=>{order.push("delete");},signOut:async()=>{order.push("signout");throw Error("storage");},isCurrent:()=>true});
+ const result=await deleteAccountWithLocalRetirement({retireLocal:async()=>{order.push("retire");},deleteRemote:async()=>{order.push("delete");},signOut:async()=>{order.push("signout");throw Error("storage");},isCurrent:()=>true});
  assert.deepEqual(order,["retire","delete","signout"]);assert.deepEqual(result,{status:"deleted",signedOut:false});
 });
-test("cleanup failure prevents remote deletion; uncertain remote outcome resumes local use without claiming success",async()=>{
- let remote=0,resumed=0;
- const base={retireLocal:async()=>{},resumeLocal:async()=>{resumed++;},deleteRemote:async()=>{remote++;throw Error("lost response");},signOut:async()=>{throw Error("must not sign out");},isCurrent:()=>true};
+test("cleanup failure prevents remote deletion; uncertain remote outcome cannot claim success or reopen local use",async()=>{
+ let remote=0;
+ const base={retireLocal:async()=>{},deleteRemote:async()=>{remote++;throw Error("lost response");},signOut:async()=>{throw Error("must not sign out");},isCurrent:()=>true};
  assert.equal((await deleteAccountWithLocalRetirement({...base,retireLocal:async()=>{throw Error("disk full");}})).status,"local-cleanup-failed");assert.equal(remote,0);
- assert.equal((await deleteAccountWithLocalRetirement(base)).status,"remote-unconfirmed");assert.equal(resumed,1);
+ assert.equal((await deleteAccountWithLocalRetirement(base)).status,"remote-unconfirmed");assert.equal(remote,1);
 });
 test("a changed session never signs out a newly selected owner",async()=>{
  let current=true,signouts=0;
- const result=await deleteAccountWithLocalRetirement({retireLocal:async()=>{},resumeLocal:async()=>{},deleteRemote:async()=>{current=false;},signOut:async()=>{signouts++;},isCurrent:()=>current});
+ const result=await deleteAccountWithLocalRetirement({retireLocal:async()=>{},deleteRemote:async()=>{current=false;},signOut:async()=>{signouts++;},isCurrent:()=>current});
  assert.deepEqual(result,{status:"deleted",signedOut:true});assert.equal(signouts,0);
 });
 test("retirement can erase corrupt local capture data and fences queued stale writes across a restart",async()=>{
@@ -74,7 +74,7 @@ test("retirement waits for an already-dispatched save and durably removes it bef
 });
 test("successful deletion signs out once and a pre-request session change sends nothing",async()=>{
  let deletes=0,outs=0;
- const steps={retireLocal:async()=>{},resumeLocal:async()=>{},deleteRemote:async()=>{deletes++;},signOut:async()=>{outs++;},isCurrent:()=>true};
+ const steps={retireLocal:async()=>{},deleteRemote:async()=>{deletes++;},signOut:async()=>{outs++;},isCurrent:()=>true};
  assert.deepEqual(await deleteAccountWithLocalRetirement(steps),{status:"deleted",signedOut:true});
  assert.equal((await deleteAccountWithLocalRetirement({...steps,isCurrent:()=>false})).status,"session-changed");assert.equal(deletes,1);assert.equal(outs,1);
 });

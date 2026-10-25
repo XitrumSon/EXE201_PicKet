@@ -4,7 +4,7 @@ import { createFallbackOutbox, type FallbackIntent } from "./fallback-outbox";
 import { capturePhotoLeases } from "./capture-photo-cleanup";
 
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
-function database() {
+async function database() {
   databasePromise ??= SQLite.openDatabaseAsync("picket-capture.db").then(async db => {
     await db.execAsync(`PRAGMA journal_mode=WAL;
       CREATE TABLE IF NOT EXISTS capture_ocr_intents (
@@ -13,7 +13,8 @@ function database() {
       )`);
     return db;
   });
-  return databasePromise;
+  const attempt=databasePromise;
+  try{return await attempt;}catch(error){if(databasePromise===attempt)databasePromise=null;throw error;}
 }
 
 async function readStoredFallbackIntent(owner: string, captureId: string) {

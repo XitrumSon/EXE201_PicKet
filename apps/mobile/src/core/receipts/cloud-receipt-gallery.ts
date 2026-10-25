@@ -1,7 +1,7 @@
 import { fromByteArray } from "base64-js";
 import { picketApi } from "@/core/api/client";
 import { supabase } from "@/core/supabase/client";
-import { readOfflineCache, writeOfflineCache } from "@/core/sync/offline-cache";
+import { readOfflineCache, writeOfflineCache, withLocalOwnerAccess } from "@/core/sync/offline-cache";
 import { loadReceiptGallery, trimReceiptImages, indexReceiptImagePaths, indexReceiptThumbnailPaths, hydrateReceiptPreviews, type ReceiptPreview, type ReceiptImageCacheEntry } from "@/core/ui/receipt-gallery-policy";
 import { calendarReceiptDay } from "@/core/ui/receipt-calendar";
 import { createReceiptThumbnail } from "./receipt-thumbnail";
@@ -58,7 +58,7 @@ export async function loadCloudReceiptGallery(owner: string, accessToken: string
   async function thumbnail(row: GalleryEntry) {
     if (row.thumbnailUri || !row.path || !row.uri?.startsWith("data:image/") || signal.aborted) return;
     try {
-      const uri = await createReceiptThumbnail(row.uri);
+      const uri = await withLocalOwnerAccess(owner,()=>createReceiptThumbnail(row.uri!));
       if (signal.aborted) return;
       row.thumbnailUri = uri; thumbnailPaths.set(row.path, uri);
       images = trimReceiptImages(images.map(image => image.path === row.path ? { ...image, thumbnailUri: uri } : image), validIds, undefined, validPaths);

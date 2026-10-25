@@ -23,6 +23,7 @@ export function createBudgetNoticeDelivery<Context=undefined>(io: DeliveryIO<Con
   let pending = Promise.resolve();
   const acknowledged = new Map<string, Set<string>>();
   return {
+    forgetOwner(owner:string){acknowledged.delete(owner);},
     deliver(owner: string, ids: string[], isCurrent = () => true,context?:Context): Promise<void> {
       const operation = pending.catch(() => undefined).then(async () => {
         if (!isCurrent()) return;

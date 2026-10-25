@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { resumeOfflineCacheOwner } from "@/core/sync/offline-cache";
 import { deleteAccountWithLocalRetirement } from "@/features/auth/account-delete-flow";
 import { retireAccountLocalData } from "@/features/auth/account-local-retirement";
+import { useOwnerCacheRecovery } from "@/features/auth/owner-cache-boundary";
 import { colors, radii } from "@picket/design-tokens";
 import { Redirect, router } from "expo-router";
 import { useState,useEffect,useRef } from "react";
@@ -17,6 +17,7 @@ import { useAuth } from "@/features/auth/auth-context";
 export default function DeleteAccountScreen() {
   const { session, signOut } = useAuth();
   const {t}=useTranslation("accountDeletion");
+  const requestOwnerRecovery=useOwnerCacheRecovery();
   const [remoteDeleted,setRemoteDeleted]=useState(false);
   const submitting=useRef(false),mounted=useRef(true),currentOwner=useRef(session?.user.id);
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
@@ -36,14 +37,14 @@ export default function DeleteAccountScreen() {
       if(remoteDeleted){await signOut();if(mounted.current)router.replace(routes.login);return;}
       const request=session!;const owner=request.user.id;
       const result=await deleteAccountWithLocalRetirement({
-        retireLocal:()=>retireAccountLocalData(owner),resumeLocal:()=>resumeOfflineCacheOwner(owner),
+        retireLocal:()=>retireAccountLocalData(owner),
         deleteRemote:async()=>{const result=await picketApi!.deleteAccount(request.access_token);if(result?.deleted!==true)throw new Error("Unconfirmed account deletion");},signOut,
         isCurrent:()=>mounted.current&&currentOwner.current===owner,
       });
       if(!mounted.current||(currentOwner.current&&currentOwner.current!==owner))return;
       if(result.status==="deleted"){
-        setRemoteDeleted(true);if(result.signedOut)router.replace(routes.login);else setMessage("deletedSignOut");
-      }else setMessage(result.status==="local-cleanup-failed"?"cleanupFailed":result.status==="remote-unconfirmed"?"remoteUnconfirmed":"sessionChanged");
+        setRemoteDeleted(true);if(result.signedOut)router.replace(routes.login);else {setMessage("deletedSignOut");requestOwnerRecovery(owner,true); }
+      }else {if(result.status==="remote-unconfirmed")requestOwnerRecovery(owner);if(result.status==="local-cleanup-failed")requestOwnerRecovery(owner,false,"cleanupFailed");setMessage(result.status==="local-cleanup-failed"?"cleanupFailed":result.status==="remote-unconfirmed"?"remoteUnconfirmed":"sessionChanged");}
     }catch{if(mounted.current)setMessage(remoteDeleted?"deletedSignOut":"remoteUnconfirmed");}
     finally{submitting.current=false;if(mounted.current)setBusy(false);}
   }

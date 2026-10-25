@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PropsWithChildren } from "react";
+import { createContext, useContext, useCallback, useEffect, useRef, useState, type PropsWithChildren } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -9,6 +9,10 @@ import { useAppTheme } from "@/features/settings/appearance-provider";
 import { AccessiblePressable } from "@/core/ui/accessible-pressable";
 import { useAuth } from "./auth-context";
 import { verifyCacheRecoveryOwner } from "./cache-recovery";
+import { useDeviceLock } from "@/features/security/device-lock";
+
+const OwnerRecoveryContext=createContext<(owner:string,confirmed?:boolean,failure?:"cleanupFailed")=>void>(()=>{});
+export function useOwnerCacheRecovery(){return useContext(OwnerRecoveryContext);}
 
 /** Runs before any account data provider or navigation screen can hydrate. */
 export function OwnerCacheBoundary({ children }: PropsWithChildren) {
@@ -19,10 +23,12 @@ export function OwnerCacheBoundary({ children }: PropsWithChildren) {
 
 function SignedInOwnerCacheBoundary({ owner, children }: PropsWithChildren<{ owner: string }>) {
   const { session, signOut } = useAuth();
+  const {refresh:refreshDeviceLock}=useDeviceLock();
   const { colors } = useAppTheme();
   const { t } = useTranslation("accountDeletion");
-  const [phase, setPhase] = useState<"checking" | "retired" | "error" | "ready">("checking");
-  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState<"checking" | "retired" | "error" | "ready" | "deleted">("checking");
+  const [busyAction,setBusyAction]=useState<"verify"|"signout"|null>(null);
+  const busy=busyAction!==null;
   const [message, setMessage] = useState<string | null>(null);
   const alive = useRef(true), submitting = useRef(false);
   const currentOwner = useRef(session?.user.id);
@@ -40,42 +46,47 @@ function SignedInOwnerCacheBoundary({ owner, children }: PropsWithChildren<{ own
     return () => { active = false; };
   }, [owner]);
   const isCurrent = () => alive.current && currentOwner.current === owner;
+  const requestOwnerRecovery=useCallback((requestedOwner:string,confirmed=false,failure?:"cleanupFailed")=>{
+    if(alive.current&&currentOwner.current===owner&&requestedOwner===owner){
+      setMessage(confirmed?null:failure??"remoteUnconfirmed");setPhase(confirmed?"deleted":"retired");
+    }
+  },[owner]);
 
   async function recover() {
-    if (submitting.current || !isCurrent() || !session || !supabase) return;
-    submitting.current = true; setBusy(true); setMessage(null);
+    if (phase==="deleted" || submitting.current || !isCurrent() || !session || !supabase) return;
+    submitting.current = true; setBusyAction("verify"); setMessage(null);
     const request = session;
     try {
       const restored = await recoverOfflineCacheOwner(owner,
         () => verifyCacheRecoveryOwner(supabase!.auth, request.access_token), isCurrent);
-      if (isCurrent()) {
-        if (restored) setPhase("ready");
-        else setMessage("verifyFailed");
-      }
+      if (!restored) {if(isCurrent())setMessage("verifyFailed");return;}
+      if(!isCurrent())return;
+      await refreshDeviceLock();
+      if(isCurrent())setPhase("ready");
     } catch { if (isCurrent()) setMessage("verifyFailed"); }
-    finally { submitting.current = false; if (isCurrent()) setBusy(false); }
+    finally { submitting.current = false; if (isCurrent()) setBusyAction(null); }
   }
 
   async function leave() {
     if (submitting.current || !isCurrent()) return;
-    submitting.current = true; setBusy(true); setMessage(null);
+    submitting.current = true; setBusyAction("signout"); setMessage(null);
     try { await signOut(); }
     catch { if (isCurrent()) setMessage("recoverySignOutFailed"); }
-    finally { submitting.current = false; if (isCurrent()) setBusy(false); }
+    finally { submitting.current = false; if (isCurrent()) setBusyAction(null); }
   }
 
-  if (phase === "ready") return children;
+  if (phase === "ready") return <OwnerRecoveryContext.Provider value={requestOwnerRecovery}>{children}</OwnerRecoveryContext.Provider>;
   return <SafeAreaView style={[styles.root, { backgroundColor: colors.canvas }]}>
     <ScrollView contentContainerStyle={styles.content}>
       {phase === "checking" ? <ActivityIndicator accessibilityLabel={t("checkingAccount")} color={colors.primary} /> : <>
-        <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>{t("recoveryTitle")}</Text>
-        <Text style={[styles.description, { color: colors.muted }]}>{t(phase === "error" ? "recoveryStorageFailed" : "recoveryDescription")}</Text>
+        <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>{t(phase==="deleted"?"deletedTitle":"recoveryTitle")}</Text>
+        <Text style={[styles.description, { color: colors.muted }]}>{t(phase==="deleted"?"deletedSignOut":phase === "error" ? "recoveryStorageFailed" : "recoveryDescription")}</Text>
         {message && <Text accessibilityLiveRegion="polite" style={[styles.description, { color: colors.expense }]}>{t(message)}</Text>}
-        <AccessiblePressable disabled={busy} onPress={() => void recover()} style={[styles.button, { backgroundColor: colors.primary }]}>
-          {busy ? <ActivityIndicator accessibilityLabel={t("checkingAccount")} color={colors.onPrimary} /> : <Text style={[styles.buttonText, { color: colors.onPrimary }]}>{t("verifyAccount")}</Text>}
-        </AccessiblePressable>
+        {phase!=="deleted"&&<AccessiblePressable disabled={busy} onPress={() => void recover()} style={[styles.button, { backgroundColor: colors.primary }]}>
+          {busyAction==="verify" ? <ActivityIndicator accessibilityLabel={t("checkingAccount")} color={colors.onPrimary} /> : <Text style={[styles.buttonText, { color: colors.onPrimary }]}>{t("verifyAccount")}</Text>}
+        </AccessiblePressable>}
         <AccessiblePressable disabled={busy} onPress={() => void leave()} style={styles.button}>
-          <Text style={[styles.buttonText, { color: colors.primary }]}>{t("finishSignOut")}</Text>
+          {busyAction==="signout"?<ActivityIndicator accessibilityLabel={t("signingOut")} color={colors.primary}/>:<Text style={[styles.buttonText, { color: colors.primary }]}>{t("finishSignOut")}</Text>}
         </AccessiblePressable>
       </>}
       <View style={styles.spacer} />

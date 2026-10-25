@@ -3,6 +3,7 @@ import { File } from "expo-file-system";
 
 import { supabase } from "@/core/supabase/client";
 import { uploadVerifiedFallbackImage } from "@/core/ocr/fallback-upload";
+import { withLocalOwnerAccess } from "@/core/sync/offline-cache";
 
 function metadata(uri: string) {
   const match = uri.match(/\.(jpe?g|png|webp)(?:\?.*)?$/i);
@@ -41,7 +42,7 @@ export async function uploadReceiptImage(input: {
   }
   const storagePath = `${input.userId}/receipts/${input.receiptId}.${input.extension}`;
   const storage = supabase.storage.from("picket-media");
-  await uploadVerifiedFallbackImage(input.image, input.sha256, {
+  await withLocalOwnerAccess(input.userId,()=>uploadVerifiedFallbackImage(input.image, input.sha256, {
     digest: async bytes => hex(await Crypto.digest(Crypto.CryptoDigestAlgorithm.SHA256, bytes)),
     upload: async () => {
       const result = await storage.upload(storagePath, input.image, { contentType: input.contentType, upsert: false });
@@ -54,7 +55,7 @@ export async function uploadReceiptImage(input: {
       if (!response.ok || Number(response.headers.get("content-length")) > 10 * 1024 * 1024) throw new Error("Cannot verify receipt upload");
       return response.arrayBuffer();
     },
-  });
+  }));
   return storagePath;
 }
 

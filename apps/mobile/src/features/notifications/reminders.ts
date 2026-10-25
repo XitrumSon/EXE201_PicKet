@@ -7,6 +7,8 @@ import { budgetWarnings } from "./budget-warnings";
 import { createBudgetNoticeDelivery, scheduleOwnedReminder } from "./budget-notice-delivery";
 import type { AppLanguage } from "@/core/i18n/formatters";
 import { privateReminderCopy,reminderLabel } from "./notification-copy";
+import { withLocalOwnerAccess, isOfflineCacheOwnerRetired } from "@/core/sync/offline-cache";
+import { ownerPreferenceKeys, isOwnerReminder, purgeOwnerPreferences } from "@/core/storage/owner-preferences";
 
 Notifications.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }) });
 
@@ -17,10 +19,10 @@ export interface ReminderItem {
   notifyAt: Date | null;
 }
 
-const settingsKey = (userId: string) => `picket_reminders_${userId.replace(/[^a-zA-Z0-9]/g, "_")}`;
-const readKey = (userId: string) => `picket_reminder_read_${userId.replace(/[^a-zA-Z0-9]/g, "_")}`;
+const settingsKey = (userId: string) => ownerPreferenceKeys(userId).reminders;
+const readKey = (userId: string) => ownerPreferenceKeys(userId).reminderRead;
 const prefix = (userId: string) => `picket-${userId}-`;
-const deliveredKey = (userId: string) => `picket_budget_delivered_${userId.replace(/[^a-zA-Z0-9]/g, "_")}`;
+const deliveredKey = (userId: string) => ownerPreferenceKeys(userId).budgetDelivered;
 const budgetNoticeDelivery = createBudgetNoticeDelivery<AppLanguage>({
   read: async userId => {
     const raw = await SecureStore.getItemAsync(deliveredKey(userId));
@@ -39,10 +41,12 @@ const budgetNoticeDelivery = createBudgetNoticeDelivery<AppLanguage>({
   },
 });
 
-export async function remindersEnabled(userId: string) {
+async function storedRemindersEnabled(userId: string) {
   return (await SecureStore.getItemAsync(settingsKey(userId))) === "enabled";
 }
+export function remindersEnabled(userId:string){return withLocalOwnerAccess(userId,()=>storedRemindersEnabled(userId));}
 export async function setRemindersEnabled(userId: string, enabled: boolean,language:AppLanguage="vi") {
+  return withLocalOwnerAccess(userId,async()=>{
   if (enabled) {
     await Notifications.setNotificationChannelAsync("picket-reminders", {
       name: privateReminderCopy("reminder",language).channel, importance: Notifications.AndroidImportance.DEFAULT,
@@ -56,16 +60,20 @@ export async function setRemindersEnabled(userId: string, enabled: boolean,langu
     await cancelUserReminders(userId, true);
   }
   return true;
+  });
 }
-export async function readReminderIds(userId: string): Promise<string[]> {
+async function storedReminderIds(userId: string): Promise<string[]> {
   const raw = await SecureStore.getItemAsync(readKey(userId));
   try { const value = JSON.parse(raw ?? "[]"); return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : []; }
   catch { return []; }
 }
+export function readReminderIds(userId:string){return withLocalOwnerAccess(userId,()=>storedReminderIds(userId));}
 export async function markReminderRead(userId: string, id: string) {
-  const ids = new Set(await readReminderIds(userId));
+  return withLocalOwnerAccess(userId,async()=>{
+  const ids = new Set(await storedReminderIds(userId));
   ids.add(id);
   await SecureStore.setItemAsync(readKey(userId), JSON.stringify([...ids].slice(-500)));
+  });
 }
 
 function notifyDate(iso: string, daysBefore: number): Date | null {
@@ -104,24 +112,25 @@ export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceS
 
 export async function cancelUserReminders(userId: string, dismissPresented = false) {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
-  for (const item of scheduled) if (item.identifier.startsWith(prefix(userId))) await Notifications.cancelScheduledNotificationAsync(item.identifier);
+  for (const item of scheduled) if (isOwnerReminder(item.identifier,userId)) await Notifications.cancelScheduledNotificationAsync(item.identifier);
   if (dismissPresented) {
     for (const item of await Notifications.getPresentedNotificationsAsync()) {
-      if (item.request.identifier.startsWith(prefix(userId))) await Notifications.dismissNotificationAsync(item.request.identifier);
+      if (isOwnerReminder(item.request.identifier,userId)) await Notifications.dismissNotificationAsync(item.request.identifier);
     }
   }
 }
 
 let scheduling: Promise<void> = Promise.resolve();
 export function scheduleUserReminders(userId: string, items: ReminderItem[], isCurrent = () => true,language:AppLanguage="vi") {
-  const operation = scheduling.catch(() => undefined).then(() => scheduleNow(userId, items, isCurrent,language));
+  const previous=scheduling;
+  const operation = withLocalOwnerAccess(userId,()=>previous.catch(() => undefined).then(() => scheduleNow(userId, items, isCurrent,language)));
   scheduling = operation;
   return operation;
 }
 async function scheduleNow(userId: string, items: ReminderItem[], isCurrent: () => boolean,language:AppLanguage) {
   if (!isCurrent()) return;
   await cancelUserReminders(userId);
-  if (!(await remindersEnabled(userId)) || !isCurrent()) return;
+  if (!(await storedRemindersEnabled(userId)) || !isCurrent()) return;
   await Notifications.setNotificationChannelAsync("picket-reminders", {
     name: privateReminderCopy("reminder",language).channel, importance: Notifications.AndroidImportance.DEFAULT,
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
@@ -140,4 +149,16 @@ async function scheduleNow(userId: string, items: ReminderItem[], isCurrent: () 
     if (!scheduled) return;
   }
   await budgetNoticeDelivery.deliver(userId, items.map(item => item.id), isCurrent,language);
+}
+
+export async function purgeRetiredOwnerPreferences(owner:string){
+  await purgeOwnerPreferences(owner,{
+    isRetired:isOfflineCacheOwnerRetired,
+    scheduled:async()=>(await Notifications.getAllScheduledNotificationsAsync()).map(item=>item.identifier),
+    presented:async()=>(await Notifications.getPresentedNotificationsAsync()).map(item=>item.request.identifier),
+    cancel:id=>Notifications.cancelScheduledNotificationAsync(id),
+    dismiss:id=>Notifications.dismissNotificationAsync(id),
+    removeKey:key=>SecureStore.deleteItemAsync(key),
+    forgetBudget:id=>budgetNoticeDelivery.forgetOwner(id),
+  });
 }

@@ -104,7 +104,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
     setBusy(true);
     setMessage(null);
     try {
-      await exportAndShareFinance(session.access_token);
+      await exportAndShareFinance(session.access_token,session.user.id);
       setMessage("Đã tạo bản export. Hãy chọn nơi lưu an toàn.");
     } catch {
       setMessage("Chưa tạo được bản sao. Hãy kiểm tra kết nối và thử lại.");
@@ -118,7 +118,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
     setBusy(true);
     setMessage(null);
     try {
-      if (kind === "csv") await exportFinanceCsv(session.access_token);
+      if (kind === "csv") await exportFinanceCsv(session.access_token,session.user.id);
       else await exportEncryptedBackup(session.access_token, session.user.id, backupPassword);
       setMessage("Đã tạo file. Hãy chọn nơi lưu an toàn.");
     } catch (error) {

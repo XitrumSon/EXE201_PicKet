@@ -40,6 +40,11 @@ Implemented increment, not full account-data erasure or release acceptance.
 
 ## Remaining gates
 
+Later behavior is documented in `OWNER_PRIVACY_LIFECYCLE_CHECKPOINT_20261025.md`:
+uncertain server outcomes never automatically resume local data. The remaining
+gate list below is historical; attributed media/preferences were subsequently
+implemented, while unknown legacy caches and native acceptance remain open.
+
 This covers the common encrypted resource cache only. Separate mutation/conflict
 queues, receipt/capture drafts, keepsake files, notification/lock preferences and
 system-managed image caches still require attributed cleanup and in-flight

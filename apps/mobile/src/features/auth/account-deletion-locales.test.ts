@@ -13,5 +13,6 @@ test("account deletion copy explains pre-request erasure and confirmed-deletion 
  assert.match(screen,/result\?\.deleted!==true/);
  assert.match(screen,/requestOwnerRecovery\(owner,true\)/);
  assert.match(screen,/requestOwnerRecovery\(owner\)/);
+ assert.match(screen,/requestOwnerRecovery\(owner,false,"cleanupFailed"\)/);
  assert.doesNotMatch(screen,/>[^<\n]*[À-ỹĐđ][^<\n]*</);
 });

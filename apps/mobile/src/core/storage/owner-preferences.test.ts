@@ -7,8 +7,8 @@ import { createOwnerCacheLifecycle } from "../sync/owner-cache-lifecycle";
 
 const a="aaaaaaaa-1111-4111-8111-111111111111", b="bbbbbbbb-1111-4111-8111-111111111111";
 function fixture(){
-  const keys=new Set([...Object.values(ownerPreferenceKeys(a)),...Object.values(ownerPreferenceKeys(b)),"picket_device_appearance_v1","picket_offline_cache_key_v1","sb-project-auth-token"]);
-  const scheduled=new Set([`picket-${a}-bill:one`,`picket-${b}-bill:two`,"picket-global-update"]);
+  const keys=new Set([...Object.values(ownerPreferenceKeys(a)),...Object.values(ownerPreferenceKeys(b)),...Object.values(ownerPreferenceKeys("device-guest")),"picket_device_appearance_v1","picket_offline_cache_key_v1","sb-project-auth-token"]);
+  const scheduled=new Set([`picket-${a}-bill:one`,`picket-${b}-bill:two`,"picket-device-guest-bill:guest","picket-global-update"]);
   const presented=new Set([`picket-${a}-budget:food:2026-10`,`picket-${b}-budget:food:2026-10`]);
   const forgotten:string[]=[];
   const source:PreferenceRetirementSource={isRetired:async()=>true,scheduled:async()=>[...scheduled],presented:async()=>[...presented],
@@ -27,10 +27,11 @@ test("owner keys preserve the existing native namespace while malformed identiti
 
 test("preference retirement cancels/dismisses only owned notifications and removes only the four owned keys",async()=>{
   const f=fixture();await purgeOwnerPreferences(a,f.source);await purgeOwnerPreferences(a,f.source);
-  assert.deepEqual([...f.scheduled].sort(),[`picket-${b}-bill:two`,"picket-global-update"].sort());
+  assert.deepEqual([...f.scheduled].sort(),[`picket-${b}-bill:two`,"picket-device-guest-bill:guest","picket-global-update"].sort());
   assert.deepEqual([...f.presented],[`picket-${b}-budget:food:2026-10`]);
   assert.ok(Object.values(ownerPreferenceKeys(a)).every(key=>!f.keys.has(key)));
   assert.ok(Object.values(ownerPreferenceKeys(b)).every(key=>f.keys.has(key)));
+  assert.ok(Object.values(ownerPreferenceKeys("device-guest")).every(key=>f.keys.has(key)));
   for(const key of ["picket_device_appearance_v1","picket_offline_cache_key_v1","sb-project-auth-token"])assert.ok(f.keys.has(key));
   assert.deepEqual(f.forgotten,[a,a]);
 });

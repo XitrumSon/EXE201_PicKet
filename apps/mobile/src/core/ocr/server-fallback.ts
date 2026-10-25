@@ -5,6 +5,7 @@ import { picketApi } from "@/core/api/client";
 import { supabase } from "@/core/supabase/client";
 import { fallbackOutbox, readFallbackIntent } from "./fallback-storage";
 import { uploadVerifiedFallbackImage } from "./fallback-upload";
+import { withLocalOwnerAccess } from "@/core/sync/offline-cache";
 
 const supportedExtension = /\.(jpe?g|png|webp)(?:\?.*)?$/i;
 
@@ -55,7 +56,7 @@ export async function queueServerOcrFallback(input: {
     localConfidence: input.localConfidence, baseline: input.baseline,
   }, {
     isActive: () => !input.signal?.aborted,
-    upload: async intent => {
+    upload: intent => withLocalOwnerAccess(input.userId,async () => {
       const bytes = await readImage();
       await uploadVerifiedFallbackImage(bytes, intent.sha256, {
         digest,
@@ -75,10 +76,10 @@ export async function queueServerOcrFallback(input: {
           return remote.arrayBuffer();
         },
       });
-    },
-    create: async intent => (await api.createOcrFallbackJob(input.accessToken, {
+    }),
+    create: intent => withLocalOwnerAccess(input.userId,async () => (await api.createOcrFallbackJob(input.accessToken, {
       storagePath: intent.storagePath, localConfidence: intent.localConfidence, idempotencyKey: intent.captureId,
-    })).job,
+    })).job),
     get: async intent => (await api.getOcrFallbackJob(input.accessToken, intent.jobId!)).job,
   });
   const persisted = await readFallbackIntent(input.userId, input.captureId);

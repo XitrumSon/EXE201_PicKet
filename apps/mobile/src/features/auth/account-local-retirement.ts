@@ -3,6 +3,7 @@ import { purgeRetiredMutationOwner } from "@/core/sync/mutation-queue";
 import { purgeRetiredCaptureOwner } from "@/core/ocr/capture-storage";
 import { purgeRetiredReceiptOwner } from "@/core/receipts/pending-receipt";
 import { purgeRetiredKeepsakeOwner } from "@/features/keepsakes/keepsake-store";
+import { purgeRetiredOwnerPreferences } from "@/features/notifications/reminders";
 
 export async function retireAccountLocalData(owner: string) {
   // The durable fence first drains both cache and outbox operations. Raw erasure
@@ -12,4 +13,5 @@ export async function retireAccountLocalData(owner: string) {
   await purgeRetiredCaptureOwner(owner);
   await purgeRetiredReceiptOwner(owner);
   await purgeRetiredKeepsakeOwner(owner);
+  await purgeRetiredOwnerPreferences(owner);
 }

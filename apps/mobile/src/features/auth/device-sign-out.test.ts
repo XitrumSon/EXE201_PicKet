@@ -22,6 +22,16 @@ test("a stale A logout queued behind B sign-in cannot call SDK logout or erase B
  assert.equal(logoutRequests,0);assert.equal((await client.auth.getSession()).data.session?.user.id,"owner-B");
 });
 
+test("owner-bound logout rejects unreadable/foreign records but can finish its own or already-cleared session",async()=>{
+ let record:string|null="not-json",calls=0;
+ const source={expectedOwner:"A",storageKey:"qa-owned-logout",storage:{getItem:async()=>record,removeItem:async()=>{record=null;}},auth:{signOut:async()=>{calls++;record=null;return {error:null};}}};
+ for(const value of ["not-json",JSON.stringify({user:{id:"B"}}),JSON.stringify({access_token:"no-user"})]){
+  record=value;await assert.rejects(signOutDeviceSession(source),/owner/);
+ }
+ assert.equal(calls,0);record=JSON.stringify({user:{id:"A"}});await signOutDeviceSession(source);
+ assert.equal(record,null);await signOutDeviceSession(source);assert.equal(calls,2);
+});
+
 test("expired offline logout clears only the auth record, emits SIGNED_OUT and permits B", async () => {
   const storageKey = "qa-expired-offline-session";
   const records = new Map<string, string>([["owner-A-queue", "retained"], [storageKey, JSON.stringify({

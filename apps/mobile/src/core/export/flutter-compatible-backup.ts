@@ -13,6 +13,7 @@ import { listKeepsakes, replaceKeepsakesForOwner } from "@/features/keepsakes/ke
 import { listGuestReceipts, replaceGuestReceipts } from "@/core/receipts/guest-receipt-store";
 import { restoreWithUploadedMedia } from "./restore-media-policy";
 import { readKeepsakePhoto, withKeepsakePhotoLease, writeKeepsakePhoto } from "@/features/keepsakes/keepsake-photo-storage";
+import { withLocalOwnerAccess } from "@/core/sync/offline-cache";
 
 const MAX_MEDIA_BYTES = 50_000_000;
 const MAX_SINGLE_IMAGE_BYTES = 10_485_760;
@@ -33,10 +34,10 @@ export function financeCsv(data: FinancePayload) {
   return `\uFEFF${rows.map((row) => row.map(escapeCsv).join(",")).join("\r\n")}`;
 }
 
-async function shareText(contents: string, extension: string, mimeType: string) {
+async function shareText(owner:string,contents: string, extension: string, mimeType: string) {
   if (!FileSystem.cacheDirectory || !(await Sharing.isAvailableAsync())) throw new Error("Không thể chia sẻ bản sao trên thiết bị này.");
-  const uri = `${FileSystem.cacheDirectory}picket-${Date.now()}.${extension}`;
-  await FileSystem.writeAsStringAsync(uri, contents, { encoding: FileSystem.EncodingType.UTF8 });
+  const uri = `${FileSystem.cacheDirectory}picket-${Crypto.randomUUID()}.${extension}`;
+  await withLocalOwnerAccess(owner,()=>FileSystem.writeAsStringAsync(uri, contents, { encoding: FileSystem.EncodingType.UTF8 }));
   await Sharing.shareAsync(uri, { dialogTitle:"Lưu dữ liệu Picket", mimeType });
 }
 
@@ -53,10 +54,10 @@ function mediaSlots(payload: FinancePayload) {
   return slots;
 }
 
-export async function exportFinanceCsv(token: string) {
+export async function exportFinanceCsv(token: string,userId:string) {
   const { api } = requireCloud();
   const exported = await api.exportFinance(token);
-  await shareText(financeCsv(exported.data), "csv", "text/csv");
+  await shareText(userId,financeCsv(exported.data), "csv", "text/csv");
 }
 
 export async function exportEncryptedBackup(token: string, userId: string, password: string) {
@@ -84,7 +85,7 @@ export async function exportEncryptedBackup(token: string, userId: string, passw
   const salt = await Crypto.getRandomBytesAsync(32);
   const nonce = await Crypto.getRandomBytesAsync(12);
   const envelope = await sealBackupEnvelope("picket-backup-v1", { data:payload, media }, password, salt, nonce);
-  await shareText(envelope, "picket", "application/octet-stream");
+  await shareText(userId,envelope, "picket", "application/octet-stream");
 }
 
 export interface DecryptedBackup { data: FinancePayload; media: Record<string, string> }
@@ -128,14 +129,14 @@ export async function restoreEncryptedBackup(token: string, userId: string, curr
       const bytes = toByteArray(encoded);
       const { extension, mime } = imageType(bytes);
       const path = `${userId}/backup-restored/${Crypto.randomUUID()}.${extension}`;
-      const { error } = await storage.upload(path, bytes, { contentType:mime, upsert:false });
+      const { error } = await withLocalOwnerAccess(userId,()=>storage.upload(path, bytes, { contentType:mime, upsert:false }));
       if (error) throw error;
       uploaded.push(path);
       item[field] = path;
     }
     },
-    validate: () => api.validateFinanceImport(token, envelope),
-    commit: () => api.restoreFinance(token, { confirmation:"RESTORE", expectedRevision:currentRevision, export:envelope }),
+    validate: () => withLocalOwnerAccess(userId,()=>api.validateFinanceImport(token, envelope)),
+    commit: () => withLocalOwnerAccess(userId,()=>api.restoreFinance(token, { confirmation:"RESTORE", expectedRevision:currentRevision, export:envelope })),
     remove: paths => storage.remove(paths),
   });
 }
@@ -170,7 +171,7 @@ async function exportGuestBackupWithLease(finance: GuestFinance, password: strin
   const salt = await Crypto.getRandomBytesAsync(32);
   const nonce = await Crypto.getRandomBytesAsync(12);
   const envelope = await sealBackupEnvelope("picket-guest-backup-v1", { finance, keepsakes:copies, receipts, media }, password, salt, nonce);
-  await shareText(envelope, "picket", "application/octet-stream");
+  await shareText(guestOwnerId,envelope, "picket", "application/octet-stream");
 }
 
 export async function decryptGuestBackup(encoded: string, password: string): Promise<GuestBackupPayload> {

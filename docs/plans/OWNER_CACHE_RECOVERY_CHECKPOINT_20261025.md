@@ -4,6 +4,10 @@ This continuation closes the common-cache recovery gap from the 24 October
 checkpoint. It does not complete separate media/outbox erasure or native release
 acceptance.
 
+Later continuation: `OWNER_PRIVACY_LIFECYCLE_CHECKPOINT_20261025.md` additionally
+keeps all unconfirmed outcomes fenced and unmounts private providers immediately;
+it supersedes automatic-resume behavior described in older checkpoints.
+
 - Account data providers and navigation remain unmounted while an owner's
   durable cache-retirement state is checked. Guest/anonymous data are independent.
 - A retired owner sees vi/en recovery controls. An explicit verification calls
