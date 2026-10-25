@@ -65,6 +65,12 @@ const planKeys: Record<
   },
 };
 
+function purchaseOffer(product:ProductSubscription){
+  return product.subscriptionOffers?.find(offer=>
+    typeof offer.offerTokenAndroid==="string"&&offer.offerTokenAndroid.trim().length>0&&
+    typeof offer.displayPrice==="string"&&offer.displayPrice.trim().length>0);
+}
+
 export default function BillingScreen() {
   const { session } = useAuth();
   if (Platform.OS !== "android") return <Redirect href="/profile" />;
@@ -229,9 +235,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     if(!canStartPlayPurchase(Platform.OS,connected,{newPurchasesEnabled:storeReady})) {
       setSuccess(false);setMessage({key:"notReady"});return;
     }
-    const offerToken = product.subscriptionOffers.find(
-      (offer) => typeof offer.offerTokenAndroid === "string",
-    )?.offerTokenAndroid;
+    const offerToken = purchaseOffer(product)?.offerTokenAndroid;
     if (!offerToken) {
       setSuccess(false);
       return setMessage({key:"offerMissing"});
@@ -357,9 +361,8 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
             if (!isPicketSubscriptionId(product.id)) return null;
             const keys = planKeys[product.id];
             const copy = {name:keys.name,cadence:t(keys.cadence),summary:t(keys.summary)};
-            const displayPrice =
-              product.subscriptionOffers?.find((offer) => offer.offerTokenAndroid)?.displayPrice ??
-              product.displayPrice;
+            const offer=purchaseOffer(product);
+            const displayPrice=offer?.displayPrice??t("priceUnavailable");
             return (
               <View key={product.id} style={styles.planCard}>
                 <View style={styles.planHeader}>
@@ -372,7 +375,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
                 <Text style={styles.planSummary}>{copy.summary}</Text>
                 <Pressable
                   accessibilityLabel={t("chooseLabel",{name:copy.name,cadence:copy.cadence})}
-                  disabled={!storeReady || !connected || busyProduct !== null || restoring}
+                  disabled={!offer || !storeReady || !connected || busyProduct !== null || restoring}
                   onPress={() => void purchase(product)}
                   style={styles.primary}
                 >
