@@ -20,5 +20,8 @@ supabase/.temp/
 web/.next-dev/
 .artifacts/
 *.apk
+*.aab
+hs_err_pid*.log
+replay_pid*.log
 .playwright-cli/
 output/playwright/
