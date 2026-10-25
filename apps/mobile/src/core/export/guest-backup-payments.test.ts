@@ -13,3 +13,15 @@ test("restore rejects invalid recurring schedule fields and retains custom legac
  for(const patch of [{amount:0},{nextDueAt:"invalid"},{cadence:"unknown"},{cycleMonths:0},{cycleMonths:121},{alertDays:-1},{alertDays:366},{active:"yes"},{note:null},{walletId:"missing"},{categoryId:"missing"}]) assert.throws(()=>validateGuestBackupPayload(payload("subscriptions",{...subscription,...patch})));
  assert.ok(validateGuestBackupPayload(payload("subscriptions",{...subscription,cadence:"custom",cycleMonths:120,alertDays:365})));
 });
+
+test("restore rejects normalized impossible calendar dates and non-ISO date text",()=>{
+ for(const date of ["2026-02-29","2026-02-31T12:00:00Z","2026-04-31T00:00:00+07:00","10/01/2026","2026-01-01T24:00:00Z"]){
+  assert.throws(()=>validateGuestBackupPayload(payload("bills",{...bill,dueAt:date})));
+  assert.throws(()=>validateGuestBackupPayload(payload("subscriptions",{...subscription,nextDueAt:date})));
+ }
+});
+test("restore preserves leap days and ISO instants with explicit or legacy local time",()=>{
+ for(const date of ["2024-02-29","2024-02-29T23:59:59.123456Z","2024-02-29T23:59:59+07:00","2024-02-29T12:00:00"]){
+  const p=payload("bills",{...bill,dueAt:date});assert.equal(validateGuestBackupPayload(p),p);
+ }
+});
