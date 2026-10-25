@@ -9,3 +9,8 @@ Completed this increment:
 Validation: 716/716 mobile tests passed; focused 16/16 tests passed again after the translated review hint; mobile typecheck passed; lint has 0 errors and 24 existing warnings; Android JavaScript export passed. RED commits ff14e30 and 30bc401 preserve reproduction.
 
 Limits: client review fencing does not establish an atomic server revision contract. Existing currency/month-key conventions and historical closes are unchanged. Native device acceptance, Google Play sandbox cycles and the required tester cohort remain outstanding. This is not final release acceptance. No production writes or paid services were activated.
+
+## Backup validation continuation
+Planning restore now rejects unsupported methods, malformed month keys, negative/fractional/over-cap period limits, mismatched close months, unsafe totals and invalid close metadata. Negative net expense remains valid for refunds. Historical totals are validated, not recomputed or rewritten. Existing empty and older compatible backups continue to pass.
+
+Evidence: RED ba2c9c6; 33 export/restore tests and all 718 mobile tests pass. Typecheck passes; lint has 0 errors and 24 existing warnings. This data-only validator change does not establish native picker/filesystem acceptance or complete the remaining product/release gates. Logs: .artifacts/backup-planning-{tests,types,lint}.log.

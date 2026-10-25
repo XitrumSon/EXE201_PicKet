@@ -34,6 +34,18 @@ export function validateGuestBackupPayload(value: unknown): GuestBackupPayload {
     if (!(finance[key] as unknown[]).every(hasId)) throw new Error("Danh sách tài chính trong bản sao không hợp lệ.");
   }
   const validMoney = (amount: unknown) => Number.isSafeInteger(amount) && (amount as number) >= 0 && (amount as number) <= 9_000_000_000_000;
+  const validMonth = (month: string) => /^\d{4}-(0[1-9]|1[0-2])$/.test(month);
+  if (!["simple", "envelope", "zero_based", "fifty_thirty_twenty", "event"].includes(String(finance.planningMethod))) throw new Error("Phương pháp ngân sách trong bản sao không hợp lệ.");
+  for (const [key, limit] of Object.entries(finance.planningPeriods)) {
+    const separator = key.indexOf(":");
+    if (separator !== 7 || !validMonth(key.slice(0, separator)) || key.length === 8 || !validMoney(limit)) throw new Error("Hạn mức trong bản sao không hợp lệ.");
+  }
+  for (const [month, close] of Object.entries(finance.planningCloses)) {
+    if (!validMonth(month) || !object(close) || close.month !== month ||
+        !Number.isSafeInteger(close.income) || (close.income as number) < 0 || !Number.isSafeInteger(close.expense) ||
+        typeof close.note !== "string" || close.note.length > 1000 || typeof close.rollover !== "boolean" ||
+        typeof close.closedAt !== "string" || !Number.isFinite(Date.parse(close.closedAt))) throw new Error("Thông tin chốt tháng trong bản sao không hợp lệ.");
+  }
   const accountIds = new Set((finance.accounts as { id: string }[]).map((item) => item.id));
   const currencies=new Map((finance.accounts as {id:string;currencyCode:string}[]).map(item=>[item.id,item.currencyCode]));
   for (const account of finance.accounts as Record<string, unknown>[]) {
