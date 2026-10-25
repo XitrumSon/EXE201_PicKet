@@ -50,3 +50,14 @@ test("a SQLite deletion failure rolls back the marker and rows together", async 
     assert.equal(await driver.isRetired("a"), true);
   } finally { db.close(); }
 });
+
+test("account retirement erases open-answer drafts without affecting another owner or guest", async () => {
+  const { db, driver } = fixture();
+  try {
+    const insert = db.prepare("INSERT INTO cached_resources VALUES (?, ?, ?)");
+    for (const owner of ["a", "b", "device-guest"]) insert.run(owner, "learning-assessment", "encrypted draft");
+    await driver.retire("a");
+    assert.equal(db.prepare("SELECT COUNT(*) AS count FROM cached_resources WHERE user_id = ? AND resource = ?").get("a", "learning-assessment")?.count, 0);
+    for (const owner of ["b", "device-guest"]) assert.equal(db.prepare("SELECT COUNT(*) AS count FROM cached_resources WHERE user_id = ? AND resource = ?").get(owner, "learning-assessment")?.count, 1);
+  } finally { db.close(); }
+});

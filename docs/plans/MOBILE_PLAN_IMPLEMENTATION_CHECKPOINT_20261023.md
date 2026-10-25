@@ -6,6 +6,19 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Open-answer draft continuation (25 October): the development learning preview
+  now includes a versioned fictional case, five public rubric criteria and a
+  vi/en editor. Answers stay in a separate owner-scoped encrypted cache record;
+  no cloud/network call or score is generated. Autosave, explicit retry/clear,
+  background/exit flushing, future-version protection and account retirement
+  are tested. Exact answer text survives language changes. All **707 mobile
+  tests** pass; typecheck/Android JS export pass; lint has 0 errors/24 existing
+  warnings. Store coverage: 100% lines / 93.18% branches / 90.48% functions.
+  RED `5932649`; see `ASSESSMENT_LOCAL_DRAFT_CHECKPOINT_20261025.md` and
+  `.artifacts/mobile-assessment-{tests,types,lint,coverage,export}.log`.
+  Provider/budget choice, cloud assessment implementation/consent/evaluation,
+  independent content review and native/release acceptance remain open.
+
 - Planning concurrency continuation (25 October): a synchronous operation lock
   prevents rapid duplicate transfers and overlapping planning writes. Both month
   arrows and previously captured navigation callbacks respect the lock. A read
