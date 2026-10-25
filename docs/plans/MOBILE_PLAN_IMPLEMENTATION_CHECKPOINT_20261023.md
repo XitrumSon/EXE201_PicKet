@@ -1,10 +1,29 @@
-# Plan implementation checkpoint — updated 24 October 2026
+# Plan implementation checkpoint — updated 25 October 2026
 
 This is an engineering checkpoint, not final acceptance or a completed P1–P5 release.
 
 ## Current continuation status
 
 The latest continuation below supersedes older pending lists in this file.
+
+- Planning/shared-controls continuation (25 October): monthly planning controls,
+  method names, close confirmation, transfer status/errors and budget summaries
+  now have vi/en copy. Month/money formatting follows the selected language;
+  history/split failures use controlled translated messages and keep unavailable
+  spending hidden. Transfer input shares the API money cap. While busy, month/
+  method/threshold/source/destination controls are disabled. Shared PrimaryAction
+  busy text/indicator are translated and announce the actual disabled state;
+  ChoiceChip supports a disabled state. Existing month-close prerequisites remain.
+  Three additional callback-level restore tests execute the real screen with
+  deterministic hooks/picker/filesystem/transport adapters: cancel/reselect,
+  changed owner, ambiguous submission and reload-only retry. These are not
+  rendered native or device acceptance tests.
+  All **689 mobile tests** pass; typecheck/Android JS export pass; lint has
+  0 errors/24 existing warnings. RED `5ac55e3`; evidence
+  `.artifacts/mobile-planning-{complete-tests,types,lint,export}.log`.
+  Independent copy review, remaining product/AI/forecast work, physical Android
+  checks and Google Play/cohort/release acceptance remain open. No production
+  data/configuration or real billing/staff action was changed.
 
 - Admin copy continuation (25 October): staff screen tabs, permission/load states,
   live controlled errors, action confirmations, partner/settings controls,

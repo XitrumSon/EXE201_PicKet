@@ -19,7 +19,7 @@ test("uncategorized spending is preserved and split-loading failure cannot autho
   assert.match(planning,/useSpendingSplits/);
   assert.match(planning,/budgetOverview/);
   assert.match(planning,/splitLoading \|\| splitError/);
-  assert.match(planning,/splitLoading \|\| splitError \? "—" : formatVnd\(spent\)/);
+  assert.match(planning,/splitLoading \|\| splitError \? "—" : money\(spent\)/);
   assert.match(planning,/const refunds = monthly\.filter/);
   assert.match(planning,/const expense = grossExpense - refunds/);
   assert.match(readFileSync(new URL("../../app/insights.tsx",import.meta.url),"utf8"),/categorySpending/);

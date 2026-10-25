@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { colors, radii, spacing, typography } from "@picket/design-tokens";
 import type { PropsWithChildren, ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -111,12 +112,13 @@ export function FieldLabel({ children }: PropsWithChildren) {
   return <Text style={styles.fieldLabel}>{children}</Text>;
 }
 
-export function ChoiceChip({ checked, label, onPress }: { checked: boolean; label: string; onPress(): void }) {
-  return <Pressable accessibilityRole="radio" accessibilityState={{ checked }} onPress={onPress} style={[styles.choiceChip, checked && styles.choiceChipSelected]}>{checked && <AppIcon name="check" size={16} color={colors.ink} />}<Text style={[styles.choiceChipText, checked && styles.choiceChipTextSelected]}>{label}</Text></Pressable>;
+export function ChoiceChip({ checked, label, onPress, disabled=false }: { checked: boolean; label: string; onPress(): void; disabled?: boolean }) {
+  return <Pressable accessibilityRole="radio" accessibilityState={{ checked, disabled }} disabled={disabled} onPress={onPress} style={[styles.choiceChip, checked && styles.choiceChipSelected, disabled && styles.disabled]}>{checked && <AppIcon name="check" size={16} color={colors.ink} />}<Text style={[styles.choiceChipText, checked && styles.choiceChipTextSelected]}>{label}</Text></Pressable>;
 }
 
 export function PrimaryAction({ busy = false, disabled = false, label, onPress }: { busy?: boolean; disabled?: boolean; label: string; onPress(): void }) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ busy, disabled }} disabled={busy || disabled} onPress={onPress} style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed, (busy || disabled) && styles.disabled]}>{busy && <ActivityIndicator accessibilityLabel="Đang xử lý" color={colors.white} size="small" />}<Text style={styles.primaryButtonText}>{busy ? "Đang xử lý…" : label}</Text></Pressable>;
+  const {t}=useTranslation("common");
+  return <Pressable accessibilityRole="button" accessibilityState={{ busy, disabled:busy||disabled }} disabled={busy || disabled} onPress={onPress} style={({ pressed }) => [styles.primaryButton, pressed && styles.pressed, (busy || disabled) && styles.disabled]}>{busy && <ActivityIndicator accessibilityLabel={t("Đang xử lý")} color={colors.white} size="small" />}<Text style={styles.primaryButtonText}>{busy ? t("Đang xử lý…") : label}</Text></Pressable>;
 }
 
 export function DangerAction({ disabled = false, label, onPress }: { disabled?: boolean; label: string; onPress(): void }) {

@@ -1,5 +1,8 @@
+import { useTranslation } from "react-i18next";
+import { formatMoney, localeFor, normalizeLanguage } from "@/core/i18n/formatters";
+import { parsePaymentAmount } from "@/core/forms/payment-form";
 import { colors } from "@picket/design-tokens";
-import { formatVnd, type BudgetMethod, type PlanningResponse } from "@picket/domain";
+import { type BudgetMethod, type PlanningResponse } from "@picket/domain";
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
@@ -17,10 +20,13 @@ import { useTransactionHistory } from "@/features/transactions/use-transaction-h
 import { useSpendingSplits } from "@/features/transactions/use-spending-splits";
 import { budgetOverview } from "@/core/local/budget-overview";
 
-const methods: [BudgetMethod, string][] = [["simple","Đơn giản"],["envelope","Phong bì"],["zero_based","Zero-based"],["fifty_thirty_twenty","50/30/20"],["event","Sự kiện"]];
+const methods: [BudgetMethod,string][] = [["simple","simple"],["envelope","envelope"],["zero_based","zero_based"],["fifty_thirty_twenty","fifty_thirty_twenty"],["event","event"]];
 const monthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
 export default function PlanningScreen() {
+  const {t,i18n}=useTranslation("planning");
+  const language=normalizeLanguage(i18n.resolvedLanguage??i18n.language);
+  const money=(amount:number)=>formatMoney(amount,language,"VND");
   const { session, localMode } = useAuth();
   const guest = useGuestFinance();
   const { budgets, update: updateBudget } = useBudgets();
@@ -52,7 +58,7 @@ export default function PlanningScreen() {
     let active = true;
     void picketApi.getPlanning(session.access_token, selectedMonth)
       .then((value) => { if (active) { setPlanning(value); setMessage(null); } })
-      .catch(() => { if (active) setMessage("Chưa tải được kế hoạch tháng. Hãy thử lại khi có kết nối."); });
+      .catch(() => { if (active) setMessage("loadFailed"); });
     return () => { active = false; };
   }, [session, selectedMonth]);
   if (!session && !localMode) return <Redirect href={routes.login} />;
@@ -62,23 +68,24 @@ export default function PlanningScreen() {
     setBusy(true); setMessage(null);
     try { if (localMode) await guest.commit({ type: "planning.method", value: method });
       else { await picketApi!.setBudgetMethod(session!.access_token, method); setPlanning((current) => current ? { ...current, method } : current); } }
-    catch { setMessage("Không lưu được phương pháp lập kế hoạch."); }
+    catch { setMessage("methodFailed"); }
     finally { setBusy(false); }
   }
   async function transfer() {
-    if ((!localMode && !picketApi) || !source || !destination || source === destination || !/^\d+$/.test(amount) || Number(amount) <= 0 || !Number.isSafeInteger(Number(amount))) { setMessage("Chọn hai ngân sách khác nhau và nhập hạn mức hợp lệ."); return; }
+    const parsedAmount=parsePaymentAmount(amount);
+    if ((!localMode && !picketApi) || !source || !destination || source === destination || parsedAmount===null) { setMessage("invalidTransfer"); return; }
     setBusy(true); setMessage(null);
-    try { if (localMode) await guest.commit({ type: "planning.transfer", sourceBudgetId:source, destinationBudgetId:destination, month:selectedMonth, amount:Number(amount) });
-      else { await picketApi!.transferBudgetLimit(session!.access_token, { sourceBudgetId:source, destinationBudgetId:destination, month:selectedMonth, amount:Number(amount) }); setPlanning(await picketApi!.getPlanning(session!.access_token, selectedMonth)); }
-      setAmount(""); setMessage(localMode ? "Đã lưu hạn mức trên thiết bị." : "Đã chuyển hạn mức tháng này."); }
-    catch { setMessage("Không chuyển được hạn mức. Kiểm tra phần còn lại hoặc tháng đã chốt."); }
+    try { if (localMode) await guest.commit({ type: "planning.transfer", sourceBudgetId:source, destinationBudgetId:destination, month:selectedMonth, amount:parsedAmount });
+      else { await picketApi!.transferBudgetLimit(session!.access_token, { sourceBudgetId:source, destinationBudgetId:destination, month:selectedMonth, amount:parsedAmount }); setPlanning(await picketApi!.getPlanning(session!.access_token, selectedMonth)); }
+      setAmount(""); setMessage(localMode ? "deviceTransferSaved" : "transferSaved"); }
+    catch { setMessage("transferFailed"); }
     finally { setBusy(false); }
   }
   function confirmClose() {
     if (planning?.close || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || historyError || splitLoading || splitError) return;
-    Alert.alert("Chốt tháng?", "Sau khi chốt, giao dịch của tháng này không thể thay đổi. Hãy kiểm tra kỹ trước khi xác nhận.", [
-      { text:"Hủy", style:"cancel" },
-      { text:"Chốt tháng", onPress:() => void closeMonth() },
+    Alert.alert(t("closeTitle"), t("closeDescription"), [
+      { text:t("cancel"), style:"cancel" },
+      { text:t("close"), onPress:() => void closeMonth() },
     ]);
   }
   async function closeMonth() {
@@ -86,8 +93,8 @@ export default function PlanningScreen() {
     setBusy(true); setMessage(null);
     try { if (localMode) await guest.commit({ type: "planning.close", value: { month:selectedMonth, closedAt:new Date().toISOString(), income, expense, note:note.trim(), rollover } });
       else { await picketApi!.closeBudgetMonth(session!.access_token, { month:selectedMonth, rollover, note:note.trim() }); setPlanning(await picketApi!.getPlanning(session!.access_token, selectedMonth)); }
-      setMessage(localMode ? "Đã chốt tháng trên thiết bị." : "Đã chốt tháng."); }
-    catch { setMessage("Không chốt được tháng. Có thể tháng đã được chốt hoặc dữ liệu vừa thay đổi."); }
+      setMessage(localMode ? "deviceClosed" : "monthClosed"); }
+    catch { setMessage("closeFailed"); }
     finally { setBusy(false); }
   }
   async function changeThreshold(id: string, percent: number) {
@@ -95,36 +102,36 @@ export default function PlanningScreen() {
     if (!budget || busy) return;
     setBusy(true); setMessage(null);
     try { await updateBudget(id, { expectedVersion: budget.version, alertPercent: percent }); }
-    catch { setMessage("Không lưu được ngưỡng cảnh báo ngân sách."); }
+    catch { setMessage("thresholdFailed"); }
     finally { setBusy(false); }
   }
   return <PicketScreen>
-    <TopAppBar title="Kế hoạch ngân sách" />
-    <Text style={styles.subtitle}>{localMode ? "Kế hoạch chỉ lưu trên thiết bị này, không đồng bộ cloud." : "Tổ chức hạn mức, điều chuyển và chốt tháng."}</Text>
-    {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{message}</Text>}
-    <SectionTitle title="Phương pháp lập kế hoạch" />
-    <View style={styles.chips}>{methods.map(([value,label]) => <ChoiceChip checked={planning?.method === value} key={value} label={label} onPress={() => void changeMethod(value)} />)}</View>
-    <Text style={styles.hint}>Phương pháp giúp bạn tổ chức ngân sách; hạn mức và chi tiêu vẫn lấy từ giao dịch thực tế.</Text>
-    <SectionTitle title="Tháng đang xem" />
-    <Surface><View style={styles.monthRow}><Pressable accessibilityLabel="Tháng trước" accessibilityRole="button" onPress={() => { setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()-1,1)); }}><Text style={styles.arrow}>‹</Text></Pressable><Text style={styles.month}>Tháng {month.getMonth()+1}/{month.getFullYear()}</Text><Pressable accessibilityLabel="Tháng sau" accessibilityRole="button" onPress={() => { setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()+1,1)); }}><Text style={styles.arrow}>›</Text></Pressable></View></Surface>
-    <SectionTitle title="Thu chi và ngân sách tháng" />
-    <Surface><Text style={styles.title}>Thu {formatVnd(income)} · Chi {formatVnd(expense)}</Text>
-      {historyError && <Text style={styles.message}>{historyError}</Text>}
-      {splitError && <Text style={styles.message}>{splitError}</Text>}
+    <TopAppBar title={t("title")} />
+    <Text style={styles.subtitle}>{localMode ? t("deviceSubtitle") : t("cloudSubtitle")}</Text>
+    {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{t(message)}</Text>}
+    <SectionTitle title={t("method")} />
+    <View style={styles.chips}>{methods.map(([value,label]) => <ChoiceChip checked={planning?.method === value} key={value} label={t(label)} disabled={busy} onPress={() => void changeMethod(value)} />)}</View>
+    <Text style={styles.hint}>{t("methodHelp")}</Text>
+    <SectionTitle title={t("viewingMonth")} />
+    <Surface><View style={styles.monthRow}><Pressable accessibilityLabel={t("previousMonth")} accessibilityRole="button" disabled={busy} onPress={() => { setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()-1,1)); }}><Text style={styles.arrow}>‹</Text></Pressable><Text style={styles.month}>{month.toLocaleDateString(localeFor(language),{month:"long",year:"numeric"})}</Text><Pressable accessibilityLabel={t("nextMonth")} accessibilityRole="button" onPress={() => { setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()+1,1)); }}><Text style={styles.arrow}>›</Text></Pressable></View></Surface>
+    <SectionTitle title={t("overview")} />
+    <Surface><Text style={styles.title}>{t("incomeExpense",{income:historyLoading||historyError?"—":money(income),expense:historyLoading||historyError?"—":money(expense)})}</Text>
+      {historyError && <Text style={styles.message}>{t("historyUnavailable")}</Text>}
+      {splitError && <Text style={styles.message}>{t("splitsUnavailable")}</Text>}
       {budgets.map((budget) => { const spent = localMode ? guestBudgetSpent(guest.data, budget, selectedMonth) : budgetOverview(budget, selectedMonth, transactions, null, splits).spent;
-        return <View key={budget.id}><Text style={styles.label}>{budget.name}</Text><Text style={styles.hint}>Kế hoạch {formatVnd(limitOf(budget.id))} · Thực tế {splitLoading || splitError ? "—" : formatVnd(spent)}</Text>
-          <Text style={styles.hint}>Nhắc khi đã dùng {budget.alertPercent}%</Text><View style={styles.chips}>{[50,80,90,100].map((percent) => <ChoiceChip checked={budget.alertPercent === percent} key={percent} label={`${percent}%`} onPress={() => void changeThreshold(budget.id,percent)} />)}</View></View>; })}
+        return <View key={budget.id}><Text style={styles.label}>{budget.name}</Text><Text style={styles.hint}>{t("budgetSummary",{planned:money(limitOf(budget.id)),actual:splitLoading || splitError ? "—" : money(spent)})}</Text>
+          <Text style={styles.hint}>{t("threshold",{percent:budget.alertPercent})}</Text><View style={styles.chips}>{[50,80,90,100].map((percent) => <ChoiceChip disabled={busy} checked={budget.alertPercent === percent} key={percent} label={`${percent}%`} onPress={() => void changeThreshold(budget.id,percent)} />)}</View></View>; })}
     </Surface>
-    {planning?.close && <Surface peach><Text style={styles.title}>Tháng đã chốt</Text><Text style={styles.hint}>Thu {formatVnd(planning.close.income)} · Chi {formatVnd(planning.close.expense)}</Text></Surface>}
-    <SectionTitle title="Chuyển hạn mức" />
-    {budgets.length < 2 ? <EmptyState title="Cần ít nhất hai ngân sách" description="Tạo thêm ngân sách để điều chuyển hạn mức." /> : <Surface>
-      <Text style={styles.label}>Từ ngân sách</Text><View style={styles.chips}>{budgets.map((item) => <ChoiceChip checked={source===item.id} key={item.id} label={`${item.name} · ${formatVnd(limitOf(item.id))}`} onPress={() => setSource(item.id)} />)}</View>
-      <Text style={styles.label}>Sang ngân sách</Text><View style={styles.chips}>{budgets.map((item) => <ChoiceChip checked={destination===item.id} key={item.id} label={item.name} onPress={() => setDestination(item.id)} />)}</View>
-      <Text style={styles.label}>Hạn mức chuyển (VND)</Text><TextInput money accessibilityLabel="Hạn mức chuyển" keyboardType="number-pad" onChangeText={setAmount} style={styles.input} value={amount} />
-      <PrimaryAction busy={busy} disabled={guest.loading && localMode || Boolean(planning?.close) || !planning} label="Chuyển hạn mức" onPress={() => void transfer()} />
+    {planning?.close && <Surface peach><Text style={styles.title}>{t("closed")}</Text><Text style={styles.hint}>{t("incomeExpense",{income:money(planning.close.income),expense:money(planning.close.expense)})}</Text></Surface>}
+    <SectionTitle title={t("transfer")} />
+    {budgets.length < 2 ? <EmptyState title={t("needBudgets")} description={t("needBudgetsHelp")} /> : <Surface>
+      <Text style={styles.label}>{t("fromBudget")}</Text><View style={styles.chips}>{budgets.map((item) => <ChoiceChip disabled={busy} checked={source===item.id} key={item.id} label={`${item.name} · ${money(limitOf(item.id))}`} onPress={() => setSource(item.id)} />)}</View>
+      <Text style={styles.label}>{t("toBudget")}</Text><View style={styles.chips}>{budgets.map((item) => <ChoiceChip disabled={busy} checked={destination===item.id} key={item.id} label={item.name} onPress={() => setDestination(item.id)} />)}</View>
+      <Text style={styles.label}>{t("transferAmount")}</Text><TextInput money accessibilityLabel={t("transferAmountLabel")} keyboardType="number-pad" editable={!busy} onChangeText={setAmount} style={styles.input} value={amount} />
+      <PrimaryAction busy={busy} disabled={guest.loading && localMode || Boolean(planning?.close) || !planning} label={t("transfer")} onPress={() => void transfer()} />
     </Surface>}
-    <SectionTitle title="Chốt tháng và chuyển phần dư" />
-    <Surface><View style={styles.monthRow}><Text style={styles.title}>Đã kiểm tra phân loại, giao dịch nghi trùng và đối soát ví</Text><Switch accessibilityLabel="Đã kiểm tra phân loại, giao dịch nghi trùng và đối soát ví" hitSlop={12} onValueChange={setChecked} value={checked} /></View><View style={styles.monthRow}><Text style={styles.title}>Chuyển dư sang tháng sau</Text><Switch accessibilityLabel="Chuyển dư sang tháng sau" hitSlop={12} onValueChange={setRollover} value={rollover} /></View><Text style={styles.label}>Ghi chú chốt tháng</Text><TextInput accessibilityLabel="Ghi chú chốt tháng" onChangeText={setNote} style={styles.input} value={note} /><PrimaryAction busy={busy} disabled={!planning || Boolean(planning.close) || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || Boolean(historyError) || splitLoading || Boolean(splitError)} label="Chốt tháng" onPress={confirmClose} /></Surface>
+    <SectionTitle title={t("closeSection")} />
+    <Surface><View style={styles.monthRow}><Text style={styles.title}>{t("reviewed")}</Text><Switch accessibilityLabel={t("reviewed")} hitSlop={12} onValueChange={setChecked} value={checked} /></View><View style={styles.monthRow}><Text style={styles.title}>{t("rollover")}</Text><Switch accessibilityLabel={t("rollover")} hitSlop={12} onValueChange={setRollover} value={rollover} /></View><Text style={styles.label}>{t("note")}</Text><TextInput accessibilityLabel={t("note")} editable={!busy} onChangeText={setNote} style={styles.input} value={note} /><PrimaryAction busy={busy} disabled={!planning || Boolean(planning.close) || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || Boolean(historyError) || splitLoading || Boolean(splitError)} label={t("close")} onPress={confirmClose} /></Surface>
   </PicketScreen>;
 }
 
