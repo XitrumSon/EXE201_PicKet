@@ -6,6 +6,18 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Latest integrity continuation (25 October): guest planning/refund calculations,
+  restored financial collection identities/budgets/payment schedules/calendar dates
+  and split allocations are validated. Notification collection excludes deleted
+  records, uses the local planning month, prioritizes the nearest 50 notifications,
+  preserves date-only calendars and fences duplicate/stale screen operations.
+  Learning completion now conditionally clears only the exact completed draft.
+  All 742 mobile tests pass; typecheck and Android JS export pass. See
+  GUEST_PLANNING_INTEGRITY_CHECKPOINT_20261025.md,
+  REMINDER_ARCHIVE_CHECKPOINT_20261025.md and
+  LEARNING_DRAFT_CLEANUP_CHECKPOINT_20261025.md for evidence and limits.
+  Native/server/provider/content and release gates remain open.
+
 - Product cost decision (25 October): the owner chose free-only for the current
   stage, with paid service and scaling considered after user growth. No current
   paid budget or automatic billing activation is authorized. Keep synthetic-only

@@ -112,7 +112,7 @@ function LearningSession({ owner }: { owner: string }) {
           }
           setProgress(reviewOffset===null ? await learningProgress.complete(owner, lesson.lessonId, lesson.version) : await learningProgress.review(owner,lesson.lessonId,lesson.version,reviewOffset));
           if(reviewOffset!==null)setReviewSaved(true);
-          await learningDrafts.clear(owner);
+          await learningDrafts.clearIfUnchanged(owner, {lessonId:lesson.lessonId,version:lesson.version,answers:lesson.questions.map((_,i)=>answers[i] ?? null)});
         }
         catch { setStorageError(true); }
         finally { setSaving(false); }

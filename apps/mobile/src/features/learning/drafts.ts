@@ -22,15 +22,19 @@ export function createLearningDraftStore(storage: { read(owner: string): Promise
     checkOwner(owner); await pending.get(owner)?.catch(() => undefined);
     return parse(await storage.read(owner));
   }
-  async function persist(owner: string, draft: LearningDraft | null) {
+  async function persist(owner: string, draft: LearningDraft | null, expected?: LearningDraft) {
     checkOwner(owner);
     const checked = draft === null ? null : validateDraft(draft);
+    const snapshot = expected === undefined ? undefined : validateDraft(expected);
     const operation = (pending.get(owner) ?? Promise.resolve()).catch(() => undefined).then(async () => {
-      parse(await storage.read(owner));
+      const current = parse(await storage.read(owner));
+      if (snapshot !== undefined && (!current || current.lessonId !== snapshot.lessonId || current.version !== snapshot.version ||
+          current.answers.some((answer, index) => answer !== snapshot.answers[index]))) return;
       await storage.write(owner,{schemaVersion:1,draft:checked});
     });
     pending.set(owner,operation);
     try { await operation; } finally { if (pending.get(owner) === operation) pending.delete(owner); }
   }
-  return { load, save: (owner: string, draft: LearningDraft) => persist(owner,draft), clear: (owner: string) => persist(owner,null) };
+  return { load, save: (owner: string, draft: LearningDraft) => persist(owner,draft), clear: (owner: string) => persist(owner,null),
+    clearIfUnchanged: (owner: string, expected: LearningDraft) => persist(owner,null,expected) };
 }
