@@ -53,3 +53,16 @@ Full mobile: 779/779 passed; typecheck, lint and Android JS export passed
 (`.artifacts/ocr-spatial-export.log`). This is a demonstrated
 parser defect and source fix, not proof that this particular real photo now
 passes: re-test the photo on an artifact containing the fix.
+
+The owner retried with a clearer photo on code 7 and reports that the amount is
+correct, but merchant/date are wrong and long receipts lose product lines. This
+is partial recognition, not OCR acceptance. RED `1ed956c4` reproduces written
+Vietnamese date parsing, merchant heading selection and split-column item loss
+with synthetic fixtures. GREEN `964f43d6` recognizes `Ngày … tháng … năm …`,
+excludes purchase-document headings/websites from merchant candidates and joins
+table rows only when name/quantity/unit-price/total headers can be identified.
+Warranty columns are not treated as prices. Existing arithmetic validation rejects
+inconsistent line totals. A 30-product fixture survives saved-text re-parsing.
+Full mobile: 785/785 passed; lint/typecheck passed. Wrapped/missing OCR text and
+unrecognized table headers are not reconstructed by guessing; the original real
+photo and longer receipts still require native regression on the new build.
