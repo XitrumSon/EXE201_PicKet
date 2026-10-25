@@ -64,6 +64,21 @@ export function validateGuestBackupPayload(value: unknown): GuestBackupPayload {
   }
   const transactionsById = new Map((finance.transactions as Record<string, unknown>[]).map(item => [item.id, item]));
   const categoryIds = new Set((finance.categories as { id: string }[]).map(item => item.id));
+  const validTitle = (title: unknown) => typeof title === "string" && title.trim().length > 0 && title.length <= 160;
+  const validInstant = (instant: unknown) => typeof instant === "string" && Number.isFinite(Date.parse(instant));
+  for (const bill of finance.bills as Record<string, unknown>[]) {
+    if (!validTitle(bill.title) || !validMoney(bill.amount) || bill.amount === 0 || !validInstant(bill.dueAt) ||
+        !["pending", "paid", "overdue", "cancelled"].includes(String(bill.status))) throw new Error("Hóa đơn trong bản sao không hợp lệ.");
+  }
+  for (const subscription of finance.subscriptions as Record<string, unknown>[]) {
+    if (!validTitle(subscription.title) || !validMoney(subscription.amount) || subscription.amount === 0 || !validInstant(subscription.nextDueAt) ||
+        !["weekly", "monthly", "quarterly", "yearly", "custom"].includes(String(subscription.cadence)) ||
+        !Number.isInteger(subscription.cycleMonths) || (subscription.cycleMonths as number) < 1 || (subscription.cycleMonths as number) > 120 ||
+        !Number.isInteger(subscription.alertDays) || (subscription.alertDays as number) < 0 || (subscription.alertDays as number) > 365 ||
+        typeof subscription.active !== "boolean" || typeof subscription.note !== "string" || subscription.note.length > 2000 ||
+        (subscription.walletId !== null && !accountIds.has(subscription.walletId as string)) ||
+        (subscription.categoryId !== null && !categoryIds.has(subscription.categoryId as string))) throw new Error("Chi phí định kỳ trong bản sao không hợp lệ.");
+  }
   for (const budget of finance.budgets as Record<string, unknown>[]) {
     if (typeof budget.name !== "string" || typeof budget.categoryId !== "string" || !categoryIds.has(budget.categoryId) ||
         !validMoney(budget.defaultLimit) || !Number.isInteger(budget.alertPercent) ||

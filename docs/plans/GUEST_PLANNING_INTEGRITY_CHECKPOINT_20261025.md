@@ -23,3 +23,6 @@ Restore validates split arrays, transaction ownership, existing category referen
 
 ## Backup budget continuation
 Restore now validates budget category references, nonnegative bounded integer limits, integer alert thresholds 1–100, boolean active state, string names and optional three-letter currency codes. Zero limits and inactive budgets remain valid; no existing records are rewritten. RED b183e073 reproduces invalid acceptance. All 727 mobile tests and 42 export/restore tests pass; typecheck passes. Evidence: .artifacts/backup-budgets-{tests,focused,types}.log. Native/device, server and release gates remain outstanding.
+
+## Backup payment schedule continuation
+Restored bills now validate title, positive bounded integer amount, parseable due timestamp and supported status. Recurring expenses additionally validate supported cadence (including legacy custom), cycleMonths 1–120, alertDays 0–365, active/note fields and wallet/category references. No schedule is rewritten or reminder dispatched during validation. RED 9f5d9b7f reproduces invalid acceptance. All 729 mobile tests and 44 export tests pass; typecheck passes. Evidence: .artifacts/backup-payments-{tests,focused,types}.log. Parseable timestamps retain the existing date semantics; this is not a full strict-calendar, bill-payment-link or native reminder acceptance claim.
