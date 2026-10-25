@@ -6,8 +6,8 @@ import ts from "typescript";
 type Element={type:unknown;props:Record<string,unknown>};
 function nodes(value:unknown):Element[]{if(Array.isArray(value))return value.flatMap(nodes);if(!value||typeof value!=="object"||!("props" in value))return [];const n=value as Element;return [n,...nodes(n.props.children)];}
 function text(value:unknown):string{if(typeof value==="string")return value;if(Array.isArray(value))return value.map(text).join("");if(value&&typeof value==="object"&&"props" in value)return text((value as Element).props.children);return "";}
-function harness(){
- const slots:unknown[]=[];let cursor=0,completions=0,clears=0,release!:(value:unknown)=>void;const pending=new Promise(done=>{release=done;});
+function harness(initialFailure=false){
+ const slots:unknown[]=[];let cursor=0,completions=0,clears=0,reads=0,readFailure=initialFailure,release!:(value:unknown)=>void,reject!:(error:Error)=>void;const pending=new Promise((done,fail)=>{release=done;reject=fail;});
  const state=(initial:unknown)=>{const i=cursor++;if(!(i in slots))slots[i]=initial;return [slots[i],(v:unknown)=>{slots[i]=typeof v==="function"?v(slots[i]):v;}];};
  const ref=(initial:unknown)=>{const i=cursor++;return slots[i]??(slots[i]={current:initial});};
  const effect=(fn:()=>unknown,deps:unknown[])=>{const i=cursor++,old=slots[i] as {deps:unknown[];cleanup?:()=>void}|undefined;if(!old||deps.some((v,j)=>!Object.is(v,old.deps[j]))){old?.cleanup?.();slots[i]={deps,cleanup:fn()};}};
@@ -17,12 +17,12 @@ function harness(){
  "react-native":{Text:"Text",View:"View",ScrollView:"ScrollView",AppState:{addEventListener:()=>({remove:()=>{}})}},"react-native-safe-area-context":{SafeAreaView:"SafeAreaView"},
  "@/core/ui/accessible-pressable":{AccessiblePressable:"Pressable"},"@/features/settings/appearance-provider":{useAppTheme:()=>({colors:{},language:"en"})},"react-i18next":{useTranslation:()=>({t:(key:string)=>key})},"@/features/auth/auth-context":{useAuth:()=>({session:null,localMode:true})},
  "@/features/learning/curriculum":{curriculumForLanguage:()=>({lessons:[lesson],publicationGate:{publishable:false}}),gradeQuiz:()=>({correct:1,total:1})},
- "@/features/learning/progress-storage":{learningProgress:{subscribe:()=>()=>{},load:async()=>progress,dueReviews:async()=>[],complete:async()=>{completions++;return pending;}},learningDrafts:{load:async()=>null,save:async()=>{},clearIfUnchanged:async()=>{clears++;}}},
+ "@/features/learning/progress-storage":{learningProgress:{subscribe:()=>()=>{},load:async()=>{reads++;if(readFailure)throw Error("Unavailable");return progress;},dueReviews:async()=>[],complete:async()=>{completions++;return pending;}},learningDrafts:{load:async()=>null,save:async()=>{},clearIfUnchanged:async()=>{clears++;}}},
  };
  const exports:{Session?:(props:{owner:string})=>unknown}={};vm.runInNewContext(ts.transpileModule(readFileSync("src/app/learning-preview.tsx","utf8")+'\nexports.Session=LearningSession;',{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:(key:string)=>adapters[key]??{},Date,setInterval:()=>1,clearInterval:()=>{}});
  const render=()=>{cursor=0;return exports.Session!({owner:"guest"});};
  const button=(label:string)=>{const node=nodes(render()).find(n=>n.type==="Pressable"&&text(n.props.children).includes(label));assert.ok(node,label);return node;};
- return {render,button,release:()=>release(progress),counts:()=>({completions,clears}),stop:()=>{for(const slot of slots)(slot as {cleanup?:()=>void})?.cleanup?.();}};
+ return {render,button,release:()=>release(progress),failSave:()=>reject(Error("Write unavailable")),setReadFailure:(value:boolean)=>{readFailure=value;},reads:()=>reads,counts:()=>({completions,clears}),stop:()=>{for(const slot of slots)(slot as {cleanup?:()=>void})?.cleanup?.();}};
 }
 async function settle(){for(let i=0;i<5;i++)await new Promise(done=>setImmediate(done));}
 async function ready(){const app=harness();app.render();await settle();(app.button("Lesson").props.onPress as ()=>void)();(app.button("Answer").props.onPress as ()=>void)();(app.button("explanations").props.onPress as ()=>void)();return app;}
@@ -34,3 +34,7 @@ test("lesson selection waits for stored draft hydration",async()=>{
  const app=harness();app.render();(app.button("Lesson").props.onPress as ()=>void)();assert.throws(()=>app.button("Answer"));
  await settle();(app.button("Lesson").props.onPress as ()=>void)();assert.ok(app.button("Answer"));
 });
+
+test("learning storage can recover without restarting and rapid retries read once",async()=>{const app=harness(true);app.render();await settle();app.setReadFailure(false);const retry=app.button("retryStorage").props.onPress as ()=>void;const before=app.reads();retry();retry();await settle();assert.equal(app.reads(),before+1);(app.button("Lesson").props.onPress as ()=>void)();assert.ok(app.button("Answer"));});
+
+test("storage recovery preserves submitted answers and does not resubmit completion",async()=>{const app=await ready();(app.button("saveCompletion").props.onPress as ()=>void)();app.failSave();await settle();(app.button("retryStorage").props.onPress as ()=>void)();await settle();assert.ok(app.button("saveCompletion"));assert.equal(app.counts().completions,1);assert.equal(app.counts().clears,0);});
