@@ -1,3 +1,5 @@
+import {receiptTableRows} from "./receipt-table-layout";
+
 export type ReceiptTextLine = {
   text: string;
   confidence?: number;
@@ -128,9 +130,9 @@ function spatialTotalCandidates(label:ReceiptTextLine,lines:ReceiptTextLine[]):R
 
 /** Pure parser shared by the future native ML Kit adapter and review UI. */
 export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDraft {
-  const lines = recognizedLines
+  const lines = receiptTableRows(recognizedLines
     .map((line) => ({ ...line, text: line.text.trim() }))
-    .filter((line) => line.text.length > 0);
+    .filter((line) => line.text.length > 0));
   // Preserve an unambiguous visual total row in the text saved to drafts.
   // Re-parsing that text after restart must not depend on lost native frames.
   const joinedTotals=new Map<ReceiptTextLine,ReceiptTextLine>();
@@ -188,7 +190,7 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
   for (const line of lines) {
     const match = line.text.match(
       /\b(\d{1,2})[./-](\d{1,2})[./-](\d{2}|\d{4})\b/,
-    );
+    )??normalized(line.text).match(/\bngay\s*(\d{1,2})\s*thang\s*(\d{1,2})\s*nam\s*(\d{4})\b/);
     if (!match) continue;
     const [day, month] = match.slice(1, 3).map(Number);
     const parsedYear = Number(match[3]);
@@ -205,6 +207,7 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     .map((line, index) => {
       const clean = normalized(line.text);
       const digitCount = (line.text.match(/\d/g) ?? []).length;
+      if(/phieu\s*(mua|ban|giao|thu)|ten\s*(san pham|hang hoa)|^sl$|^bh$|don\s*gia|thanh\s*tien|phuong\s*thuc|thong\s*tin|khach\s*hang|website|www\.|https?:|@/i.test(clean))return null;
       if (line.text.length < 3 || !/[A-Za-zÀ-ỹ]/.test(line.text) || /hoa\s*don|bi(?:e)?n\s*lai|cash\s*bill|receipt|invoice|mst|tax|dia\s*chi|address|hotline|tel\b|ngay\b|date\b|tong|subtotal|thanh\s*toan|^no\.?\s*\d|\bjalan\b|\b\d{5}\b/i.test(clean) || digitCount > line.text.length / 3) return null;
       const relativeTop = maxBottom > 0 && line.top !== undefined ? line.top / maxBottom : index / Math.max(1, lines.length);
       const letters = line.text.replace(/[^A-Za-zÀ-ỹ]/g, "");

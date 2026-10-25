@@ -34,3 +34,19 @@ test("inconsistent table quantity and prices are not silently accepted",()=>{
  const lines=table().map(line=>line.text==="240.000 đ"?{...line,text:"230.000 đ"}:line);
  assert.ok(!parseReceiptLines(lines).lineItems.some(line=>line.name==="Bàn phím demo"));
 });
+test("a long table retains thirty distinct products without counting its summary",()=>{
+ const lines=table().filter(line=>line.top!<=80);
+ for(let index=0;index<30;index++){
+  const top=110+index*30;
+  lines.push(cell(`Sản phẩm mẫu ${index+1}`,10,top,180),cell("2",220,top,25),cell("10.000 đ",270,top),cell("12",370,top,25),cell("20.000 đ",430,top,100));
+ }
+ lines.push(cell("Tổng thanh toán",270,1050,130),cell("600.000 đ",430,1050,100));
+ const result=parseReceiptLines(lines);
+ assert.equal(result.lineItems.length,30);
+ assert.equal(result.lineItems.reduce((sum,line)=>sum+line.total,0),600000);
+ assert.equal(result.amount,600000);
+ assert.equal(parseReceiptText(result.rawText).lineItems.length,30);
+});
+test("impossible Vietnamese written calendar dates are rejected",()=>{
+ assert.equal(parseReceiptText("PICKET DEMO\nNgày 31 tháng 02 năm 2026\nTổng thanh toán 145000").date,null);
+});
