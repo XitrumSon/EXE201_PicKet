@@ -135,7 +135,9 @@ async function scheduleNow(userId: string, items: ReminderItem[], isCurrent: () 
     name: privateReminderCopy("reminder",language).channel, importance: Notifications.AndroidImportance.DEFAULT,
     lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
   });
-  for (const item of items.filter((entry) => entry.notifyAt !== null && entry.notifyAt > new Date()).slice(0, 50)) {
+  const upcoming = items.filter((entry) => entry.notifyAt !== null && entry.notifyAt > new Date())
+    .sort((a, b) => a.notifyAt!.getTime() - b.notifyAt!.getTime()).slice(0, 50);
+  for (const item of upcoming) {
     if (!isCurrent()) return;
     const scheduled = await scheduleOwnedReminder(`${prefix(userId)}${item.id}`, isCurrent, {
       schedule: async identifier => {
