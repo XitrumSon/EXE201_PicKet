@@ -1,3 +1,4 @@
+import { billsVi, billsEn } from "./bill-resources";
 import {accountDeletionVi,accountDeletionEn} from "./account-deletion-resources";
 import {forecastObservationVi,forecastObservationEn} from "./forecast-observation-resources";
 import {settlementCloudVi,settlementCloudEn} from "./settlement-cloud-resources";
@@ -19,8 +20,8 @@ import { calendarEn, calendarVi } from "./calendar-resources";
 import { overviewEn, overviewVi } from "./overview-resources";
 /** Add complete reviewed resources here; selectors and formatters use this registry. */
 export const languages = {
-  vi: { name: "Tiếng Việt", locale: "vi-VN", direction: "ltr", translation: vi, common: commonVi, learning: learningVi, learningAi: learningAiVi, calendar: calendarVi, overview: overviewVi, transactions: {...transactionsVi,...transactionFormVi}, security: securityVi, cashflow: {...cashflowVi,...settlementCloudVi}, auth: authVi, profile: profileVi, updates: updatesVi, management:managementVi, notifications:notificationsVi, reconciliation:reconciliationVi, forecastObservations:forecastObservationVi, accountDeletion:accountDeletionVi },
-  en: { name: "English", locale: "en-US", direction: "ltr", translation: en, common: commonEn, learning: learningEn, learningAi: learningAiEn, calendar: calendarEn, overview: overviewEn, transactions: {...transactionsEn,...transactionFormEn}, security: securityEn, cashflow: {...cashflowEn,...settlementCloudEn}, auth: authEn, profile: profileEn, updates: updatesEn, management:managementEn, notifications:notificationsEn, reconciliation:reconciliationEn, forecastObservations:forecastObservationEn, accountDeletion:accountDeletionEn },
+  vi: { name: "Tiếng Việt", locale: "vi-VN", direction: "ltr", translation: vi, common: commonVi, learning: learningVi, learningAi: learningAiVi, calendar: calendarVi, overview: overviewVi, transactions: {...transactionsVi,...transactionFormVi}, security: securityVi, cashflow: {...cashflowVi,...settlementCloudVi}, auth: authVi, profile: profileVi, updates: updatesVi, management:managementVi, notifications:notificationsVi, reconciliation:reconciliationVi, forecastObservations:forecastObservationVi, accountDeletion:accountDeletionVi, bills:billsVi },
+  en: { name: "English", locale: "en-US", direction: "ltr", translation: en, common: commonEn, learning: learningEn, learningAi: learningAiEn, calendar: calendarEn, overview: overviewEn, transactions: {...transactionsEn,...transactionFormEn}, security: securityEn, cashflow: {...cashflowEn,...settlementCloudEn}, auth: authEn, profile: profileEn, updates: updatesEn, management:managementEn, notifications:notificationsEn, reconciliation:reconciliationEn, forecastObservations:forecastObservationEn, accountDeletion:accountDeletionEn, bills:billsEn },
 } as const;
 export type AppLanguage = keyof typeof languages;
 export const languageCodes = Object.keys(languages) as AppLanguage[];

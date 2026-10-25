@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import { parseBillForm, billDateInput } from "@/features/bills/bill-form";
 import { TopAppBar , ChoiceChip, DangerAction, FieldLabel, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
 import { colors, radii } from "@picket/design-tokens";
 import type { BillStatus } from "@picket/domain";
@@ -11,11 +13,10 @@ import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
 import { useAuth } from "@/features/auth/auth-context";
 import { useBills } from "@/features/bills/bills-context";
 
-const statuses: { value: BillStatus; label: string }[] = [
-  { value: "pending", label: "Chờ thanh toán" }, { value: "paid", label: "Đã thanh toán" }, { value: "overdue", label: "Quá hạn" },
-];
+const statuses: BillStatus[] = ["pending", "paid", "overdue"];
 
 export default function BillDetailScreen() {
+  const { t } = useTranslation("bills");
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, localMode } = useAuth();
   const { archive, bills, update } = useBills();
@@ -31,36 +32,33 @@ export default function BillDetailScreen() {
   const selectedBill = bill;
   const currentTitle = title ?? bill.title;
   const currentAmount = amount ?? String(bill.amount);
-  const currentDueDate = dueDate ?? bill.dueAt.slice(0, 10);
+  const currentDueDate = dueDate ?? billDateInput(bill.dueAt);
   const currentStatus = status ?? bill.status;
 
   async function save() {
-    const parsedAmount = Number.parseInt(currentAmount, 10);
-    const dueAt = new Date(`${currentDueDate}T12:00:00`);
-    if (!currentTitle.trim()) return setMessage("Hãy nhập tên hóa đơn.");
-    if (!/^\d+$/.test(currentAmount) || parsedAmount <= 0) return setMessage("Số tiền phải lớn hơn 0.");
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(currentDueDate) || Number.isNaN(dueAt.getTime())) return setMessage("Ngày đến hạn không hợp lệ.");
+    const parsed = parseBillForm({ title: currentTitle, amount: currentAmount, dueDate: currentDueDate });
+    if ("error" in parsed) return setMessage(parsed.error);
     setBusy(true); setMessage(null);
-    try { await update(selectedBill.id, { expectedVersion: selectedBill.version, title: currentTitle.trim(), amount: parsedAmount, dueAt: dueAt.toISOString(), status: currentStatus }); router.replace(routes.bills); }
-    catch (caught) { if (isOfflineQueuedError(caught)) { router.replace(routes.bills); return; } setMessage("Không lưu được hóa đơn. Dữ liệu có thể đã thay đổi."); }
+    try { await update(selectedBill.id, { expectedVersion: selectedBill.version, ...parsed.value, status: currentStatus }); router.replace(routes.bills); }
+    catch (caught) { if (isOfflineQueuedError(caught)) { router.replace(routes.bills); return; } setMessage("saveFailed"); }
     finally { setBusy(false); }
   }
 
   function confirmArchive() {
-    Alert.alert("Lưu trữ hóa đơn?", "Hóa đơn sẽ được ẩn khỏi danh sách đang theo dõi.", [
-      { text: "Hủy", style: "cancel" }, { text: "Lưu trữ", style: "destructive", onPress: () => { setBusy(true); void archive(selectedBill.id, selectedBill.version).then(() => router.replace(routes.bills)).catch((caught: unknown) => { if (isOfflineQueuedError(caught)) { router.replace(routes.bills); return; } setMessage("Không lưu trữ được hóa đơn."); setBusy(false); }); } },
+    Alert.alert(t("archiveTitle"), t("archiveDescription"), [
+      { text: t("cancel"), style: "cancel" }, { text: t("confirmArchive"), style: "destructive", onPress: () => { setBusy(true); void archive(selectedBill.id, selectedBill.version).then(() => router.replace(routes.bills)).catch((caught: unknown) => { if (isOfflineQueuedError(caught)) { router.replace(routes.bills); return; } setMessage("archiveFailed"); setBusy(false); }); } },
     ]);
   }
 
   return <PicketScreen>
-    <TopAppBar title="Chi tiết hóa đơn" subtitle="Cập nhật trạng thái ngay sau khi bạn hoàn tất thanh toán." backDisabled={busy} />
+    <TopAppBar title={t("detail")} subtitle={t("detailSubtitle")} backDisabled={busy} />
     <Surface>
-      <FieldLabel>Tên hóa đơn</FieldLabel><TextInput accessibilityLabel="Tên hóa đơn" maxLength={160} onChangeText={setTitle} style={styles.input} value={currentTitle} />
-      <FieldLabel>Số tiền</FieldLabel><TextInput money accessibilityLabel="Số tiền hóa đơn" keyboardType="number-pad" onChangeText={setAmount} style={styles.input} value={currentAmount} />
-      <FieldLabel>Ngày đến hạn</FieldLabel><TextInput date accessibilityLabel="Ngày đến hạn" onChangeText={setDueDate} style={styles.input} value={currentDueDate} />
-      <FieldLabel>Trạng thái</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{statuses.map((item) => <ChoiceChip checked={currentStatus === item.value} key={item.value} label={item.label} onPress={() => setStatus(item.value)} />)}</View>
-      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text> : null}
-      <PrimaryAction busy={busy} label="Lưu thay đổi" onPress={() => void save()} /><DangerAction disabled={busy} label="Lưu trữ hóa đơn" onPress={confirmArchive} />
+      <FieldLabel>{t("name")}</FieldLabel><TextInput accessibilityLabel={t("name")} maxLength={160} onChangeText={setTitle} style={styles.input} value={currentTitle} />
+      <FieldLabel>{t("amount")}</FieldLabel><TextInput money accessibilityLabel={t("amountLabel")} keyboardType="number-pad" onChangeText={setAmount} style={styles.input} value={currentAmount} />
+      <FieldLabel>{t("dueDate")}</FieldLabel><TextInput date accessibilityLabel={t("dueDate")} onChangeText={setDueDate} style={styles.input} value={currentDueDate} />
+      <FieldLabel>{t("status")}</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{statuses.map((item) => <ChoiceChip checked={currentStatus === item} key={item} label={t(item)} onPress={() => setStatus(item)} />)}</View>
+      {message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{t(message)}</Text> : null}
+      <PrimaryAction busy={busy} label={t("save")} onPress={() => void save()} /><DangerAction disabled={busy} label={t("archive")} onPress={confirmArchive} />
     </Surface>
   </PicketScreen>;
 }

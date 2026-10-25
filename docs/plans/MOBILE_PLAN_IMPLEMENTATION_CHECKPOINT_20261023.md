@@ -6,6 +6,19 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Bills continuation (25 October): list/create/details now use vi/en copy for
+  labels, status, hints, archive confirmation, live validation and controlled
+  errors. List money/date formatting follows the selected language; stored user
+  titles remain unchanged. Shared form validation rejects impossible dates and
+  unsafe/nonpositive amounts before dispatch. Defaults/editing retain local
+  calendar dates rather than slicing UTC; round trips pass in Ho Chi Minh City,
+  Los Angeles and Kiritimati. All **664 mobile tests** pass, typecheck and Android
+  JS export pass, lint has 0 errors/25 preexisting warnings. Form helper coverage:
+  100% lines/functions, 93.55% branches. RED `61ab2e3`; logs
+  `.artifacts/mobile-bills-{complete-tests,types,lint,coverage,export}.log`.
+  Native layout, TalkBack and independent copy review remain pending; other
+  untranslated product surfaces are not marked complete.
+
 - Test discovery continuation: root `npm run test:mobile` now discovers every
   `src/**/*.test.ts` file through the Node runner with the existing tsx loader,
   instead of a hand-maintained directory list. The Expo CI job invokes this same
