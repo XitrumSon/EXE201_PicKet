@@ -6,6 +6,24 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Planning concurrency continuation (25 October): a synchronous operation lock
+  prevents rapid duplicate transfers and overlapping planning writes. Both month
+  arrows and previously captured navigation callbacks respect the lock. A read
+  generation discards responses started before a newer mutation. Owner/month
+  lifetime checks prevent late feedback, follow-up reads and stale native-close
+  confirmation dispatch; close checks the latest review/history/split readiness.
+  Method/transfer/close HTTP dispatch shares the existing owner retirement fence
+  and rechecks the current scope when its queued lease actually starts.
+  Seven callback-level tests reproduce rapid taps, late reads, changed owners,
+  revoked review confirmation, captured navigation, retired owners and queued
+  owner changes using real screen code with deterministic adapters. They do not
+  claim native rendering or cancellation of requests already sent to the server.
+  All **696 mobile tests** pass; typecheck/Android JS export pass; lint has
+  0 errors/24 existing warnings. RED `57c153a`, `e1cd265`; evidence
+  `.artifacts/mobile-planning-races-{tests,types,lint,export}.log`.
+  No production data, schema, billing or release gate was changed. Physical
+  device/server race acceptance and the broader product gates remain open.
+
 - Planning/shared-controls continuation (25 October): monthly planning controls,
   method names, close confirmation, transfer status/errors and budget summaries
   now have vi/en copy. Month/money formatting follows the selected language;

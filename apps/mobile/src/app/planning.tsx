@@ -1,10 +1,11 @@
+import { withLocalOwnerAccess } from "@/core/sync/offline-cache";
 import { useTranslation } from "react-i18next";
 import { formatMoney, localeFor, normalizeLanguage } from "@/core/i18n/formatters";
 import { parsePaymentAmount } from "@/core/forms/payment-form";
 import { colors } from "@picket/design-tokens";
 import { type BudgetMethod, type PlanningResponse } from "@picket/domain";
 import { Redirect } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import { Alert, StyleSheet, Switch, Text, View } from "react-native";
 
@@ -42,78 +43,96 @@ export default function PlanningScreen() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const selectedMonth = monthKey(month);
+  const scope=(session?.user.id??(localMode?"device-guest":"anonymous"))+":"+selectedMonth;
+  const currentScope=useRef<string|null>(scope),alive=useRef(true),operationBusy=useRef(false),readGeneration=useRef(0),closeAllowed=useRef(false);
+  useLayoutEffect(()=>{currentScope.current=scope;alive.current=true;return()=>{currentScope.current=null;alive.current=false;};},[scope]);
+  const isCurrent=()=>alive.current&&currentScope.current===scope;
   const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(transactions, selectedMonth);
   const planning: PlanningResponse | null = localMode ? {
     method: guest.data.planningMethod,
     periods: budgets.map((budget) => ({ budgetId: budget.id, month: selectedMonth, limit: guest.data.planningPeriods[`${selectedMonth}:${budget.id}`] ?? budget.defaultLimit, carriedAmount: 0 })),
     close: guest.data.planningCloses[selectedMonth] ?? null,
   } : cloudPlanning;
+  const canClose=Boolean(planning&&!planning.close&&selectedMonth<monthKey(new Date())&&checked&&!historyLoading&&!historyError&&!splitLoading&&!splitError);
+  useLayoutEffect(()=>{closeAllowed.current=canClose;},[canClose]);
   const monthly = transactions.filter((item) => item.occurredAt.slice(0, 7) === selectedMonth);
   const income = monthly.filter((item) => item.kind === "income").reduce((sum, item) => sum + item.amount, 0);
   const grossExpense = monthly.filter((item) => item.kind === "expense").reduce((sum, item) => sum + item.amount, 0);
   const refunds = monthly.filter((item) => item.kind === "refund").reduce((sum, item) => sum + item.amount, 0);
   const expense = grossExpense - refunds;
   useEffect(() => {
-    if (!session || !picketApi) return;
+    if (!session || !picketApi || operationBusy.current) return;
     let active = true;
+    const generation=++readGeneration.current;
     void picketApi.getPlanning(session.access_token, selectedMonth)
-      .then((value) => { if (active) { setPlanning(value); setMessage(null); } })
-      .catch(() => { if (active) setMessage("loadFailed"); });
+      .then((value) => { if (active&&generation===readGeneration.current&&currentScope.current===scope) { setPlanning(value); setMessage(null); } })
+      .catch(() => { if (active&&generation===readGeneration.current&&currentScope.current===scope) setMessage("loadFailed"); });
     return () => { active = false; };
-  }, [session, selectedMonth]);
+  }, [session, selectedMonth, scope]);
   if (!session && !localMode) return <Redirect href={routes.login} />;
   const limitOf = (id: string) => planning?.periods.find((item) => item.budgetId === id)?.limit ?? budgets.find((item) => item.id === id)?.defaultLimit ?? 0;
+  async function writeCloud<T>(write:()=>Promise<T>):Promise<T>{
+    if(!session)throw new Error("Missing planning owner");
+    return withLocalOwnerAccess(session.user.id,()=>{if(!isCurrent())throw new Error("Stale planning operation");return write();});
+  }
   async function changeMethod(method: BudgetMethod) {
-    if ((!localMode && !picketApi) || busy) return;
-    setBusy(true); setMessage(null);
+    if(operationBusy.current||!isCurrent())return;
+    if ((!localMode && !picketApi) || !planning || busy) return;
+    operationBusy.current=true;readGeneration.current++;setBusy(true);setMessage(null);
     try { if (localMode) await guest.commit({ type: "planning.method", value: method });
-      else { await picketApi!.setBudgetMethod(session!.access_token, method); setPlanning((current) => current ? { ...current, method } : current); } }
-    catch { setMessage("methodFailed"); }
-    finally { setBusy(false); }
+      else { await writeCloud(()=>picketApi!.setBudgetMethod(session!.access_token, method)); if(!isCurrent())return; setPlanning((current) => current ? { ...current, method } : current); } }
+    catch { if(isCurrent())setMessage("methodFailed"); }
+    finally { operationBusy.current=false;if(isCurrent())setBusy(false); }
   }
   async function transfer() {
+    if(operationBusy.current||!isCurrent())return;
+    if(!planning||planning.close||(localMode&&guest.loading))return;
     const parsedAmount=parsePaymentAmount(amount);
     if ((!localMode && !picketApi) || !source || !destination || source === destination || parsedAmount===null) { setMessage("invalidTransfer"); return; }
-    setBusy(true); setMessage(null);
+    operationBusy.current=true;readGeneration.current++;setBusy(true);setMessage(null);
     try { if (localMode) await guest.commit({ type: "planning.transfer", sourceBudgetId:source, destinationBudgetId:destination, month:selectedMonth, amount:parsedAmount });
-      else { await picketApi!.transferBudgetLimit(session!.access_token, { sourceBudgetId:source, destinationBudgetId:destination, month:selectedMonth, amount:parsedAmount }); setPlanning(await picketApi!.getPlanning(session!.access_token, selectedMonth)); }
+      else { await writeCloud(()=>picketApi!.transferBudgetLimit(session!.access_token, { sourceBudgetId:source, destinationBudgetId:destination, month:selectedMonth, amount:parsedAmount })); if(!isCurrent())return; const next=await picketApi!.getPlanning(session!.access_token, selectedMonth);if(!isCurrent())return;setPlanning(next); }
+      if(!isCurrent())return;
       setAmount(""); setMessage(localMode ? "deviceTransferSaved" : "transferSaved"); }
-    catch { setMessage("transferFailed"); }
-    finally { setBusy(false); }
+    catch { if(isCurrent())setMessage("transferFailed"); }
+    finally { operationBusy.current=false;if(isCurrent())setBusy(false); }
   }
   function confirmClose() {
-    if (planning?.close || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || historyError || splitLoading || splitError) return;
+    if (operationBusy.current||!isCurrent()||!planning||planning.close || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || historyError || splitLoading || splitError) return;
     Alert.alert(t("closeTitle"), t("closeDescription"), [
       { text:t("cancel"), style:"cancel" },
       { text:t("close"), onPress:() => void closeMonth() },
     ]);
   }
   async function closeMonth() {
-    if (!localMode && !picketApi) return;
-    setBusy(true); setMessage(null);
+    if(operationBusy.current||!isCurrent())return;
+    if ((!localMode && !picketApi) || !closeAllowed.current || selectedMonth>=monthKey(new Date())) return;
+    operationBusy.current=true;readGeneration.current++;setBusy(true);setMessage(null);
     try { if (localMode) await guest.commit({ type: "planning.close", value: { month:selectedMonth, closedAt:new Date().toISOString(), income, expense, note:note.trim(), rollover } });
-      else { await picketApi!.closeBudgetMonth(session!.access_token, { month:selectedMonth, rollover, note:note.trim() }); setPlanning(await picketApi!.getPlanning(session!.access_token, selectedMonth)); }
+      else { await writeCloud(()=>picketApi!.closeBudgetMonth(session!.access_token, { month:selectedMonth, rollover, note:note.trim() })); if(!isCurrent())return; const next=await picketApi!.getPlanning(session!.access_token, selectedMonth);if(!isCurrent())return;setPlanning(next); }
+      if(!isCurrent())return;
       setMessage(localMode ? "deviceClosed" : "monthClosed"); }
-    catch { setMessage("closeFailed"); }
-    finally { setBusy(false); }
+    catch { if(isCurrent())setMessage("closeFailed"); }
+    finally { operationBusy.current=false;if(isCurrent())setBusy(false); }
   }
   async function changeThreshold(id: string, percent: number) {
+    if(operationBusy.current||!isCurrent())return;
     const budget = budgets.find((item) => item.id === id);
     if (!budget || busy) return;
-    setBusy(true); setMessage(null);
+    operationBusy.current=true;readGeneration.current++;setBusy(true);setMessage(null);
     try { await updateBudget(id, { expectedVersion: budget.version, alertPercent: percent }); }
-    catch { setMessage("thresholdFailed"); }
-    finally { setBusy(false); }
+    catch { if(isCurrent())setMessage("thresholdFailed"); }
+    finally { operationBusy.current=false;if(isCurrent())setBusy(false); }
   }
   return <PicketScreen>
-    <TopAppBar title={t("title")} />
+    <TopAppBar title={t("title")} backDisabled={busy} />
     <Text style={styles.subtitle}>{localMode ? t("deviceSubtitle") : t("cloudSubtitle")}</Text>
     {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{t(message)}</Text>}
     <SectionTitle title={t("method")} />
-    <View style={styles.chips}>{methods.map(([value,label]) => <ChoiceChip checked={planning?.method === value} key={value} label={t(label)} disabled={busy} onPress={() => void changeMethod(value)} />)}</View>
+    <View style={styles.chips}>{methods.map(([value,label]) => <ChoiceChip checked={planning?.method === value} key={value} label={t(label)} disabled={busy||!planning} onPress={() => void changeMethod(value)} />)}</View>
     <Text style={styles.hint}>{t("methodHelp")}</Text>
     <SectionTitle title={t("viewingMonth")} />
-    <Surface><View style={styles.monthRow}><Pressable accessibilityLabel={t("previousMonth")} accessibilityRole="button" disabled={busy} onPress={() => { setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()-1,1)); }}><Text style={styles.arrow}>‹</Text></Pressable><Text style={styles.month}>{month.toLocaleDateString(localeFor(language),{month:"long",year:"numeric"})}</Text><Pressable accessibilityLabel={t("nextMonth")} accessibilityRole="button" onPress={() => { setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()+1,1)); }}><Text style={styles.arrow}>›</Text></Pressable></View></Surface>
+    <Surface><View style={styles.monthRow}><Pressable accessibilityLabel={t("previousMonth")} accessibilityRole="button" disabled={busy} onPress={() => { if(operationBusy.current||!isCurrent())return;setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()-1,1)); }}><Text style={styles.arrow}>‹</Text></Pressable><Text style={styles.month}>{month.toLocaleDateString(localeFor(language),{month:"long",year:"numeric"})}</Text><Pressable accessibilityLabel={t("nextMonth")} accessibilityRole="button" disabled={busy} onPress={() => { if(operationBusy.current||!isCurrent())return;setPlanning(null); setChecked(false); setMonth((current) => new Date(current.getFullYear(), current.getMonth()+1,1)); }}><Text style={styles.arrow}>›</Text></Pressable></View></Surface>
     <SectionTitle title={t("overview")} />
     <Surface><Text style={styles.title}>{t("incomeExpense",{income:historyLoading||historyError?"—":money(income),expense:historyLoading||historyError?"—":money(expense)})}</Text>
       {historyError && <Text style={styles.message}>{t("historyUnavailable")}</Text>}
@@ -131,7 +150,7 @@ export default function PlanningScreen() {
       <PrimaryAction busy={busy} disabled={guest.loading && localMode || Boolean(planning?.close) || !planning} label={t("transfer")} onPress={() => void transfer()} />
     </Surface>}
     <SectionTitle title={t("closeSection")} />
-    <Surface><View style={styles.monthRow}><Text style={styles.title}>{t("reviewed")}</Text><Switch accessibilityLabel={t("reviewed")} hitSlop={12} onValueChange={setChecked} value={checked} /></View><View style={styles.monthRow}><Text style={styles.title}>{t("rollover")}</Text><Switch accessibilityLabel={t("rollover")} hitSlop={12} onValueChange={setRollover} value={rollover} /></View><Text style={styles.label}>{t("note")}</Text><TextInput accessibilityLabel={t("note")} editable={!busy} onChangeText={setNote} style={styles.input} value={note} /><PrimaryAction busy={busy} disabled={!planning || Boolean(planning.close) || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || Boolean(historyError) || splitLoading || Boolean(splitError)} label={t("close")} onPress={confirmClose} /></Surface>
+    <Surface><View style={styles.monthRow}><Text style={styles.title}>{t("reviewed")}</Text><Switch accessibilityLabel={t("reviewed")} hitSlop={12} disabled={busy} onValueChange={setChecked} value={checked} /></View><View style={styles.monthRow}><Text style={styles.title}>{t("rollover")}</Text><Switch accessibilityLabel={t("rollover")} hitSlop={12} disabled={busy} onValueChange={setRollover} value={rollover} /></View><Text style={styles.label}>{t("note")}</Text><TextInput accessibilityLabel={t("note")} editable={!busy} onChangeText={setNote} style={styles.input} value={note} /><PrimaryAction busy={busy} disabled={!planning || Boolean(planning.close) || selectedMonth >= monthKey(new Date()) || !checked || historyLoading || Boolean(historyError) || splitLoading || Boolean(splitError)} label={t("close")} onPress={confirmClose} /></Surface>
   </PicketScreen>;
 }
 

@@ -24,6 +24,7 @@ function harness() {
   let session = { user: { id: "owner-A" }, access_token: "synthetic-A" };
   let getPlanning = async (_token: string, month: string) => plan(month);
   let transfer = async () => {};
+  let fenceWait: Promise<void> = Promise.resolve();
   let confirm: (() => void) | undefined;
   const useState = (initial: unknown) => {
     const index = cursor++; if (!(index in slots)) slots[index] = typeof initial === "function" ? initial() : initial;
@@ -46,7 +47,7 @@ function harness() {
     "@/core/i18n/formatters": { formatMoney, localeFor, normalizeLanguage },
     "@/core/forms/payment-form": { parsePaymentAmount },
     "@/core/sync/offline-cache": { withLocalOwnerAccess: async (owner: string, operation: () => Promise<unknown>) => {
-      assert.equal(owner, session.user.id); if (state.retired) throw Error("Retired owner"); return operation();
+      assert.equal(owner, session.user.id); await fenceWait; if (state.retired) throw Error("Retired owner"); return operation();
     } },
     "@/features/auth/auth-context": { useAuth: () => ({ session, localMode: false }) },
     "@/core/local/guest-finance-context": { useGuestFinance: () => ({ data: {}, loading: false }) },
@@ -79,6 +80,7 @@ function harness() {
   }
   return { state, render, find, selectTransfer,
     setGet: (value: typeof getPlanning) => { getPlanning = value; }, setTransfer: (value: typeof transfer) => { transfer = value; },
+    setFenceWait: (value: Promise<void>) => { fenceWait = value; },
     switchSession: (owner: string) => { state.owner = owner; session = { user: { id: owner }, access_token: `synthetic-${owner}` }; },
     confirmClose: () => { assert.ok(confirm); confirm(); },
   };
@@ -155,4 +157,12 @@ test("planning write dispatch shares the owner retirement fence for transfers, m
     await settle();
     assert.equal(app.state.transfers + app.state.methods + app.state.closes, 0, action);
   }
+});
+
+test("an owner change while a planning write waits for its lease prevents transport dispatch", async () => {
+  const app = harness(); app.render(); await settle(); app.selectTransfer();
+  const held = deferred<void>(); app.setFenceWait(held.promise);
+  (app.find("PrimaryAction", "Transfer limit").props.onPress as () => void)();
+  app.switchSession("owner-B"); app.render();
+  held.resolve(); await settle(); assert.equal(app.state.transfers, 0);
 });
