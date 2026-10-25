@@ -6,6 +6,19 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Recurring expense continuation (25 October): list/create/details now use vi/en
+  labels, cadence names, local date/money formatting, accessible field labels,
+  archive prompts and controlled errors; reminder text has English singular/
+  plural forms. User expense/wallet/category names and notes remain verbatim.
+  Creation validates real calendar days, title/note length, supported cadence,
+  reminder days 0–365 and the API's 9,000,000,000,000 money cap before dispatch.
+  Bills reuse the common payment validator and now enforce that same API cap.
+  All **668 mobile tests** pass; typecheck/Android JS export pass; lint has
+  0 errors/25 preexisting warnings. Shared payment/subscription helper coverage
+  is 100% lines/functions and 94.92% branches. RED `df7454e`; evidence
+  `.artifacts/mobile-recurring-{complete-tests,types,lint,coverage,export}.log`.
+  This does not include native layout/TalkBack or independent language review.
+
 - Bills continuation (25 October): list/create/details now use vi/en copy for
   labels, status, hints, archive confirmation, live validation and controlled
   errors. List money/date formatting follows the selected language; stored user
