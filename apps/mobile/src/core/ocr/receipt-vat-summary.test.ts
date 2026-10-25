@@ -43,3 +43,17 @@ test("a VAT summary accepts zero tax and decimal currency suffixes", () => {
     line.text === "162.000" ? {...line, text: "150.000,00"} : line);
   assert.equal(parseReceiptLines(lines).amount, 150000);
 });
+
+
+test("table border strokes around VAT labels do not discard the payment summary", () => {
+  const lines = invoice().map(line => /Tiền|Tổng cộng/.test(line.text) ? {...line, text: `|${line.text}|`} : line);
+  const result = parseReceiptLines(lines);
+  assert.equal(result.amount, 162000);
+  assert.equal(canAttachReceipt(result), true);
+  assert.equal(parseReceiptText(result.rawText).amount, 162000);
+});
+
+test("extra words on a VAT label are not stripped to fabricate a recognized heading", () => {
+  const lines = invoice().map(line => line.text === "Tiền thuế:" ? {...line, text: "Tạm tính Tiền thuế:"} : line);
+  assert.notEqual(parseReceiptLines(lines).amount, 162000);
+});

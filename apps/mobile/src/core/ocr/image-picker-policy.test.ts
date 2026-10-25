@@ -9,9 +9,9 @@ describe("receipt image picker policy", () => {
     assert.equal("aspect" in receiptImagePickerOptions, false);
   });
 
-  it("selects images at a practical OCR quality", () => {
+  it("preserves source quality so small invoice text is not recompressed before OCR", () => {
     assert.deepEqual(receiptImagePickerOptions.mediaTypes, ["images"]);
-    assert.equal(receiptImagePickerOptions.quality, 0.8);
+    assert.equal(receiptImagePickerOptions.quality, 1);
     assert.equal(receiptImagePickerOptions.exif, false);
   });
 });
