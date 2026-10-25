@@ -5,7 +5,7 @@ import { ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { formatCalendarDate, localeFor } from "@/core/i18n/formatters";
+import { formatCalendarDate, localCalendarDay, localeFor } from "@/core/i18n/formatters";
 import { guestOwnerId } from "@/core/local/guest-finance";
 import { useAuth } from "@/features/auth/auth-context";
 import { useAppTheme } from "@/features/settings/appearance-provider";
@@ -49,7 +49,7 @@ function Scenario({owner}:{owner:string}){
     if(manualSyncRequests.current.signal.aborted)manualSyncRequests.current=new AbortController();
     return()=>manualSyncRequests.current.abort();
   },[]);
-  const [start,setStart]=useState(()=>new Date().toISOString().slice(0,10));
+  const [start,setStart]=useState(()=>localCalendarDay());
   const [scheduleDay,setScheduleDay]=useState(start);
   const [endDay,setEndDay]=useState("");
   const [enabled,setEnabled]=useState(true);

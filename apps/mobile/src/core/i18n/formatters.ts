@@ -5,6 +5,10 @@ export function normalizeLanguage(locale?: string | null): AppLanguage {
   return languageCodes.find(code => code === base) ?? "vi";
 }
 export const localeFor = (language: AppLanguage) => languages[language].locale;
+export function localCalendarDay(date: Date = new Date()): string {
+  if (!Number.isFinite(date.getTime())) throw new Error("Invalid calendar date");
+  return `${String(date.getFullYear()).padStart(4, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
 export function formatMoney(amount: number, language: AppLanguage, currency: string): string {
   if (!Number.isFinite(amount) || !/^[A-Z]{3}$/.test(currency)) throw new Error("Invalid money value");
   return new Intl.NumberFormat(localeFor(language), { style: "currency", currency }).format(amount);
