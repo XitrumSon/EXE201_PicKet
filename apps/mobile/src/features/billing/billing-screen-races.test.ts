@@ -44,3 +44,6 @@ test("an older entitlement read cannot overwrite a newer restored plan",async()=
 test("an older entitlement read failure cannot hide a newer restored plan",async()=>{
  const app=harness();let reject!:(error:Error)=>void;const held=new Promise((_done,fail)=>{reject=fail;});app.setEntitlementRead(()=>held);app.restore()();app.setEntitlementRead(async()=>({tier:"plus",ocrFallbackRemaining:10,ocrFallbackDailyLimit:10}));app.release();await settle();assert.ok(app.viewText().includes("current:PLUS"));reject(Error("Old read failed"));await settle();assert.ok(app.viewText().includes("current:PLUS"));
 });
+test("a failed plan refresh after verification reports refresh failure",async()=>{
+ const app=harness();app.restore()();app.setEntitlementRead(async()=>{throw Error("Offline");});app.release();await settle();assert.equal(app.verified(),1);assert.ok(app.viewText().includes("refreshError"));assert.ok(!app.viewText().includes("restoreFailed"));
+});
