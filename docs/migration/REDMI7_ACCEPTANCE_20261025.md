@@ -80,3 +80,30 @@ that purchasedAt and completion routes to its month. Tests cover differing month
 invalid dates and America/Los_Angeles; full mobile 786/786, hook lint/typecheck
 passed. Existing saved receipts are not rewritten. Native re-test on a build with
 these commits remains required.
+
+## Code 8 regression, 26 October 2026
+
+ADB confirms the owner updated Redmi to version 1.0.4 / code 8. The owner reports
+“Không nhận diện được hóa đơn hợp lệ” for a VAT table invoice. The native Latin
+ML Kit 16.0.1 diagnostic on the selected photo produced 109 lines. The unchanged
+parser found no payable total or valid date, so the eligibility guard rejected it.
+This is a confirmed code 8 failure, not an outdated-installation explanation.
+
+A separate local Android diagnostic was built under the ignored
+`.artifacts/ocr-code8-diagnostic/` directory. MIUI rejected installation on Redmi;
+it ran instead on a local Android 35 emulator, using the pulled photo and the
+same bundled OCR library. No real receipt photo or recognized personal text was
+committed or sent to a cloud OCR service. The emulator was stopped afterward.
+
+RED `03793c10`, GREEN `35c6d6a6` reproduce and fix the skewed VAT summary using
+fictional test data. The fix requires explicit goods/tax/payable labels and a
+single total column with exactly three numeric cells; goods plus tax must match
+the payable amount. Inconsistent or ambiguous summaries remain unaccepted.
+Canonical payable text survives draft re-parsing. The local photo result now
+has a payable total, passes eligibility and retains the same total on reparse.
+Validation: 791/791 mobile tests; commit-hook lint and typecheck passed.
+
+The same photo still has no valid OCR date and incomplete product extraction.
+Neither has been accepted. Build 9 is a targeted rejection fix; it does not
+establish full OCR acceptance. Device regression must check the review flow,
+missing-date warning and total before saving anything.
