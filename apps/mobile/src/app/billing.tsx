@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+import type { billingVi } from "@/core/i18n/billing-resources";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { radii } from "@/core/ui/mobile-palette";
@@ -37,29 +39,29 @@ import {
   verifyAndFinishPurchase,
 } from "@/features/billing/billing-policy";
 
-const planCopy: Record<
+const planKeys: Record<
   PicketSubscriptionId,
   { name: string; cadence: string; summary: string }
 > = {
   picket_plus_monthly: {
     name: "Picket Plus",
-    cadence: "hàng tháng",
-    summary: "Tăng hạn mức OCR cloud và giữ đầy đủ tính năng đồng bộ.",
+    cadence: "monthly",
+    summary: "plusMonthly",
   },
   picket_plus_yearly: {
     name: "Picket Plus",
-    cadence: "hàng năm",
-    summary: "Gói Plus theo năm, quản lý trực tiếp qua Google Play.",
+    cadence: "yearly",
+    summary: "plusYearly",
   },
   picket_pro_monthly: {
     name: "Picket Pro",
-    cadence: "hàng tháng",
-    summary: "Hạn mức OCR cloud cao nhất cho nhu cầu sử dụng thường xuyên.",
+    cadence: "monthly",
+    summary: "proMonthly",
   },
   picket_pro_yearly: {
     name: "Picket Pro",
-    cadence: "hàng năm",
-    summary: "Gói Pro theo năm, phù hợp người dùng dài hạn.",
+    cadence: "yearly",
+    summary: "proYearly",
   },
 };
 
@@ -72,9 +74,10 @@ export default function BillingScreen() {
 
 function BillingContent({ accessToken, userId }: { accessToken: string; userId: string }) {
   const { colors, styles } = useMobileStyles(createStyles);
+  const { t } = useTranslation("billing");
   const [busyProduct, setBusyProduct] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{key:keyof typeof billingVi;tier?:string} | null>(null);
   const [success, setSuccess] = useState(false);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
   const [availability, setAvailability] = useState<{ token: string; ready: boolean } | null>(null);
@@ -99,12 +102,12 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       setSuccess(false);
       setMessage(
         error.code === "user-cancelled"
-          ? "Bạn đã đóng cửa sổ thanh toán."
-          : "Google Play chưa hoàn tất giao dịch. Vui lòng thử lại.",
+          ? {key:"cancelled"}
+          : {key:"purchaseError"},
       );
     },
     onError: () => {
-      setMessage("Không kết nối được Google Play Billing.");
+      setMessage({key:"connectionError"});
     },
   });
 
@@ -155,7 +158,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     processingTokens.current.add(token);
     setBusyProduct(purchase.productId);
     setSuccess(false);
-    setMessage("Đang xác minh giao dịch an toàn với Google Play…");
+    setMessage({key:"verifying"});
     try {
       const api = picketApi;
       if (!api) throw new Error("Chưa kích hoạt được gói. Hãy thử lại sau.");
@@ -168,16 +171,14 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       setSuccess(true);
       setMessage(
         result.active
-          ? `Đã kích hoạt gói ${result.tier.toUpperCase()}.`
-          : "Giao dịch hợp lệ nhưng gói đã hết hạn.",
+          ? {key:"activated",tier:result.tier.toUpperCase()}
+          : {key:"expired"},
       );
       return true;
-    } catch (error) {
+    } catch {
       setSuccess(false);
       setMessage(
-        error instanceof Error
-          ? error.message
-          : "Không thể xác minh giao dịch. Google Play sẽ giữ giao dịch để thử lại.",
+        {key:"verifyError"},
       );
       return false;
     } finally {
@@ -189,14 +190,14 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   async function purchase(product: ProductSubscription) {
     if (Platform.OS !== "android" || product.platform !== "android") return;
     if(!canStartPlayPurchase(Platform.OS,connected,{newPurchasesEnabled:storeReady})) {
-      setSuccess(false);setMessage("Cửa hàng chưa sẵn sàng. Chưa thể bắt đầu mua gói mới.");return;
+      setSuccess(false);setMessage({key:"notReady"});return;
     }
     const offerToken = product.subscriptionOffers.find(
       (offer) => typeof offer.offerTokenAndroid === "string",
     )?.offerTokenAndroid;
     if (!offerToken) {
       setSuccess(false);
-      return setMessage("Google Play chưa trả về ưu đãi hợp lệ cho gói này.");
+      return setMessage({key:"offerMissing"});
     }
     setBusyProduct(product.id);
     setSuccess(false);
@@ -216,9 +217,9 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
         },
         type: "subs",
       });
-    } catch (error) {
+    } catch {
       setBusyProduct(null);
-      setMessage(error instanceof Error ? error.message : "Không mở được Google Play.");
+      setMessage({key:"openError"});
     }
   }
 
@@ -235,19 +236,19 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
         (item) => isPicketSubscriptionId(item.productId) && item.purchaseToken,
       );
       if (eligible.length === 0) {
-        setMessage("Không tìm thấy gói Picket đang hoạt động trên tài khoản Google Play này.");
+        setMessage({key:"restoreEmpty"});
         return;
       }
       const restored = await verifyRestoredPurchases(eligible, verifyStorePurchase);
       await refreshEntitlements();
       setSuccess(restored.failed === 0 && restored.verified > 0);
       setMessage(restored.failed === 0
-        ? "Đã xác minh và đồng bộ giao dịch từ Google Play. Xem trạng thái gói hiện tại bên dưới."
+        ? {key:"restoreSuccess"}
         : restored.verified > 0
-          ? "Một số giao dịch chưa xác minh được. Hãy kiểm tra tài khoản và thử khôi phục lại."
-          : "Chưa xác minh được giao dịch nào. Gói chưa được khôi phục; hãy kiểm tra kết nối và tài khoản rồi thử lại.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Không thể khôi phục giao dịch.");
+          ? {key:"restorePartial"}
+          : {key:"restoreFailed"});
+    } catch {
+      setMessage({key:"restoreError"});
     } finally {
       setRestoring(false);
     }
@@ -261,7 +262,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       });
     } catch {
       setSuccess(false);
-      setMessage("Không mở được trang quản lý gói Google Play.");
+      setMessage({key:"manageError"});
     }
   }
 
@@ -274,39 +275,40 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
-        {!storeReady && <Text accessibilityLiveRegion="polite" style={{color:colors.muted}}>{checkingStore ? "Đang kiểm tra cửa hàng…" : "Cửa hàng chưa sẵn sàng. Chưa thể bắt đầu mua gói mới."}</Text>}
+        {!storeReady && <Text accessibilityLiveRegion="polite" style={{color:colors.muted}}>{t(checkingStore ? "checking" : "notReady")}</Text>}
         <Pressable onPress={() => router.back()}>
-          <Text style={styles.back}>‹ Quay lại hồ sơ</Text>
+          <Text style={styles.back}>{t("back")}</Text>
         </Pressable>
-        <Text accessibilityRole="header" style={styles.title}>Gói Picket</Text>
+        <Text accessibilityRole="header" style={styles.title}>{t("title")}</Text>
         <Text style={styles.description}>
-          Thanh toán an toàn qua Google Play. Gói của bạn được kích hoạt sau khi thanh toán được xác nhận.
+          {t("description")}
         </Text>
 
         {entitlements && (
           <View style={styles.currentPlan}>
-            <Text style={styles.currentPlanTitle}>Gói hiện tại: {entitlements.tier.toUpperCase()}</Text>
+            <Text style={styles.currentPlanTitle}>{t("current",{tier:entitlements.tier.toUpperCase()})}</Text>
             <Text style={styles.currentPlanText}>
-              OCR cloud còn {entitlements.ocrFallbackRemaining}/{entitlements.ocrFallbackDailyLimit} lượt trong 24 giờ.
+              {t("quota",{remaining:entitlements.ocrFallbackRemaining,limit:entitlements.ocrFallbackDailyLimit})}
             </Text>
           </View>
         )}
 
         {Platform.OS !== "android" ? (
-          <Text style={styles.notice}>Thanh toán trong ứng dụng hiện chỉ hỗ trợ Android.</Text>
+          <Text style={styles.notice}>{t("androidOnly")}</Text>
         ) : !connected ? (
           <View style={styles.loadingRow}>
-            <ActivityIndicator accessibilityLabel="Đang kết nối Google Play" color={colors.mauve} />
-            <Text style={styles.notice}>Đang kết nối Google Play…</Text>
+            <ActivityIndicator accessibilityLabel={t("connecting")} color={colors.mauve} />
+            <Text style={styles.notice}>{t("connecting")}</Text>
           </View>
         ) : orderedProducts.length === 0 ? (
           <Text style={styles.notice}>
-            Chưa tải được bảng giá. Hãy kiểm tra kết nối và dùng bản cài từ Google Play để mua hoặc khôi phục gói.
+            {t("pricesUnavailable")}
           </Text>
         ) : (
           orderedProducts.map((product) => {
             if (!isPicketSubscriptionId(product.id)) return null;
-            const copy = planCopy[product.id];
+            const keys = planKeys[product.id];
+            const copy = {name:keys.name,cadence:t(keys.cadence),summary:t(keys.summary)};
             const displayPrice =
               product.subscriptionOffers?.find((offer) => offer.offerTokenAndroid)?.displayPrice ??
               product.displayPrice;
@@ -321,15 +323,15 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
                 </View>
                 <Text style={styles.planSummary}>{copy.summary}</Text>
                 <Pressable
-                  accessibilityLabel={`Chọn ${copy.name} ${copy.cadence}`}
+                  accessibilityLabel={t("chooseLabel",{name:copy.name,cadence:copy.cadence})}
                   disabled={!storeReady || !connected || busyProduct !== null || restoring}
                   onPress={() => void purchase(product)}
                   style={styles.primary}
                 >
                   {busyProduct === product.id ? (
-                    <ActivityIndicator accessibilityLabel={`Đang mua ${copy.name} ${copy.cadence}`} color={colors.onPrimary} />
+                    <ActivityIndicator accessibilityLabel={t("buyingLabel",{name:copy.name,cadence:copy.cadence})} color={colors.onPrimary} />
                   ) : (
-                    <Text style={styles.primaryText}>Chọn gói</Text>
+                    <Text style={styles.primaryText}>{t("choose")}</Text>
                   )}
                 </Pressable>
               </View>
@@ -339,7 +341,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
 
         {message && (
           <Text accessibilityLiveRegion="polite" style={success ? styles.success : styles.error}>
-            {message}
+            {t(message.key,{tier:message.tier})}
           </Text>
         )}
         <Pressable
@@ -347,17 +349,17 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           onPress={() => void restore()}
           style={styles.secondary}
         >
-          {restoring ? <ActivityIndicator accessibilityLabel="Đang khôi phục giao dịch Google Play" color={colors.mauve} /> : <Text style={styles.secondaryText}>Khôi phục giao dịch</Text>}
+          {restoring ? <ActivityIndicator accessibilityLabel={t("restoring")} color={colors.mauve} /> : <Text style={styles.secondaryText}>{t("restore")}</Text>}
         </Pressable>
         <Pressable
           disabled={Platform.OS !== "android"}
           onPress={() => void manageSubscription()}
           style={styles.linkButton}
         >
-          <Text style={styles.linkText}>Quản lý hoặc hủy gói trên Google Play</Text>
+          <Text style={styles.linkText}>{t("manage")}</Text>
         </Pressable>
         <Text style={styles.footnote}>
-          Không nhập thông tin thẻ vào Picket. Hoàn tiền và hủy gia hạn được xử lý theo chính sách Google Play.
+          {t("footnote")}
         </Text>
       </ScrollView>
     </SafeAreaView>
