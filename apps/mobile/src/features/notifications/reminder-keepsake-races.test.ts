@@ -12,7 +12,7 @@ function harness(){
  vm.runInNewContext(ts.transpileModule(code,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText,{
   session:{user:{id:"A"},access_token:"synthetic"},useEffect:(fn:()=>()=>void)=>{cleanup=fn();},listKeepsakes:async()=>[],
   picketApi:{listKeepsakes:()=>{const request=held<{keepsakes:unknown[]}>();requests.push(request);return request.promise;}},
-  onKeepsakesChanged:(fn:(owner:string)=>void)=>{changed=fn;return ()=>{};},onCloudKeepsakesChanged:()=>()=>{},setKeepsakes:(value:unknown[])=>{rows.push(value);},
+  onKeepsakesChanged:(fn:(owner:string)=>void)=>{changed=fn;return ()=>{};},onCloudKeepsakesChanged:()=>()=>{},setKeepsakes:(value:{items:unknown[]})=>{rows.push(value.items);},
  });
  return {requests,rows,changed:(owner="A")=>changed(owner),stop:()=>cleanup()};
 }

@@ -38,7 +38,8 @@ export default function NotificationsScreen() {
   const month = calendar.month;
   const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(transactions, month);
   const { periodLimits, periodsReady } = useReminderPeriods(budgets, month);
-  const [keepsakes, setKeepsakes] = useState<Keepsake[]>([]);
+  const [loadedKeepsakes, setKeepsakes] = useState<{owner:string;items:Keepsake[]} | null>(null);
+  const keepsakes = useMemo(() => loadedKeepsakes?.owner === ownerId ? loadedKeepsakes!.items : [], [loadedKeepsakes,ownerId]);
   const [enabled, setEnabled] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [read, setRead] = useState<string[]>([]);
@@ -69,7 +70,7 @@ export default function NotificationsScreen() {
       remindersEnabled(ownerId),
       readReminderIds(ownerId),
     ])
-      .then(([items, setting, ids]) => { if (current()) { setKeepsakes(items); setEnabled(setting); setRead(ids); setBusy(false);setMessage(null); } })
+      .then(([items, setting, ids]) => { if (current()) { setKeepsakes({owner:ownerId,items}); setEnabled(setting); setRead(ids); setBusy(false);setMessage(null); } })
       .catch(() => { if (current()) {setBusy(false);setMessage("Không tải được cài đặt thông báo trên thiết bị.");} })
       .finally(() => { if (current()) setSettingsLoading(false); });
     return () => { active = false; };

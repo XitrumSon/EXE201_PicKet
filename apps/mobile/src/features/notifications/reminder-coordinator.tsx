@@ -25,17 +25,20 @@ export function ReminderCoordinator() {
   const month = calendar.month;
   const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(history, month);
   const { periodLimits, periodsReady } = useReminderPeriods(budgets, month);
-  const [keepsakes, setKeepsakes] = useState<Keepsake[]>([]);
+  const [loadedKeepsakes, setKeepsakes] = useState<{owner: string; items: Keepsake[]} | null>(null);
+  const keepsakes = useMemo(() => loadedKeepsakes?.owner === session?.user.id ? loadedKeepsakes!.items : [], [loadedKeepsakes,session?.user.id]);
   useEffect(() => {
     if (!session) return;
     const userId = session.user.id;
     let active = true;
+    let generation = 0;
     const reload = () => {
+      const request = ++generation;
       void Promise.all([
         listKeepsakes(userId),
         picketApi?.listKeepsakes(session.access_token).then((result) => result.keepsakes).catch(() => []) ?? Promise.resolve([]),
       ]).then(([local, remote]) => {
-        if (!active) return;
+        if (!active || request !== generation) return;
         const cloud: Keepsake[] = remote.map((item) => ({
           id: item.id, userId, title: item.title, amount: item.amount,
           date: item.purchasedAt, note: item.note, category: item.category,
@@ -43,7 +46,7 @@ export function ReminderCoordinator() {
           photoUri: null,
         }));
         const remoteIds = new Set(cloud.map((item) => item.id));
-        setKeepsakes([...cloud, ...local.filter((item) => !remoteIds.has(item.id))]);
+        setKeepsakes({owner:userId,items:[...cloud, ...local.filter((item) => !remoteIds.has(item.id))]});
       }).catch(() => undefined);
     };
     reload();
