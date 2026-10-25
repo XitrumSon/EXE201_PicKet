@@ -20,7 +20,7 @@ export function ReminderCoordinator() {
   const { budgets } = useBudgets();
   const { subscriptions } = useSubscriptions();
   const { transactions: history, loading: historyLoading, error: historyError, refresh: refreshHistory } = useTransactionHistory();
-  const month = new Date().toISOString().slice(0, 7);
+  const month = String(new Date().getFullYear()) + "-" + String(new Date().getMonth() + 1).padStart(2, "0");
   const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(history, month);
   const { periodLimits, periodsReady } = useReminderPeriods(budgets, month);
   const [keepsakes, setKeepsakes] = useState<Keepsake[]>([]);

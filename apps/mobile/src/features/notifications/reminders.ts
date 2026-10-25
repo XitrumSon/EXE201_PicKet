@@ -103,7 +103,7 @@ export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceS
       if (Number.isFinite(due) && due >= now) notices.push({ id:`${kind}:${item.id}:${iso}`, label:reminderLabel(kind,item.title,iso,language), dueAt:iso, notifyAt:notifyDate(`${iso}T12:00:00`, kind === "return" ? 1 : 7) });
     }
   }
-  const month = new Date().toISOString().slice(0, 7);
+  const month = String(new Date().getFullYear()) + "-" + String(new Date().getMonth() + 1).padStart(2, "0");
   for (const budget of budgetWarnings({ ...input, month })) {
     notices.push({ id:`budget:${budget.id}:${month}`, label:reminderLabel("budget",budget.name,new Date().toISOString(),language), dueAt:new Date().toISOString(), notifyAt:null });
   }

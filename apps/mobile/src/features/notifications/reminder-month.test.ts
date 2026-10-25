@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
 import vm from "node:vm";
-import ts from "typescript";
 test("all reminder consumers select the local calendar month at a UTC boundary",()=>{
  const RealDate=Date;
  class BoundaryDate extends RealDate {constructor(){super("2026-09-30T18:00:00Z");}getFullYear(){return 2026;}getMonth(){return 9;}}

@@ -38,7 +38,7 @@ export default function NotificationsScreen() {
   const { budgets } = useBudgets();
   const { subscriptions } = useSubscriptions();
   const { transactions, loading: historyLoading, error: historyError } = useTransactionHistory();
-  const month = new Date().toISOString().slice(0, 7);
+  const month = String(new Date().getFullYear()) + "-" + String(new Date().getMonth() + 1).padStart(2, "0");
   const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(transactions, month);
   const { periodLimits, periodsReady } = useReminderPeriods(budgets, month);
   const [keepsakes, setKeepsakes] = useState<Keepsake[]>([]);
