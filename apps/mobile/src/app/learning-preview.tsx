@@ -28,7 +28,7 @@ export default function LearningPreview() {
 function LearningSession({ owner }: { owner: string }) {
   const { session, localMode } = useAuth();
   const attemptKey = useRef<{signature:string;key:string} | null>(null);
-  const alive = useRef(true), operationBusy = useRef(false);
+  const alive = useRef(true), operationBusy = useRef(false), progressRead = useRef(0);
   useEffect(() => { alive.current=true;return () => {alive.current=false;}; },[owner]);
   const canInteract = () => alive.current && !operationBusy.current;
   const { colors: c, language } = useAppTheme();
@@ -46,12 +46,19 @@ function LearningSession({ owner }: { owner: string }) {
   const [reviews,setReviews]=useState<Awaited<ReturnType<typeof learningProgress.dueReviews>>>([]);
   useEffect(()=>{
     let active=true;
-    const stop=learningProgress.subscribe(owner,()=>{void learningProgress.load(owner).then(value=>{if(active)setProgress(value);}).catch(()=>{if(active)setStorageError(true);});});
+    const stop=learningProgress.subscribe(owner,()=>{
+      const request=++progressRead.current;
+      void learningProgress.load(owner).then(value=>{if(active && request===progressRead.current)setProgress(value);}).catch(()=>{if(active && request===progressRead.current)setStorageError(true);});
+    });
     return()=>{active=false;stop();};
   },[owner]);
   useEffect(()=>{
     let active=true;
-    const refresh=()=>{void learningProgress.dueReviews(owner,new Date().toISOString().slice(0,10)).then(value=>{if(active)setReviews(value);}).catch(()=>{if(active)setStorageError(true);});};
+    let generation=0;
+    const refresh=()=>{
+      const request=++generation;
+      void learningProgress.dueReviews(owner,new Date().toISOString().slice(0,10)).then(value=>{if(active && request===generation)setReviews(value);}).catch(()=>{if(active && request===generation)setStorageError(true);});
+    };
     refresh();
     const subscription=AppState.addEventListener("change",state=>{if(state==="active")refresh();});
     const timer=setInterval(refresh,60000);
@@ -59,9 +66,10 @@ function LearningSession({ owner }: { owner: string }) {
   },[owner,progress]);
   useEffect(() => {
     let active = true;
+    const request=++progressRead.current;
     void Promise.all([learningProgress.load(owner), learningDrafts.load(owner)]).then(([value,draft]) => {
       if (!active) return;
-      setProgress(value);
+      if(request===progressRead.current)setProgress(value);
       if (draft) {
         setLessonIndex(curriculumForLanguage("vi").lessons.findIndex(row => row.lessonId === draft.lessonId));
         setAnswers(Object.fromEntries(draft.answers.flatMap((answer,i) => answer === null ? [] : [[i,answer]])));
@@ -82,9 +90,10 @@ function LearningSession({ owner }: { owner: string }) {
   async function retryStorage() {
     if(!canInteract())return;
     operationBusy.current=true;setSaving(true);
+    const request=++progressRead.current;
     try {
       const [value,draft]=await Promise.all([learningProgress.load(owner),learningDrafts.load(owner)]);
-      if(!alive.current)return;
+      if(!alive.current || request!==progressRead.current)return;
       setProgress(value);
       // After hydration, current answers may be newer than the stored draft.
       if(!draftReady && draft){
@@ -92,7 +101,7 @@ function LearningSession({ owner }: { owner: string }) {
         setAnswers(Object.fromEntries(draft.answers.flatMap((answer,i)=>answer===null?[]:[[i,answer]])));
       }
       setDraftReady(true);setStorageError(false);
-    } catch { if(alive.current)setStorageError(true); }
+    } catch { if(alive.current && request===progressRead.current)setStorageError(true); }
     finally { operationBusy.current=false;if(alive.current)setSaving(false); }
   }
   const result = lesson && submitted ? gradeQuiz(lesson, lesson.questions.map((_,i) => answers[i])) : null;
@@ -122,6 +131,7 @@ function LearningSession({ owner }: { owner: string }) {
       {result && <Pressable accessibilityRole="button" disabled={!progress || saving || storageError} accessibilityState={{ disabled: !progress || saving || storageError }} onPress={async () => {
         if(!canInteract() || !progress || storageError)return;
         operationBusy.current=true;
+        progressRead.current++;
         setSaving(true);
         try {
           if (reviewOffset===null && !localMode && session?.user.id===owner && curriculum.publicationGate.publishable &&
@@ -135,6 +145,7 @@ function LearningSession({ owner }: { owner: string }) {
           }
           const nextProgress=reviewOffset===null ? await learningProgress.complete(owner, lesson.lessonId, lesson.version) : await learningProgress.review(owner,lesson.lessonId,lesson.version,reviewOffset);
           if(!alive.current)return;
+          progressRead.current++;
           setProgress(nextProgress);
           if(reviewOffset!==null)setReviewSaved(true);
           await learningDrafts.clearIfUnchanged(owner, {lessonId:lesson.lessonId,version:lesson.version,answers:lesson.questions.map((_,i)=>answers[i] ?? null)});
