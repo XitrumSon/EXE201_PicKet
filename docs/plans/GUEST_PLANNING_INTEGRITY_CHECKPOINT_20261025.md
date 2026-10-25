@@ -14,3 +14,6 @@ Limits: client review fencing does not establish an atomic server revision contr
 Planning restore now rejects unsupported methods, malformed month keys, negative/fractional/over-cap period limits, mismatched close months, unsafe totals and invalid close metadata. Negative net expense remains valid for refunds. Historical totals are validated, not recomputed or rewritten. Existing empty and older compatible backups continue to pass.
 
 Evidence: RED ba2c9c6; 33 export/restore tests and all 718 mobile tests pass. Typecheck passes; lint has 0 errors and 24 existing warnings. This data-only validator change does not establish native picker/filesystem acceptance or complete the remaining product/release gates. Logs: .artifacts/backup-planning-{tests,types,lint}.log.
+
+## Backup identity continuation
+All six financial collections now reject duplicate IDs before restore. IDs remain scoped to their own collection; no imported record is silently merged or discarded. RED 5190fc2c reproduced four previously accepted duplicate collections. The full mobile run passed 722 tests; an additional wallet/transaction compatibility test was then added and the 38-test export/restore suite passed. Typecheck passed. This is collection identity validation, not comprehensive validation of every backup field or native restore acceptance.

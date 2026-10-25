@@ -32,6 +32,8 @@ export function validateGuestBackupPayload(value: unknown): GuestBackupPayload {
       new Set(receiptIds).size !== receiptIds.length)) throw new Error("Lịch sử tạo hóa đơn trong bản sao không hợp lệ.");
   for (const key of ["accounts", "categories", "transactions", "budgets", "bills", "subscriptions"] as const) {
     if (!(finance[key] as unknown[]).every(hasId)) throw new Error("Danh sách tài chính trong bản sao không hợp lệ.");
+    const ids = (finance[key] as { id: string }[]).map(item => item.id);
+    if (new Set(ids).size !== ids.length) throw new Error("Danh sách tài chính trong bản sao có mã trùng lặp.");
   }
   const validMoney = (amount: unknown) => Number.isSafeInteger(amount) && (amount as number) >= 0 && (amount as number) <= 9_000_000_000_000;
   const validMonth = (month: string) => /^\d{4}-(0[1-9]|1[0-2])$/.test(month);
