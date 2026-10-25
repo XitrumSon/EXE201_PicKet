@@ -12,7 +12,7 @@ export function budgetWarnings(input: {
   const live = input.transactions.filter(item => !item.deletedAt);
   const splits = (input.splits ?? []).filter(item => !item.deletedAt);
   return input.budgets.filter(budget => {
-    if (!budget.active) return false;
+    if (!budget.active || budget.deletedAt) return false;
     const { spent, limit } = budgetOverview(budget, input.month, live, input.periodLimits?.[budget.id] ?? null, splits);
     return limit > 0 && spent >= limit * budget.alertPercent / 100;
   });

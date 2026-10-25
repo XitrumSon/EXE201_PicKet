@@ -87,12 +87,12 @@ export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceS
   const notices: ReminderItem[] = [];
   const now = Date.now();
   for (const bill of input.bills) {
-    if (bill.status === "paid" || bill.status === "cancelled" || bill.paidTransactionId) continue;
+    if (bill.deletedAt || bill.status === "paid" || bill.status === "cancelled" || bill.paidTransactionId) continue;
     const due = new Date(bill.dueAt).getTime();
     if (Number.isFinite(due) && due >= now - 86400000) notices.push({ id:`bill:${bill.id}:${bill.dueAt}`, label:reminderLabel("bill",bill.title,bill.dueAt,language), dueAt:bill.dueAt, notifyAt:notifyDate(bill.dueAt, 1) });
   }
   for (const plan of input.subscriptions) {
-    if (!plan.active) continue;
+    if (!plan.active || plan.deletedAt) continue;
     const due = new Date(plan.nextDueAt).getTime();
     if (Number.isFinite(due) && due >= now - 86400000) notices.push({ id:`sub:${plan.id}:${plan.nextDueAt}`, label:reminderLabel("subscription",plan.title,plan.nextDueAt,language), dueAt:plan.nextDueAt, notifyAt:notifyDate(plan.nextDueAt, plan.alertDays) });
   }
