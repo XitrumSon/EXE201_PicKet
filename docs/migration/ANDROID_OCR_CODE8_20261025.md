@@ -1,7 +1,8 @@
 # OCR candidate — Android 1.0.4 / code 8
 
 Built 25 October 2026 from the current local working tree after `f5f93bd7`.
-This is a local candidate, not a published or device-accepted release.
+Uploaded to Google Play Internal testing on 25 October 2026; device acceptance
+is still pending. This is not a public production release.
 
 - Artifact: `.artifacts/releases/picket-1.0.4-8-google-play.aab`
 - Size: 48,136,748 bytes; ARM64 only (the connected Redmi supports ARM64).
@@ -26,7 +27,20 @@ Upload to Internal testing, update the existing Play installation, verify footer
 code 8, then re-test the same receipt plus a long multi-item receipt. Check exact
 merchant, date, total and each item; save only reviewed test data. Do not uninstall
 the Play app or install an upload-key APK over its different signing certificate.
-No upload, rollout, purchase or phone data change was performed in this build.
+## Internal release verification
+
+The initial MCP upload timed out. A fresh writable MCP session with a longer
+HTTP timeout deployed version code 8 successfully at approximately 23:48 ICT.
+A subsequent live `get_releases` read confirmed Internal status `completed`,
+version code `8`, version name `1.0.4`, rollout 100%. Production remains empty;
+alpha remains the code 6 draft. Local receipts are
+`.artifacts/ocr-code8-play-deploy.json` and
+`.artifacts/ocr-code8-deploy-retry.log`.
+
+The local Google Play MCP configuration had `--read-only`; it was removed in
+response to the user's request to enable publishing. Chrome and Edge are already
+installed; publishing used MCP directly. No purchase or phone data change was
+performed. Update the existing installation through Google Play before device QA.
 
 ## Local build cleanup
 
