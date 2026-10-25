@@ -1,42 +1,68 @@
+import {parseReceiptItemMoney} from "./receipt-money";
 import type {ReceiptTextLine} from "./receipt-parser";
-
-const clean=(value:string)=>value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").trim();
-function positioned(line:ReceiptTextLine):line is ReceiptTextLine&{left:number;right:number;top:number;bottom:number}{
+type PositionedLine=ReceiptTextLine&{left:number;right:number;top:number;bottom:number};
+const clean=(value:string)=>value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/\s+/g," ").replace(/^[|\s]+|[|\s]+$/g,"");
+const namePattern=/^(ten\s*(san pham|hang hoa)(?:,?\s*dich vu)?|san pham|mat hang|item|description)$/;
+const quantityPattern=/^(sl|s\.l\.?|so luong|qty|quantity)$/;
+const unitPattern=/^(don gia|unit price|price)$/;
+const totalPattern=/^(thanh tien|amount|total)$/;
+const optionalPattern=/^(stt|don vi tinh|dvt|thue suat|\(%\)|bh|bao hanh|giam gia)$/;
+function positioned(line:ReceiptTextLine):line is PositionedLine{
  return [line.left,line.right,line.top,line.bottom].every(value=>typeof value==="number"&&Number.isFinite(value))&&line.right!>line.left!&&line.bottom!>line.top!;
 }
-function sameRow(a:ReceiptTextLine,b:ReceiptTextLine){
- if(!positioned(a)||!positioned(b))return false;
- return Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top)>=Math.min(a.bottom-a.top,b.bottom-b.top)*0.5;
+const centerY=(line:PositionedLine)=>(line.top+line.bottom)/2;
+export function receiptHasTableColumns(lines:ReceiptTextLine[]):boolean{
+ return [namePattern,quantityPattern,unitPattern,totalPattern].every(pattern=>lines.some(line=>pattern.test(clean(line.text))));
 }
-
-/** Join only tables whose quantity, unit-price and total columns are identified. */
+/** Headers may be centered; match cells by column bounds and header-relative row offset. */
 export function receiptTableRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
  const used=new Set<ReceiptTextLine>(),replacements=new Map<ReceiptTextLine,ReceiptTextLine>();
- const headers=lines.filter(line=>positioned(line)&&/^(ten\s*(san pham|hang hoa)|san pham|mat hang|item|description)$/.test(clean(line.text)));
- for(const nameHeader of headers){
-  if(!positioned(nameHeader))continue;
-  const row=lines.filter(line=>sameRow(nameHeader,line)&&positioned(line)&&line.left>nameHeader.left);
-  const quantityHeader=row.find(line=>/^(sl|s\.l\.?|so luong|qty|quantity)$/.test(clean(line.text)));
-  const unitHeader=row.find(line=>/^(don gia|unit price|price)$/.test(clean(line.text)));
-  const totalHeader=row.find(line=>/^(thanh tien|amount|total)$/.test(clean(line.text)));
-  if(!quantityHeader||!unitHeader||!totalHeader||!positioned(quantityHeader)||!positioned(unitHeader)||!positioned(totalHeader)||
-    !(nameHeader.left<quantityHeader.left&&quantityHeader.left<unitHeader.left&&unitHeader.left<totalHeader.left))continue;
-  for(const name of lines){
-   if(!positioned(name)||used.has(name)||name.top<=nameHeader.bottom||name.left<nameHeader.left-10||name.left>=quantityHeader.left||
-     !/[A-Za-zÀ-ỹ]/.test(name.text)||/^(tong|total|phi|giam|thue|vat|subtotal|ngay|date|khach|dia chi)\b/.test(clean(name.text)))continue;
-   const cells=lines.filter(line=>line!==name&&sameRow(name,line)&&positioned(line)&&line.left>=quantityHeader.left);
-   const inColumn=(header:ReceiptTextLine&{left:number;right:number},nextLeft:number)=>cells.filter(line=>positioned(line)&&line.left>=header.left-10&&line.left<nextLeft);
-   const quantities=inColumn(quantityHeader,unitHeader.left-10);
-   // A warranty/discount column may sit between unit price and line total.
-   const nextHeader=row.filter(positioned).filter(line=>line.left>unitHeader.left).sort((a,b)=>a.left-b.left)[0];
-   const units=inColumn(unitHeader,nextHeader?.left??totalHeader.left);
-   const totals=inColumn(totalHeader,Infinity);
-   if(quantities.length!==1||units.length!==1||totals.length!==1)continue;
-   if(!/^\d+(?:[.,]\d+)?$/.test(quantities[0].text.trim())||
-     !units.concat(totals).every(line=>/^\d[\d.,\s]*(?:vnd|đ|d|₫)?$/i.test(line.text.trim())))continue;
-   const unit=units[0].text.replace(/\s*(vnd|đ|d|₫)\s*$/i,"");
-   replacements.set(name,{...name,text:`${name.text} ${quantities[0].text} x ${unit} | ${totals[0].text}`,right:totals[0].right});
-   cells.forEach(cell=>used.add(cell));
+ const positionedLines=lines.filter(positioned);
+ for(const nameHeader of positionedLines.filter(line=>namePattern.test(clean(line.text)))){
+  const height=nameHeader.bottom-nameHeader.top;
+  const headers=positionedLines.filter(line=>Math.abs(centerY(line)-centerY(nameHeader))<=height*1.5&&
+   [namePattern,quantityPattern,unitPattern,totalPattern,optionalPattern].some(pattern=>pattern.test(clean(line.text)))).sort((a,b)=>a.left-b.left);
+  const find=(pattern:RegExp)=>{const matches=headers.filter(line=>pattern.test(clean(line.text)));return matches.length===1?matches[0]:undefined;};
+  const quantityHeader=find(quantityPattern),unitHeader=find(unitPattern),totalHeader=find(totalPattern);
+  if(!quantityHeader||!unitHeader||!totalHeader||!(nameHeader.left<quantityHeader.left&&quantityHeader.left<unitHeader.left&&unitHeader.left<totalHeader.left))continue;
+  const band=(header:PositionedLine)=>{
+   const index=headers.indexOf(header),previous=headers[index-1],next=headers[index+1];
+   return {left:previous?(previous.right+header.left)/2:-Infinity,right:next?(header.right+next.left)/2:Infinity};
+  };
+  const nextNameHeader=headers[headers.indexOf(nameHeader)+1];
+  const previousNameHeader=headers[headers.indexOf(nameHeader)-1];
+  const nameLeft=previousNameHeader?.right??nameHeader.left-height*2;
+  const nameRight=nextNameHeader?(nameHeader.right+nextNameHeader.left)/2:quantityHeader.left;
+  const end=Math.min(Infinity,...positionedLines.filter(line=>line.top>nameHeader.bottom&&
+   /^(tong|total|subtotal|tien hang|tien thue|tien thanh toan|so tien bang chu)\b/.test(clean(line.text))).map(line=>line.top));
+  const body=positionedLines.filter(line=>line.top>nameHeader.bottom&&line.top<end&&!used.has(line));
+  const column=(header:PositionedLine)=>{const bounds=band(header);return body.filter(line=>(line.left+line.right)/2>=bounds.left&&(line.left+line.right)/2<bounds.right);};
+  const corrected=(line:PositionedLine,header:PositionedLine)=>centerY(line)-(centerY(header)-centerY(nameHeader));
+  const totals=column(totalHeader).filter(line=>/^\d[\d.,\s]*(?:vnd|đ|d|₫)?$/i.test(line.text.trim()));
+  const names=body.filter(line=>line.left>=nameLeft-height*0.25&&(line.left+line.right)/2<nameRight&&/[A-Za-zÀ-ỹ]/.test(line.text));
+  for(const total of totals){
+   const rowY=corrected(total,totalHeader);
+   const cells=(header:PositionedLine)=>column(header).filter(line=>
+    Math.abs(corrected(line,header)-rowY)<=Math.max(line.bottom-line.top,total.bottom-total.top)*0.85);
+   const units=cells(unitHeader),quantities=cells(quantityHeader);
+   if(units.length>1||quantities.length>1)continue;
+   const numeric=(line:ReceiptTextLine|undefined)=>line&&/^\d[\d.,\s]*(?:vnd|đ|d|₫)?$/i.test(line.text.trim())?parseReceiptItemMoney(line.text):null;
+   const amount=numeric(total);let unit=numeric(units[0]);
+   let quantity=quantities[0]&&/^\d+(?:[.,]\d+)?$/.test(quantities[0].text.trim())?Number(quantities[0].text.replace(',', '.')):null;
+   let inferred=false;
+   if(amount===null)continue;
+   if(quantity===null&&unit!==null&&unit>0){quantity=Math.round(amount/unit);inferred=true;}
+   else if(unit===null&&quantity!==null&&quantity>0){unit=Math.round(amount/quantity);inferred=true;}
+   if(quantity===null||unit===null||!Number.isFinite(quantity)||quantity<=0||quantity>1_000_000||Math.abs(quantity*unit-amount)>1)continue;
+   const parts=names.filter(name=>{
+    const distances=totals.map(other=>({other,distance:Math.abs(centerY(name)-corrected(other,totalHeader))})).sort((a,b)=>a.distance-b.distance);
+    return distances[0]?.other===total&&distances[0].distance<=Math.max(name.bottom-name.top,total.bottom-total.top)&&
+     (distances.length<2||distances[1].distance-distances[0].distance>2);
+   }).sort((a,b)=>a.top-b.top);
+   if(parts.length===0)continue;
+   const name=parts[0],text=parts.map(part=>part.text).join(" ");
+   replacements.set(name,{...name,text:`${text} ${quantity} x ${unit} | ${amount}`,confidence:inferred?0.55:name.confidence,right:total.right});
+   parts.slice(1).forEach(part=>used.add(part));[...quantities,...units,total].forEach(cell=>used.add(cell));
   }
  }
  return lines.filter(line=>!used.has(line)).map(line=>replacements.get(line)??line);

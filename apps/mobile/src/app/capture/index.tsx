@@ -33,6 +33,7 @@ import { savePendingReceiptDraft } from "@/core/receipts/pending-receipt";
 import { guestOwnerId } from "@/core/local/guest-finance";
 import { useAuth } from "@/features/auth/auth-context";
 import { receiptCalendarDate, receiptCaptureDate } from "@/core/ui/receipt-flow-policy";
+import { formatMoney } from "@/core/i18n/formatters";
 import { calendarReceiptDay } from "@/core/ui/receipt-calendar";
 
 const serverFallbackEnabled =

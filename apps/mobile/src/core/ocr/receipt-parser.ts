@@ -1,4 +1,6 @@
-import {receiptTableRows} from "./receipt-table-layout";
+import { parseReceiptMoney, parseReceiptItemMoney } from "./receipt-money";
+export { parseReceiptMoney } from "./receipt-money";
+import {receiptHasTableColumns,receiptTableRows} from "./receipt-table-layout";
 import { receiptVatSummaryRows } from "./receipt-vat-summary";
 
 export type ReceiptTextLine = {
@@ -52,16 +54,6 @@ function confidence(line: ReceiptTextLine, fallback = 0.75) {
   return Math.max(0, Math.min(1, line.confidence ?? fallback));
 }
 
-export function parseReceiptMoney(value: string): number | null {
-  let digits = value.replace(/[^0-9,.]/g, "");
-  if (/[,.]\d{2}$/.test(digits)) digits = digits.slice(0, -3);
-  digits = digits.replace(/\D/g, "");
-  const amount = Number.parseInt(digits, 10);
-  return Number.isSafeInteger(amount) && amount > 0 && amount <= 9000000000000
-    ? amount
-    : null;
-}
-
 export function parseReceiptLineItems(
   recognizedLines: ReceiptTextLine[],
 ): ReceiptDraftLine[] {
@@ -72,10 +64,10 @@ export function parseReceiptLineItems(
     const clean = normalized(text);
     if (!/[A-Za-zÀ-ỹ]/.test(text) || rejectedItemWords.test(clean)) continue;
     const priceMatch = text.match(
-      /(\d{1,3}(?:[.,\s]\d{3})+(?:[.,]\d{2})?|\d{3,}(?:[.,]\d{2})?)(?:\s*(?:vnd|đ|d|₫))?\s*$/i,
+      /(\d{1,3}(?:[.,\s]\d{3})+(?:[.,]\d{2})?|\d{3,}(?:[.,]\d{2})?|0(?:[.,]0{2})?)(?:\s*(?:vnd|đ|d|₫))?\s*$/i,
     );
     if (!priceMatch || priceMatch.index === undefined) continue;
-    const total = parseReceiptMoney(priceMatch[1]);
+    const total = parseReceiptItemMoney(priceMatch[1]);
     if (total === null) continue;
     let name = text.slice(0, priceMatch.index).replace(/[-:|]+\s*$/, "").trim();
     let quantity = 1;
@@ -85,7 +77,7 @@ export function parseReceiptLineItems(
     );
     if (quantityMatch) {
       const parsedQuantity = Number(quantityMatch[2].replace(",", "."));
-      const parsedUnitPrice = parseReceiptMoney(quantityMatch[3]);
+      const parsedUnitPrice = parseReceiptItemMoney(quantityMatch[3]);
       if (
         Number.isFinite(parsedQuantity) &&
         parsedQuantity > 0 &&
@@ -100,7 +92,7 @@ export function parseReceiptLineItems(
         continue;
       }
     }
-    if (name.length < 2 || name.length > 200) continue;
+    if ((total === 0 && !quantityMatch) || name.length < 2 || name.length > 200) continue;
     items.push({
       name,
       quantity,
@@ -221,10 +213,13 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     .filter((candidate): candidate is { value: string; score: number } => candidate !== null)
     .sort((left, right) => right.score - left.score);
   const merchant = merchants[0] ?? null;
-  const lineItems = parseReceiptLineItems(lines);
+  const itemLines = receiptHasTableColumns(lines) ? lines.filter(line => /\s\d+(?:[.,]\d+)?\s*x\s*.*\|\s*\d/.test(line.text)) : lines;
+  const lineItems = parseReceiptLineItems(itemLines);
 
   const reviewReason = rawText.length === 0
     ? "Không nhận diện được chữ trong ảnh."
+    : lineItems.some(item => item.confidence < 0.7)
+      ? "Một số dòng hàng có giá trị được tính lại từ các ô đọc được. Hãy đối chiếu từng dòng với hóa đơn."
     : selectedTotal === null
       ? "Không tìm thấy tổng tiền cần thanh toán."
       : selectedTotal.score < 0.7
