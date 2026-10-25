@@ -1,4 +1,4 @@
-import { localeFor,type AppLanguage } from "../../core/i18n/formatters";
+import { formatCalendarDate,localeFor,type AppLanguage } from "../../core/i18n/formatters";
 import { createInstance } from "i18next";
 import { notificationsVi,notificationsEn } from "../../core/i18n/notification-resources";
 const instance=createInstance();
@@ -6,7 +6,7 @@ void instance.init({lng:"vi",fallbackLng:"vi",initAsync:false,keySeparator:false
 function copy(language:AppLanguage){return instance.getFixedT(language,"notifications");}
 export type ReminderKind="bill"|"subscription"|"return"|"warranty"|"budget";
 export function reminderLabel(kind:ReminderKind,title:string,dueAt:string,language:AppLanguage="vi"):string{
- const date=kind==="bill"?new Intl.DateTimeFormat(localeFor(language)).format(new Date(dueAt)):"";
+ const date=kind==="bill"?(/^\d{4}-\d{2}-\d{2}$/.test(dueAt)?formatCalendarDate(dueAt,language):new Intl.DateTimeFormat(localeFor(language)).format(new Date(dueAt))):"";
  return copy(language)(kind+"Label",{title,date});
 }
 export function privateReminderCopy(kind:"budget"|"reminder",language:AppLanguage="vi"):{title:string;body:string;channel:string}{

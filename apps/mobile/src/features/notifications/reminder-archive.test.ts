@@ -5,7 +5,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import {budgetWarnings} from "./budget-warnings";
 const source=readFileSync(new URL("./reminders.ts",import.meta.url),"utf8");
-const code=source.slice(source.indexOf("function notifyDate("),source.indexOf("export async function cancelUserReminders"));
+const code=source.slice(source.indexOf("function reminderDate("),source.indexOf("export async function cancelUserReminders"));
 function collect(input:unknown):{id:string}[]{
  const exports:{collectReminders?:(input:unknown)=>{id:string}[]}={};
  vm.runInNewContext(ts.transpileModule(code,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,Date,budgetWarnings,reminderLabel:()=>"Reminder"});

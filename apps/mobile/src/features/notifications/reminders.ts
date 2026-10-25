@@ -76,8 +76,11 @@ export async function markReminderRead(userId: string, id: string) {
   });
 }
 
+function reminderDate(iso: string): Date {
+  return new Date(/^\d{4}-\d{2}-\d{2}$/.test(iso) ? `${iso}T12:00:00` : iso);
+}
 function notifyDate(iso: string, daysBefore: number): Date | null {
-  const due = new Date(iso);
+  const due = reminderDate(iso);
   if (Number.isNaN(due.getTime())) return null;
   const date = new Date(due.getFullYear(), due.getMonth(), due.getDate() - daysBefore, 9);
   return date > new Date() ? date : null;
@@ -88,12 +91,12 @@ export function collectReminders(input: { bills: Bill[]; subscriptions: FinanceS
   const now = Date.now();
   for (const bill of input.bills) {
     if (bill.deletedAt || bill.status === "paid" || bill.status === "cancelled" || bill.paidTransactionId) continue;
-    const due = new Date(bill.dueAt).getTime();
+    const due = reminderDate(bill.dueAt).getTime();
     if (Number.isFinite(due) && due >= now - 86400000) notices.push({ id:`bill:${bill.id}:${bill.dueAt}`, label:reminderLabel("bill",bill.title,bill.dueAt,language), dueAt:bill.dueAt, notifyAt:notifyDate(bill.dueAt, 1) });
   }
   for (const plan of input.subscriptions) {
     if (!plan.active || plan.deletedAt) continue;
-    const due = new Date(plan.nextDueAt).getTime();
+    const due = reminderDate(plan.nextDueAt).getTime();
     if (Number.isFinite(due) && due >= now - 86400000) notices.push({ id:`sub:${plan.id}:${plan.nextDueAt}`, label:reminderLabel("subscription",plan.title,plan.nextDueAt,language), dueAt:plan.nextDueAt, notifyAt:notifyDate(plan.nextDueAt, plan.alertDays) });
   }
   for (const item of input.keepsakes) {
