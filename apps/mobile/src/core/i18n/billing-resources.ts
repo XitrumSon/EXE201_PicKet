@@ -1,4 +1,5 @@
 export const billingVi = {
+  reloadPrices: "Tải lại bảng giá", loadingPrices: "Đang tải bảng giá…",
   priceUnavailable: "Chưa có giá từ Google Play",
   refreshError: "Giao dịch đã được xác minh nhưng chưa tải lại được trạng thái gói. Hãy kiểm tra kết nối và mở lại màn gói; không cần mua lại.",
   title: "Gói Picket", back: "‹ Quay lại hồ sơ", description: "Thanh toán an toàn qua Google Play. Gói của bạn được kích hoạt sau khi thanh toán được xác nhận.",
@@ -8,6 +9,7 @@ export const billingVi = {
   current: "Gói hiện tại: {{tier}}", quota: "OCR cloud còn {{remaining}}/{{limit}} lượt trong 24 giờ.", androidOnly: "Thanh toán trong ứng dụng hiện chỉ hỗ trợ Android.", connecting: "Đang kết nối Google Play…", pricesUnavailable: "Chưa tải được bảng giá. Hãy kiểm tra kết nối và dùng bản cài từ Google Play để mua hoặc khôi phục gói.", chooseLabel: "Chọn {{name}} {{cadence}}", buyingLabel: "Đang mua {{name}} {{cadence}}", choose: "Chọn gói", restoring: "Đang khôi phục giao dịch Google Play", restore: "Khôi phục giao dịch", manage: "Quản lý hoặc hủy gói trên Google Play", footnote: "Không nhập thông tin thẻ vào Picket. Hoàn tiền và hủy gia hạn được xử lý theo chính sách Google Play.",
 } as const;
 export const billingEn: Record<keyof typeof billingVi, string> = {
+  reloadPrices: "Reload prices", loadingPrices: "Loading prices…",
   priceUnavailable: "Google Play price unavailable",
   refreshError: "Your purchase was verified, but the plan status could not be refreshed. Check your connection and reopen this screen; you do not need to buy again.",
   title: "Picket plans", back: "‹ Back to profile", description: "Pay securely through Google Play. Your plan is activated after payment is verified.",

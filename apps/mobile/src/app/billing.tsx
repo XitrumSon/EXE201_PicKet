@@ -90,7 +90,9 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   const storeReady = availability?.token === accessToken && availability.ready;
   const checkingStore = Boolean(picketApi) && availability?.token !== accessToken;
   const processingTokens = useRef(new Set<string>());
-  const fetchedProducts = useRef(false);
+  const [catalogueAttempt,setCatalogueAttempt]=useState(0);
+  const [catalogueLoading,setCatalogueLoading]=useState(false);
+  const catalogueBusy=useRef(false);
   const entitlementRead = useRef(0);
   const operationScope = useRef({active:true,token:accessToken,restoring:false,purchasing:false,controller:new AbortController()});
   useEffect(()=>{
@@ -146,10 +148,19 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   },[accessToken]);
 
   useEffect(() => {
-    if (!connected || Platform.OS !== "android" || fetchedProducts.current) return;
-    fetchedProducts.current = true;
-    void fetchProducts({ skus: [...PICKET_SUBSCRIPTION_IDS], type: "subs" });
-  }, [connected, fetchProducts]);
+    if (!connected || Platform.OS !== "android") return;
+    let active=true;
+    catalogueBusy.current=true;
+    void Promise.resolve().then(async()=>{
+      if(!active)return;
+      setCatalogueLoading(true);
+      setMessage(value=>value?.key==="connectionError"?null:value);
+      try{await fetchProducts({ skus: [...PICKET_SUBSCRIPTION_IDS], type: "subs" });}
+      catch{if(active)setMessage({key:"connectionError"});}
+      finally{if(active){catalogueBusy.current=false;setCatalogueLoading(false);}}
+    });
+    return()=>{active=false;catalogueBusy.current=false;};
+  }, [connected, fetchProducts,catalogueAttempt]);
 
   useEffect(() => {
     if (!picketApi) return;
@@ -231,7 +242,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     if (Platform.OS !== "android" || product.platform !== "android") return;
     const scope=operationScope.current;
     const current=()=>scope.active&&operationScope.current===scope&&scope.token===accessToken;
-    if(!current()||scope.purchasing||scope.restoring||processingTokens.current.size>0)return;
+    if(!current()||catalogueBusy.current||scope.purchasing||scope.restoring||processingTokens.current.size>0)return;
     if(!canStartPlayPurchase(Platform.OS,connected,{newPurchasesEnabled:storeReady})) {
       setSuccess(false);setMessage({key:"notReady"});return;
     }
@@ -375,7 +386,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
                 <Text style={styles.planSummary}>{copy.summary}</Text>
                 <Pressable
                   accessibilityLabel={t("chooseLabel",{name:copy.name,cadence:copy.cadence})}
-                  disabled={!offer || !storeReady || !connected || busyProduct !== null || restoring}
+                  disabled={catalogueLoading || !offer || !storeReady || !connected || busyProduct !== null || restoring}
                   onPress={() => void purchase(product)}
                   style={styles.primary}
                 >
@@ -395,6 +406,12 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
             {t(message.key,{tier:message.tier})}
           </Text>
         )}
+        {connected&&<Pressable
+          accessibilityRole="button"
+          disabled={catalogueLoading||restoring||busyProduct!==null}
+          onPress={()=>{if(!catalogueBusy.current)setCatalogueAttempt(value=>value+1);}}
+          style={styles.secondary}
+        ><Text style={styles.secondaryText}>{t(catalogueLoading?"loadingPrices":"reloadPrices")}</Text></Pressable>}
         <Pressable
           disabled={!connected || restoring || busyProduct !== null}
           onPress={() => void restore()}

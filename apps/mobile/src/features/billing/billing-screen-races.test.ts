@@ -11,7 +11,8 @@ function harness(){
  const pending=new Promise<unknown[]>(done=>{release=done;});
  let entitlementRead:()=>Promise<unknown>=async()=>null;
  let displayPrice="test price";
- const fetchProducts=async()=>{catalogReads++;};
+ let catalogueRequest:()=>Promise<void>=async()=>{};
+ const fetchProducts=async()=>{catalogReads++;await catalogueRequest();};
  const state=(initial:unknown)=>{const index=cursor++;if(!(index in slots))slots[index]=typeof initial==="function"?initial():initial;return [slots[index],(value:unknown)=>{slots[index]=typeof value==="function"?value(slots[index]):value;}];};
  const ref=(initial:unknown)=>{const index=cursor++;return slots[index]??(slots[index]={current:initial});};
  const effect=(callback:()=>unknown,deps:unknown[])=>{const index=cursor++;const old=slots[index] as {deps:unknown[];cleanup?:()=>void}|undefined;if(!old||deps.some((value,position)=>!Object.is(value,old.deps[position]))){old?.cleanup?.();slots[index]={deps,cleanup:callback()};}};
@@ -33,7 +34,7 @@ function harness(){
  const restore=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="restore");assert.ok(button);return button.props.onPress as ()=>void;};
  const buy=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose");assert.ok(button);return button.props.onPress as ()=>void;};
  const reloadPrices=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="reloadPrices");assert.ok(button);(button.props.onPress as ()=>void)();render();};
- return {restore,buy,reloadPrices,catalogReads:()=>catalogReads,setPrice:(value:string)=>{displayPrice=value;},buyDisabled:()=>nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose")?.props.disabled,viewText:()=>text(render()),setEntitlementRead:(read:()=>Promise<unknown>)=>{entitlementRead=read;},purchases:()=>purchaseRequests,refreshToken:()=>{accessToken="new-test-token";render();},reads:()=>reads,verified:()=>verified,release:()=>release([{productId:"picket_plus_monthly",purchaseToken:"synthetic-token"}]),stop:()=>{for(const slot of slots)(slot as {cleanup?:()=>void})?.cleanup?.();}};
+ return {restore,buy,reloadPrices,setCatalogueRequest:(request:()=>Promise<void>)=>{catalogueRequest=request;},catalogReads:()=>catalogReads,setPrice:(value:string)=>{displayPrice=value;},buyDisabled:()=>nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose")?.props.disabled,viewText:()=>text(render()),setEntitlementRead:(read:()=>Promise<unknown>)=>{entitlementRead=read;},purchases:()=>purchaseRequests,refreshToken:()=>{accessToken="new-test-token";render();},reads:()=>reads,verified:()=>verified,release:()=>release([{productId:"picket_plus_monthly",purchaseToken:"synthetic-token"}]),stop:()=>{for(const slot of slots)(slot as {cleanup?:()=>void})?.cleanup?.();}};
 }
 async function settle(){for(let index=0;index<5;index++)await new Promise(done=>setImmediate(done));}
 test("rapid restore taps query Google Play only once",async()=>{const app=harness();const press=app.restore();press();press();assert.equal(app.reads(),1);app.release();await settle();});
@@ -54,3 +55,4 @@ test("a plan with no visible Play offer price cannot dispatch a purchase",async(
  const app=harness();app.setPrice(" ");app.buy();await settle();assert.equal(app.buyDisabled(),true);app.buy()();await settle();assert.equal(app.purchases(),0);
 });
 test("the Play price catalogue can be reloaded without leaving billing",async()=>{const app=harness();app.buy();await settle();assert.equal(app.catalogReads(),1);app.reloadPrices();await settle();assert.equal(app.catalogReads(),2);});
+test("a rejected catalogue load remains retryable",async()=>{const app=harness();app.setCatalogueRequest(async()=>{throw Error("Store unavailable");});app.buy();await settle();assert.ok(app.viewText().includes("connectionError"));app.setCatalogueRequest(async()=>{});app.reloadPrices();await settle();assert.equal(app.catalogReads(),2);assert.ok(!app.viewText().includes("connectionError"));});
