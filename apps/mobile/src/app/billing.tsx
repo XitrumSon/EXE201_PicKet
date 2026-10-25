@@ -194,7 +194,12 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
         },
       );
       if(!current())return false;
-      await refreshEntitlements(current);
+      try {
+        await refreshEntitlements(current);
+      } catch {
+        if(current()){setSuccess(false);setMessage({key:"refreshError"});}
+        return true;
+      }
       if(!current())return false;
       setSuccess(true);
       setMessage(
@@ -265,6 +270,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     setRestoring(true);
     setSuccess(false);
     setMessage(null);
+    let purchasesVerified=false;
     try {
       const purchases = await getAvailablePurchases({
         includeSuspendedAndroid: false,
@@ -279,6 +285,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
       }
       const restored = await verifyRestoredPurchases(eligible, item=>current()?verifyStorePurchase(item):Promise.resolve(false));
       if(!current())return;
+      purchasesVerified=restored.verified>0;
       await refreshEntitlements(current);
       if(!current())return;
       setSuccess(restored.failed === 0 && restored.verified > 0);
@@ -288,7 +295,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           ? {key:"restorePartial"}
           : {key:"restoreFailed"});
     } catch {
-      if(current())setMessage({key:"restoreError"});
+      if(current())setMessage({key:purchasesVerified?"refreshError":"restoreError"});
     } finally {
       scope.restoring=false;
       if(current())setRestoring(false);
