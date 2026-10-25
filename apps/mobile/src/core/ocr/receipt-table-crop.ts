@@ -1,5 +1,7 @@
 import type { ReceiptTextLine } from "./receipt-parser";
 import {receiptHasTableColumns} from "./receipt-table-layout";
+// Keep crop edges away from thin glyphs and table rules.
+const CROP_MARGIN_GRID_PX = 50;
 const clean=(text:string)=>text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/\s+/g," ").trim();
 /** Refine only a complete left-to-right table; keep original coordinates for merging. */
 export function receiptTableCrop(lines: ReceiptTextLine[]): {originX:number; originY:number; width:number; height:number}|null {
@@ -16,7 +18,7 @@ export function receiptTableCrop(lines: ReceiptTextLine[]): {originX:number; ori
  if(body.length<6)return null;
  const left=Math.max(0,Math.floor(Math.min(...body.map(line=>line.left))-padding));
  const right=Math.ceil(Math.max(...body.map(line=>line.right))+padding);
- const top=Math.max(0,Math.floor(name.top-padding));
- const bottom=Math.min(end,Math.ceil(Math.max(...body.map(line=>line.bottom))+padding));
+ const top=Math.max(0,Math.floor((name.top-padding)/CROP_MARGIN_GRID_PX)*CROP_MARGIN_GRID_PX);
+ const bottom=Math.min(end,Math.ceil((Math.max(...body.map(line=>line.bottom))+padding)/CROP_MARGIN_GRID_PX)*CROP_MARGIN_GRID_PX);
  return bottom>top&&right>left?{originX:left,originY:top,width:right-left,height:bottom-top}:null;
 }
