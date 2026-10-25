@@ -66,3 +66,17 @@ inconsistent line totals. A 30-product fixture survives saved-text re-parsing.
 Full mobile: 785/785 passed; lint/typecheck passed. Wrapped/missing OCR text and
 unrecognized table headers are not reconstructed by guessing; the original real
 photo and longer receipts still require native regression on the new build.
+
+## Purchase date and calendar rule
+
+The owner explicitly requested automatic matching to the purchase day printed on
+the receipt, with manual correction only when that day is unreadable. RED
+`6ff540e6`, GREEN `d15daaad` therefore change the earlier calendar-selection-wins
+rule: a valid OCR calendar day wins; otherwise the selected day, or today, remains
+the fallback. The capture screen identifies a missing OCR date as a fallback
+requiring review. Recognized days are stored at local noon to preserve their
+calendar date across timezones. Existing receipt/generic transaction handoff uses
+that purchasedAt and completion routes to its month. Tests cover differing months,
+invalid dates and America/Los_Angeles; full mobile 786/786, hook lint/typecheck
+passed. Existing saved receipts are not rewritten. Native re-test on a build with
+these commits remains required.
