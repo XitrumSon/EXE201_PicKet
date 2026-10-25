@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { recognizeReceipt } from "@/core/ocr/mlkit-receipt-ocr";
+import { canAttachReceipt } from "@/core/ocr/receipt-eligibility";
 import { receiptImagePickerOptions } from "@/core/ocr/image-picker-policy";
 import { captureJournal, cleanupCaptureImages, persistCaptureImage, restoreCaptureImage, pickerRecovery } from "@/core/ocr/capture-storage";
 import { restoreCaptureSnapshot, type CaptureSnapshot } from "@/core/ocr/capture-journal";
@@ -70,6 +71,7 @@ export default function CaptureReceiptScreen() {
   const imageGeneration = useRef(0);
   const mounted = useRef(true);
   const activeOwner = useRef(ownerId);
+  const receiptEligible = !isRecognizing && canAttachReceipt({ rawText });
 
   useEffect(() => {
     activeOwner.current = ownerId;
@@ -477,6 +479,8 @@ export default function CaptureReceiptScreen() {
           </View>
         )}
 
+        {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.message}>{message}</Text>}
+
         <View style={styles.actions}>
           <Pressable
             accessibilityRole="button"
@@ -485,7 +489,7 @@ export default function CaptureReceiptScreen() {
             onPress={() => { pollingController.current?.abort(); setCameraOpen(true); }}
             style={[styles.primary, (isRecognizing || isContinuing || isQueueingFallback) && styles.disabled]}
           >
-            <AppIcon name="camera-outline" color={colors.white} /><Text style={styles.primaryText}>Chụp ảnh</Text>
+            <AppIcon name="camera-outline" color={colors.white} /><Text style={styles.primaryText}>Chụp lại</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -524,6 +528,7 @@ export default function CaptureReceiptScreen() {
           </View>
         )}
 
+        {receiptEligible && <>
         <Text style={styles.label}>Ngày hóa đơn</Text>
         <TextInput date accessibilityLabel="Ngày hóa đơn" value={calendarReceiptDay({ purchasedAt }) ?? ""} onChangeText={(day) => { explicitDate.current = receiptCalendarDate(day); setPurchasedAt(receiptCaptureDate(day, null)); }} style={styles.input} />
         <Text style={styles.label}>Tên cửa hàng / nội dung</Text>
@@ -546,7 +551,6 @@ export default function CaptureReceiptScreen() {
           style={styles.input}
         />
 
-        {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.message}>{message}</Text>}
         {__DEV__ && ocrDurationMs !== null && (
           <Text style={styles.metric}>Thời gian OCR: {ocrDurationMs} ms</Text>
         )}
@@ -611,6 +615,7 @@ export default function CaptureReceiptScreen() {
             <Text style={styles.primaryText}>Kiểm tra và tạo giao dịch</Text>
           )}
         </Pressable>
+        </>}
         <Text style={styles.privacy}>
           Nhận diện cơ bản hoạt động cả khi không có mạng. Bạn luôn có thể sửa thông tin trước khi lưu.
         </Text>
