@@ -15,6 +15,17 @@ export interface GuestBackupPayload {
 const object = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value);
 const hasId = (value: unknown): value is { id: string } => object(value) && typeof value.id === "string" && value.id.length > 0;
 
+// Preserve ISO values verbatim, but reject Date.parse's calendar normalization.
+function validScheduleInstant(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const match = /^(\d{4})-(\d{2})-(\d{2})(?:T([0-2]\d):([0-5]\d):([0-5]\d)(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})?)?$/.exec(value);
+  if (!match || (match[4] !== undefined && Number(match[4]) > 23)) return false;
+  const year = Number(match[1]), month = Number(match[2]), day = Number(match[3]);
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return month >= 1 && month <= 12 && day >= 1 && day <= days[month - 1] && Number.isFinite(Date.parse(value));
+}
+
 export function validateGuestBackupPayload(value: unknown): GuestBackupPayload {
   if (!object(value) || !object(value.finance) || !Array.isArray(value.keepsakes) || !Array.isArray(value.receipts) || !object(value.media)) throw new Error("Bản sao trên máy không hợp lệ.");
   const finance = value.finance;
@@ -65,13 +76,12 @@ export function validateGuestBackupPayload(value: unknown): GuestBackupPayload {
   const transactionsById = new Map((finance.transactions as Record<string, unknown>[]).map(item => [item.id, item]));
   const categoryIds = new Set((finance.categories as { id: string }[]).map(item => item.id));
   const validTitle = (title: unknown) => typeof title === "string" && title.trim().length > 0 && title.length <= 160;
-  const validInstant = (instant: unknown) => typeof instant === "string" && Number.isFinite(Date.parse(instant));
   for (const bill of finance.bills as Record<string, unknown>[]) {
-    if (!validTitle(bill.title) || !validMoney(bill.amount) || bill.amount === 0 || !validInstant(bill.dueAt) ||
+    if (!validTitle(bill.title) || !validMoney(bill.amount) || bill.amount === 0 || !validScheduleInstant(bill.dueAt) ||
         !["pending", "paid", "overdue", "cancelled"].includes(String(bill.status))) throw new Error("Hóa đơn trong bản sao không hợp lệ.");
   }
   for (const subscription of finance.subscriptions as Record<string, unknown>[]) {
-    if (!validTitle(subscription.title) || !validMoney(subscription.amount) || subscription.amount === 0 || !validInstant(subscription.nextDueAt) ||
+    if (!validTitle(subscription.title) || !validMoney(subscription.amount) || subscription.amount === 0 || !validScheduleInstant(subscription.nextDueAt) ||
         !["weekly", "monthly", "quarterly", "yearly", "custom"].includes(String(subscription.cadence)) ||
         !Number.isInteger(subscription.cycleMonths) || (subscription.cycleMonths as number) < 1 || (subscription.cycleMonths as number) > 120 ||
         !Number.isInteger(subscription.alertDays) || (subscription.alertDays as number) < 0 || (subscription.alertDays as number) > 365 ||
