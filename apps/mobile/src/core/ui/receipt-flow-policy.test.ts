@@ -2,21 +2,28 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { receiptCaptureDate, receiptCalendarDate, finishReceiptFlow, receiptHome } from "./receipt-flow-policy";
+import {calendarReceiptDay} from "./receipt-calendar";
 
-test("calendar date is validated and wins over an OCR date from another month", () => {
+test("OCR purchase date wins over the previously selected calendar day", () => {
   assert.equal(receiptCalendarDate("2026-02-31"), null);
   assert.equal(receiptCalendarDate(["2026-10-19"]), null);
   assert.equal(receiptCalendarDate("2024-02-29"), "2024-02-29");
   const result = new Date(receiptCaptureDate("2026-10-19", "2026-05-01T00:00:00Z"));
   assert.equal(result.getFullYear(), 2026);
-  assert.equal(result.getMonth(), 9);
-  assert.equal(result.getDate(), 19);
+  assert.equal(result.getMonth(), 4);
+  assert.equal(result.getDate(), 1);
+  assert.equal(calendarReceiptDay({purchasedAt:result.toISOString()}),"2026-05-01");
 });
 test("icon scan keeps a valid OCR date; missing/invalid OCR date falls back to today", () => {
   const now = new Date("2026-10-20T04:00:00Z");
-  assert.equal(receiptCaptureDate(null, "2026-05-01T00:00:00Z", now), "2026-05-01T00:00:00.000Z");
+  assert.equal(calendarReceiptDay({purchasedAt:receiptCaptureDate(null, "2026-05-01T00:00:00Z", now)}), "2026-05-01");
   assert.equal(receiptCaptureDate(null, "invalid", now), now.toISOString());
   assert.equal(receiptCaptureDate("invalid", null, now), now.toISOString());
+});
+test("unreadable and impossible OCR dates retain the selected calendar fallback",()=>{
+ for(const detected of [null,"invalid","2026-02-31T00:00:00Z"]){
+  assert.equal(calendarReceiptDay({purchasedAt:receiptCaptureDate("2026-10-19",detected)}),"2026-10-19");
+ }
 });
 test("completion returns to home before pushing success, so Back cannot revisit the saved form", () => {
   const calls: unknown[] = [];
