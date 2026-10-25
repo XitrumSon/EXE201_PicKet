@@ -6,6 +6,15 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Product cost decision (25 October): the owner chose free-only for the current
+  stage, with paid service and scaling considered after user growth. No current
+  paid budget or automatic billing activation is authorized. Keep synthetic-only
+  free AI and local encrypted open-answer drafts/rubric. Personal-answer cloud
+  grading is deferred to a separately scoped paid/provider/consent/evaluation
+  decision; it is not a promise of free cloud grading. This supersedes earlier
+  statements that the current cost preference was unanswered. No runtime flags,
+  quotas, provider account or production settings changed.
+
 - Open-answer draft continuation (25 October): the development learning preview
   now includes a versioned fictional case, five public rubric criteria and a
   vi/en editor. Answers stay in a separate owner-scoped encrypted cache record;

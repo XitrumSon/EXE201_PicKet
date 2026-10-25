@@ -4,6 +4,15 @@ Ngày đối chiếu: 24/10/2026. Trạng thái: nghiên cứu, chưa bật bill
 
 ## Kết luận
 
+**Quyết định của chủ sản phẩm ngày 25/10/2026:** hiện tại chỉ dùng miễn phí;
+có thể trả phí và mở rộng khi có nhiều người dùng. Đây là định hướng tương lai,
+chưa phải cho phép bật billing, ngân sách cụ thể hoặc tự chuyển sang dịch vụ trả phí.
+Ở giai đoạn hiện tại, giữ luồng free chỉ cho dữ kiện giả lập cố định. Câu trả lời
+tự do dùng nháp mã hóa và rubric cục bộ; chưa bật chấm cloud cho đáp án thật.
+Phương án trả phí dưới đây là nghiên cứu cho giai đoạn sau, không phải cấu hình
+triển khai hiện tại. Khi chuyển giai đoạn cần chốt nhà cung cấp, ngân sách, consent,
+đánh giá chất lượng và nghiệm thu riêng; không cam kết khả năng scale chưa đo.
+
 Giữ nguyên Gemini free cho ví dụ giả lập cố định. Với đáp án tự do, đề xuất đánh giá **Gemini Standard paid, không Contributor** bằng bộ dữ liệu giả lập trước. Chưa triển khai gửi đáp án thật dưới cấu hình hiện tại. Không có căn cứ để cam kết một phương án cloud vừa miễn phí tuyệt đối vừa đáp ứng các điều kiện dữ liệu bên dưới.
 
 ## Điều khoản đã xác minh
@@ -35,7 +44,7 @@ Nháp mặc định ở thiết bị. Nếu người dùng gửi cloud, cần co
 
 ## Điều kiện mở còn thiếu
 
-1. Chủ sản phẩm quyết định có cho phép trả phí hay vẫn giữ free-only; xác định ngân sách và giới hạn ứng dụng. Chưa có quyết định này.
+1. Giai đoạn hiện tại đã chốt free-only ngày 25/10/2026. Trước giai đoạn trả phí cần quyết định mới về nhà cung cấp, ngân sách và giới hạn ứng dụng; chưa có quyền tự kích hoạt.
 2. Xác minh Standard/non-Contributor, DPA, đối tượng tuổi và cấu hình provider. Không coi biến môi trường tự khai là bằng chứng điều khoản tài khoản.
 3. Cập nhật consent, privacy và Data Safety; kiểm thử RLS/TTL/revoke trước khi gửi dữ liệu thật.
 4. Hoàn thiện rubric và benchmark giả lập Việt–Anh, reviewer độc lập, quy trình báo sai/chấm lại.
