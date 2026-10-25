@@ -7,10 +7,7 @@ test("camera handoff rejects parallel submission and stale generation finalizers
   const handoff = source.slice(source.indexOf("async function continueToTransaction()"), source.indexOf("if (!hydrated) return"));
   assert.match(handoff, /if \(isContinuing \|\| isRecognizing \|\| isQueueingFallback\) return/);
   assert.match(handoff, /generation === imageGeneration.current\) setIsContinuing\(false\)/);
-  const rotate = source.slice(source.indexOf("async function rotateImage()"), source.indexOf("function confirmServerFallback()"));
-  assert.match(rotate, /isQueueingFallback \|\| isContinuing/);
-  assert.match(rotate, /generation === imageGeneration.current\) setIsRecognizing\(false\)/);
-  const choose = source.slice(source.indexOf('async function choose('), source.indexOf('async function rotateImage()'));
+  const choose = source.slice(source.indexOf('async function choose('), source.indexOf('function confirmServerFallback()'));
   assert.match(choose, /if \(isContinuing \|\| isRecognizing \|\| isQueueingFallback\) return/);
 });
 

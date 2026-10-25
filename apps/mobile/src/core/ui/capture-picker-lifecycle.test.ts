@@ -4,7 +4,7 @@ import test from "node:test";
 
 test("cancelling the image picker preserves the existing OCR draft and fallback job", () => {
   const source = readFileSync(new URL("../../app/capture/index.tsx", import.meta.url), "utf8");
-  const choose = source.slice(source.indexOf("async function choose("), source.indexOf("async function rotateImage("));
+  const choose = source.slice(source.indexOf("async function choose("), source.indexOf("function confirmServerFallback("));
   const cancelled = choose.indexOf("if (result.canceled) return;");
   assert.ok(cancelled >= 0);
   assert.ok(choose.indexOf("await acceptImage(uri)") > cancelled);

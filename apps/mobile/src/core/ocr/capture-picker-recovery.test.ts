@@ -54,7 +54,7 @@ test("capture restores the old draft with a clear interrupted-picker notice", ()
   const source = readFileSync(new URL("../../app/capture/index.tsx", import.meta.url), "utf8");
   assert.match(source, /pickerRecovery\.pending\(ownerId\)/);
   assert.match(source, /Lần chọn ảnh trước bị gián đoạn/);
-  const choose = source.slice(source.indexOf("async function choose("), source.indexOf("async function rotateImage("));
+  const choose = source.slice(source.indexOf("async function choose("), source.indexOf("function confirmServerFallback("));
   assert.ok(choose.indexOf("pickerRecovery.begin") >= 0 && choose.indexOf("pickerRecovery.begin") < choose.indexOf("await picker("));
   assert.ok(choose.indexOf("pickerRecovery.complete") > choose.indexOf("await acceptImage(uri)"));
   assert.doesNotMatch(source, /getPendingResultAsync/);

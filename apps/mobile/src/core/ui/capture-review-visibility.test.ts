@@ -26,6 +26,7 @@ test("unrecognized receipt shows recovery actions and alert without transaction 
  const result=render(false);
  assert.equal(result.nodes.filter(node=>node.type==="TextInput").length,0);
  assert.doesNotMatch(result.text,/Kiểm tra và tạo giao dịch|Đính kèm ảnh vào giao dịch/);
+ assert.doesNotMatch(result.text,/Xoay ảnh/);
  assert.match(result.text,/Chụp (?:ảnh|lại)/);assert.match(result.text,/Chọn từ thư viện/);
  assert.ok(result.nodes.some(node=>node.props.role==="alert"));
 });

@@ -262,36 +262,6 @@ export default function CaptureReceiptScreen() {
     }
   }
 
-  async function rotateImage() {
-    if (!imageUri || isRecognizing || isQueueingFallback || isContinuing) return;
-    const generation = imageGeneration.current;
-    pollingController.current?.abort();
-    setIsRecognizing(true);
-    setMessage("Đang xoay ảnh sang phải…");
-    try {
-      const { ImageManipulator, SaveFormat } = await import(
-        "expo-image-manipulator"
-      );
-      const context = ImageManipulator.manipulate(imageUri);
-      context.rotate(90);
-      const rendered = await context.renderAsync();
-      const rotated = await rendered.saveAsync({
-        compress: 0.85,
-        format: SaveFormat.JPEG,
-      });
-
-      if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
-      await acceptImage(rotated.uri);
-    } catch {
-      if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
-      setMessage(
-        "Chưa xoay được ảnh. Hãy thử lại hoặc chọn ảnh khác.",
-      );
-    } finally {
-      if (mounted.current && activeOwner.current === ownerId && generation === imageGeneration.current) setIsRecognizing(false);
-    }
-  }
-
   function confirmServerFallback() {
     if (isContinuing || isRecognizing || isQueueingFallback) return;
     const capture = captureRef.current;
@@ -501,25 +471,6 @@ export default function CaptureReceiptScreen() {
             <AppIcon name="image-outline" /><Text style={styles.secondaryText}>Chọn từ thư viện</Text>
           </Pressable>
         </View>
-
-        {imageUri && (
-          <Pressable
-            accessibilityLabel="Xoay ảnh hóa đơn 90 độ sang phải và nhận diện lại"
-            accessibilityRole="button"
-            accessibilityState={{
-              busy: isRecognizing || isQueueingFallback || isContinuing,
-              disabled: isRecognizing || isQueueingFallback || isContinuing,
-            }}
-            disabled={isRecognizing || isQueueingFallback || isContinuing}
-            onPress={() => void rotateImage()}
-            style={[
-              styles.secondary,
-              (isRecognizing || isQueueingFallback || isContinuing) && styles.disabled,
-            ]}
-          >
-            <Text style={styles.secondaryText}>Xoay ảnh 90° sang phải</Text>
-          </Pressable>
-        )}
 
         {isRecognizing && (
           <View accessibilityLiveRegion="polite" style={styles.progress}>
