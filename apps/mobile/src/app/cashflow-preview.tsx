@@ -85,12 +85,16 @@ function Scenario({owner}:{owner:string}){
   };
   const button=(label:string,onPress:()=>void,disabled=false)=><Pressable accessibilityRole="button" accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={{minHeight:48,padding:14,borderRadius:12,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.primary}}>{label}</Text></Pressable>;
   const field=(label:string,value:string,onChange:(value:string)=>void)=><View style={{gap:6}}><Text style={{color:c.text}}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChange} autoCapitalize="none" autoCorrect={false} keyboardAppearance={theme} selectionColor={c.primary} style={{minHeight:48,color:c.text,borderColor:c.border,borderWidth:1,borderRadius:12,padding:12}}/></View>;
-  async function mutate(change:()=>Promise<ScheduleDocument>){
-    if(busy)return;
-    setBusy(true);setSaved(false);
-    try{setDoc(await change());setFailed(false);setSaved(true);setEditing(null);setEditingRevision(null);setWalletId(undefined);setAmount("");setEndDay("");setEnabled(true);}
-    catch{setFailed(true);}finally{setBusy(false);}
-  }
+  const [mutate]=useState(()=>{
+    let inFlight=false;
+    return async(change:()=>Promise<ScheduleDocument>)=>{
+      if(inFlight)return;
+      inFlight=true;
+      setBusy(true);setSaved(false);
+      try{setDoc(await change());setFailed(false);setSaved(true);setEditing(null);setEditingRevision(null);setWalletId(undefined);setAmount("");setEndDay("");setEnabled(true);}
+      catch{setFailed(true);}finally{inFlight=false;setBusy(false);}
+    };
+  });
   function startSync(){
     if(!session)return;
     const controller=manualSyncRequests.current;
