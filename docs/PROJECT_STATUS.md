@@ -1,5 +1,9 @@
 # Trạng thái hiện hành của Picket
 
+**Cập nhật source local 25/10/2026:** bộ kiểm tra hiện tại đạt 10 landing, 761 mobile, 54 web và 140 API test; mobile typecheck và lint các tệp vừa sửa đạt. Ngày mặc định của preview dòng tiền đã theo lịch trên thiết bị (`a9a073c7`). Đây là kiểm tra source, không phải nghiệm thu APK/AAB mới: Play internal đang ở code 7, còn source hiện tại có thay đổi sau bản build đó. `adb devices` trong lượt kiểm tra này chưa thấy thiết bị kết nối.
+
+**Gate phát hành còn mở:** rà các thay đổi local chưa commit; nghiệm thu Android thật và nội dung học; đánh giá dự báo với dữ liệu được phép; chạy vòng đời Billing sandbox qua Play; hoàn thiện Console và nhóm người thử nghiệm kín. Bản AI miễn phí hiện chỉ dùng tình huống tổng hợp, không gửi câu trả lời cá nhân hoặc dữ liệu tài chính thật. [Checkpoint triển khai 25/10](plans/MOBILE_PLAN_IMPLEMENTATION_CHECKPOINT_20261023.md), [Play readiness 24/10](google-play/RELEASE_READINESS_20261024.md), [checklist Android thật](ANDROID_REAL_DEVICE_CHECKLIST.md). Các số liệu và giới hạn 22/10 bên dưới là snapshot lịch sử.
+
 **Web/landing production 22/10:** đã triển khai source `6993560`, có nút Đăng nhập trên landing và workspace admin riêng. GitHub đã nhận nhánh `feat/picket-platform-ocr`; smoke HTTPS đạt, không đổi mobile/API/OCR/schema. [Triển khai và rollback](migration/WEB_PRODUCTION_20261022.md). Các dòng “chưa push/deploy” của checkpoint local bên dưới là lịch sử.
 
 Cập nhật ngày 22/10/2026 (Asia/Saigon). **Checklist phần 1 trên máy ảo đã nghiệm thu đạt** theo [báo cáo chốt](migration/PART1_ACCEPTANCE_20261022.md); [APK 1.0.4/code 5 đã lên landing](migration/ANDROID_RELEASE_1_0_4_20261022.md). Đây không phải tuyên bố hoàn tất toàn roadmap/thiết bị thật/Billing. Báo cáo theo ngày trong `docs/migration` là bằng chứng từng checkpoint, không phải trạng thái phát hành mới nhất.
