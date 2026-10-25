@@ -23,6 +23,7 @@ was performed in these checks.
 | Retry unlock successfully | PASS | Owner reports fingerprint success and Wallet/Transactions open. Later hierarchy independently confirms unlocked navigation, with Budget then selected; `redmi-unlocked-transactions.xml`. |
 | Camera preview | PASS for preview | Owner confirms clear preview and reachable shutter; hierarchy exposes capture/gallery/close, `redmi-camera-preview.xml`. No general OCR-quality claim. |
 | Reject non-receipt image | PASS for tested image | Explicit rejection message; merchant/amount, attachment and final handoff disabled in `redmi-invalid-receipt-result.xml`. Supersedes the owner's initial impression that saving was available. No save was attempted. |
+| Genuine paper purchase receipt | FAIL for attempted image | Owner reported rejection. Hierarchy confirms invalid-receipt message and disabled fields, `redmi-valid-receipt-failure.xml`. Local inspection with owner consent shows a multi-column purchase document; the original native OCR text was not captured, so the exact cause is unconfirmed. |
 
 Evidence files are local under `.artifacts/` and are not committed.
 
@@ -39,3 +40,16 @@ Evidence files are local under `.artifacts/` and are not committed.
   compares total/date, and stops before saving.
 
 This session does not establish full release acceptance.
+
+## OCR source follow-up
+
+RED `bc0a0a8a` reproduces a synthetic split-column total that the parser cannot
+find when ML Kit returns columns in separate blocks. GREEN `cda79803` carries
+horizontal frames from ML Kit, matches numeric text to the right with at least
+50% vertical overlap, and preserves an unambiguous total row in saved text so
+draft re-parsing retains the amount. Tests cover other rows, invalid/left-hand
+coordinates, ambiguous amounts and text round trips, using fictional data only.
+Full mobile: 779/779 passed; typecheck, lint and Android JS export passed
+(`.artifacts/ocr-spatial-export.log`). This is a demonstrated
+parser defect and source fix, not proof that this particular real photo now
+passes: re-test the photo on an artifact containing the fix.
