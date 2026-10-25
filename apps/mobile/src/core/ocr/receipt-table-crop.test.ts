@@ -19,3 +19,8 @@ test("a free invoice item retains zero unit price and total without inventing a 
  const draft=parseReceiptText('PICKET DEMO\nQuà tặng 1 x 0 | 0\nTổng thanh toán 25000');
  assert.deepEqual(draft.lineItems.map(({name,quantity,unitPrice,total})=>({name,quantity,unitPrice,total})),[{name:'Quà tặng',quantity:1,unitPrice:0,total:0}]);
 });
+
+test("crop boundaries leave a stable pixel margin around text rows",()=>{
+ const crop=receiptTableCrop([cell('Tên hàng hoá, dịch vụ',100,200,200),cell('Số lượng',450,200),cell('Đơn giá',600,200),cell('Thành tiền',800,200),cell('Bánh mẫu',50,260,260),cell('2',470,260,20),cell('25.000',620,260),cell('50.000',820,260),cell('Tiền hàng:',30,1000)]);
+ assert.ok(crop);assert.equal(crop.originY%50,0);assert.equal((crop.originY+crop.height)%50,0);
+});
