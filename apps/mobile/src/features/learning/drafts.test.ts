@@ -20,3 +20,22 @@ test("unknown content or corrupted drafts never silently overwrite history",asyn
  await assert.rejects(store.save("guest",{lessonId:"unknown",version:1,answers:[]}));
  assert.equal(writes,0);
 });
+
+test("completion cleanup removes only the exact draft that was completed",async()=>{
+ const rows=new Map<string,unknown>();let writes=0;
+ const store=createLearningDraftStore({read:async(owner)=>rows.get(owner),write:async(owner,value)=>{writes++;rows.set(owner,value);}});
+ const clear=Reflect.get(store,"clearIfUnchanged") as (owner:string,expected:{lessonId:string;version:number;answers:(number|null)[]})=>Promise<void>;
+ assert.equal(typeof clear,"function");
+ const completed={lessonId:"picket.vi.financial.v1.01",version:1,answers:[0,1,2]};
+ const newer={...completed,answers:[1,1,null]};
+ await store.save("guest",completed);
+ await Promise.all([store.save("guest",newer),clear("guest",completed)]);
+ assert.deepEqual(await store.load("guest"),newer);
+ const before=writes;await clear("other",completed);assert.equal(writes,before);
+ await clear("guest",newer);assert.equal(await store.load("guest"),null);
+});
+test("conditional completion cleanup preserves unknown draft schemas",async()=>{
+ let writes=0;const store=createLearningDraftStore({read:async()=>({schemaVersion:99}),write:async()=>{writes++;}});
+ const clear=Reflect.get(store,"clearIfUnchanged") as (owner:string,expected:unknown)=>Promise<void>;assert.equal(typeof clear,"function");
+ await assert.rejects(clear("guest",{lessonId:"picket.vi.financial.v1.01",version:1,answers:[0,1,2]}));assert.equal(writes,0);
+});
