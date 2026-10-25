@@ -85,6 +85,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   const checkingStore = Boolean(picketApi) && availability?.token !== accessToken;
   const processingTokens = useRef(new Set<string>());
   const fetchedProducts = useRef(false);
+  const entitlementRead = useRef(0);
   const operationScope = useRef({active:true,token:accessToken,restoring:false,purchasing:false,controller:new AbortController()});
   useEffect(()=>{
     const scope={active:true,token:accessToken,restoring:false,purchasing:false,controller:new AbortController()};
@@ -147,13 +148,14 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   useEffect(() => {
     if (!picketApi) return;
     let active = true;
+    const request=++entitlementRead.current;
     void picketApi
       .currentEntitlements(accessToken)
       .then((value) => {
-        if (active) setEntitlements(value);
+        if (active&&request===entitlementRead.current) setEntitlements(value);
       })
       .catch(() => {
-        if (active) setEntitlements(null);
+        if (active&&request===entitlementRead.current) setEntitlements(null);
       });
     return () => {
       active = false;
@@ -162,8 +164,9 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
 
   async function refreshEntitlements(current:()=>boolean) {
     if (!picketApi) return;
+    const request=++entitlementRead.current;
     const value=await picketApi.currentEntitlements(accessToken);
-    if(current())setEntitlements(value);
+    if(current()&&request===entitlementRead.current)setEntitlements(value);
   }
 
   async function verifyStorePurchase(purchase: Purchase) {

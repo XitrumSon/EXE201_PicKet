@@ -41,3 +41,6 @@ test("leaving the screen while preparing a purchase prevents Play dispatch",asyn
 test("an older entitlement read cannot overwrite a newer restored plan",async()=>{
  const app=harness();let release!:(value:unknown)=>void;const held=new Promise(done=>{release=done;});app.setEntitlementRead(()=>held);app.restore()();app.setEntitlementRead(async()=>({tier:"pro",ocrFallbackRemaining:10,ocrFallbackDailyLimit:10}));app.release();await settle();assert.ok(app.viewText().includes("current:PRO"));release({tier:"free",ocrFallbackRemaining:1,ocrFallbackDailyLimit:1});await settle();assert.ok(app.viewText().includes("current:PRO"));
 });
+test("an older entitlement read failure cannot hide a newer restored plan",async()=>{
+ const app=harness();let reject!:(error:Error)=>void;const held=new Promise((_done,fail)=>{reject=fail;});app.setEntitlementRead(()=>held);app.restore()();app.setEntitlementRead(async()=>({tier:"plus",ocrFallbackRemaining:10,ocrFallbackDailyLimit:10}));app.release();await settle();assert.ok(app.viewText().includes("current:PLUS"));reject(Error("Old read failed"));await settle();assert.ok(app.viewText().includes("current:PLUS"));
+});
