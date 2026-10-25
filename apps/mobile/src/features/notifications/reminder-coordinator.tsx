@@ -26,7 +26,7 @@ export function ReminderCoordinator() {
   const { splits, loading: splitLoading, error: splitError } = useSpendingSplits(history, month);
   const { periodLimits, periodsReady } = useReminderPeriods(budgets, month);
   const [loadedKeepsakes, setKeepsakes] = useState<{owner: string; items: Keepsake[]} | null>(null);
-  const keepsakes = useMemo(() => loadedKeepsakes?.owner === session?.user.id ? loadedKeepsakes!.items : [], [loadedKeepsakes,session?.user.id]);
+  const keepsakes = useMemo(() => loadedKeepsakes && session && loadedKeepsakes.owner === session.user.id ? loadedKeepsakes.items : [], [loadedKeepsakes,session?.user.id]);
   useEffect(() => {
     if (!session) return;
     const userId = session.user.id;
