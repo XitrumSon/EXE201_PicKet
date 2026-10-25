@@ -6,6 +6,19 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Budget continuation (25 October): budget list/create/edit/archive, month
+  controls, progress accessibility labels, asynchronous period/split failures,
+  queued notices and confirmations now use vi/en copy. Month and money follow
+  the chosen language; stored names are not translated. Create/edit limits share
+  the payment parser and API money cap, including rejection of unsafe integers,
+  decimals and exponent/prefix inputs. All **671 mobile tests** pass; typecheck
+  and Android JS export pass; lint has 0 errors/25 preexisting warnings. Shared
+  payment/subscription helper coverage: 100% lines/functions, 95.24% branches.
+  RED `9dc686c`; evidence `.artifacts/mobile-budget-{complete-tests,types,lint,coverage,export}.log`.
+  Other screens, native accessibility/layout, actual Play billing/cohort and
+  broader product gates remain open. Existing user theme changes are preserved
+  as unstaged changes; no production configuration or data was changed.
+
 - Recurring expense continuation (25 October): list/create/details now use vi/en
   labels, cadence names, local date/money formatting, accessible field labels,
   archive prompts and controlled errors; reminder text has English singular/

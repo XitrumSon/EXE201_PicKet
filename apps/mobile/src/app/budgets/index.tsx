@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next";
+import { formatMoney, localeFor, normalizeLanguage } from "@/core/i18n/formatters";
+import { parsePaymentAmount } from "@/core/forms/payment-form";
 import { colors, radii } from "@picket/design-tokens";
-import { formatVnd } from "@picket/domain";
 import { Redirect, router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
@@ -19,6 +21,9 @@ import { useBudgets } from "@/features/budgets/budgets-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 
 export default function BudgetsScreen() {
+  const {t,i18n}=useTranslation("budgets");
+  const language=normalizeLanguage(i18n.resolvedLanguage??i18n.language);
+  const money=(amount:number)=>formatMoney(amount,language,"VND");
   const { session, localMode } = useAuth();
   const guest = useGuestFinance();
   const { categories, transactions } = useTransactions();
@@ -43,7 +48,7 @@ export default function BudgetsScreen() {
     let active = true;
     void picketApi.getPlanning(session.access_token, monthText)
       .then((planning) => { if (active) { setPeriodLimits({ month: monthText, limits: Object.fromEntries(planning.periods.map((period) => [period.budgetId, period.limit])) }); setPeriodError(null); } })
-      .catch(() => { if (active) { setPeriodLimits(null); setPeriodError("Không tải được hạn mức của tháng; đang hiển thị hạn mức mặc định."); } });
+      .catch(() => { if (active) { setPeriodLimits(null); setPeriodError("periodFailed"); } });
     return () => { active = false; };
   }, [localMode, monthText, session]));
   useFocusEffect(useCallback(() => {
@@ -54,7 +59,7 @@ export default function BudgetsScreen() {
     setSplitError(null);
     void loadBudgetSplits(transactions, monthText, async (ids) => (await api.listTransactionSplitsByIds(session.access_token, ids)).splits)
       .then((splits) => { if (active) setCloudSplits({ month: monthText, splits }); })
-      .catch(() => { if (active) setSplitError("Không tải được phân bổ danh mục; chưa thể tính chính xác số đã chi."); });
+      .catch(() => { if (active) setSplitError("splitsFailed"); });
     return () => { active = false; };
   }, [localMode, monthText, session, transactions]));
   if (!session && !localMode) return <Redirect href={routes.login} />;
@@ -63,35 +68,36 @@ export default function BudgetsScreen() {
   const editing = budgets.find((item) => item.id === editingId);
   const selected = expenseCategories.find((item) => item.id === categoryId) ?? expenseCategories[0];
   async function add() {
-    if (!selected || !/^\d+$/.test(limit) || Number(limit) <= 0) { setMessage("Chọn danh mục và nhập hạn mức hợp lệ."); return; }
+    const amount=parsePaymentAmount(limit);
+    if (!selected || amount===null) { setMessage("invalidCreate"); return; }
     setBusy(true); setMessage(null);
-    try { await create({ categoryId: selected.id, name: selected.name, defaultLimit: Number(limit), alertPercent: 80 }); setLimit("1000000"); setShowCreate(false); }
-    catch (caught) { if (!isOfflineQueuedError(caught)) setMessage("Không tạo được ngân sách. Một danh mục chỉ có một ngân sách đang hoạt động."); }
+    try { await create({ categoryId: selected.id, name: selected.name, defaultLimit: amount, alertPercent: 80 }); setLimit("1000000"); setShowCreate(false); }
+    catch (caught) { if (!isOfflineQueuedError(caught)) setMessage("createFailed"); }
     finally { setBusy(false); }
   }
   async function archiveBudget(id: string, version: number) {
     setBusy(true); setMessage(null);
     try { await archive(id, version); }
-    catch (caught) { if (!isOfflineQueuedError(caught)) setMessage("Không lưu trữ được ngân sách."); }
+    catch (caught) { if (!isOfflineQueuedError(caught)) setMessage("archiveFailed"); }
     finally { setBusy(false); }
   }
   async function saveLimit(id: string, version: number) {
-    const amount = Number(editedLimit);
-    if (!/^\d+$/.test(editedLimit) || !Number.isSafeInteger(amount) || amount <= 0) { setMessage("Nhập hạn mức hợp lệ."); return; }
+    const amount = parsePaymentAmount(editedLimit);
+    if (amount===null) { setMessage("invalidLimit"); return; }
     setBusy(true); setMessage(null);
     try { await update(id, { expectedVersion: version, defaultLimit: amount }); setEditingId(null); }
-    catch (caught) { if (isOfflineQueuedError(caught)) { setEditingId(null); setMessage("Đã lưu trên máy, chờ đồng bộ."); } else setMessage("Không cập nhật được hạn mức."); }
+    catch (caught) { if (isOfflineQueuedError(caught)) { setEditingId(null); setMessage("queued"); } else setMessage("updateFailed"); }
     finally { setBusy(false); }
   }
   return <PicketScreen>
-    <TopAppBar title="Ngân sách" subtitle="Chi tiêu trong tầm tay, từng tháng một." back={false} action={<IconButton icon={showCreate ? "close" : "plus"} label={showCreate ? "Đóng tạo ngân sách" : "Thêm ngân sách"} onPress={() => setShowCreate(!showCreate)} />} />
-    <MenuRow icon="calendar-check-outline" title="Kế hoạch tháng" description="Điều chuyển hạn mức, chốt tháng và chuyển dư" onPress={() => router.push(routes.planning)} />
-    <Surface><View style={styles.monthRow}><Pressable accessibilityLabel="Tháng trước" accessibilityRole="button" onPress={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth()-1, 1))}><Text style={styles.monthArrow}>‹</Text></Pressable><Text style={styles.name}>Tháng {month.getMonth()+1}/{month.getFullYear()}</Text><Pressable accessibilityLabel="Tháng sau" accessibilityRole="button" onPress={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth()+1, 1))}><Text style={styles.monthArrow}>›</Text></Pressable></View></Surface>
-    {loading && budgets.length === 0 ? <ActivityIndicator accessibilityLabel="Đang tải ngân sách" color={colors.mauve} style={styles.loader} /> : null}
+    <TopAppBar title={t("title")} subtitle={t("subtitle")} back={false} action={<IconButton icon={showCreate ? "close" : "plus"} label={showCreate ? t("closeCreate") : t("add")} onPress={() => setShowCreate(!showCreate)} />} />
+    <MenuRow icon="calendar-check-outline" title={t("planning")} description={t("planningDescription")} onPress={() => router.push(routes.planning)} />
+    <Surface><View style={styles.monthRow}><Pressable accessibilityLabel={t("previousMonth")} accessibilityRole="button" onPress={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth()-1, 1))}><Text style={styles.monthArrow}>‹</Text></Pressable><Text style={styles.name}>{month.toLocaleDateString(localeFor(language),{month:"long",year:"numeric"})}</Text><Pressable accessibilityLabel={t("nextMonth")} accessibilityRole="button" onPress={() => setMonth((current) => new Date(current.getFullYear(), current.getMonth()+1, 1))}><Text style={styles.monthArrow}>›</Text></Pressable></View></Surface>
+    {loading && budgets.length === 0 ? <ActivityIndicator accessibilityLabel={t("loading")} color={colors.mauve} style={styles.loader} /> : null}
     {error ? <ConnectionNotice hasData={budgets.length > 0} onRetry={() => void refresh()} /> : null}
-    {periodError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{periodError}</Text> : null}
-    {splitError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{splitError}</Text> : null}
-    {budgets.length === 0 && !loading ? <EmptyState description="Chọn một danh mục và đặt hạn mức đầu tiên." title="Chưa có ngân sách" /> : <View style={styles.stack}>{budgets.map((budget) => {
+    {periodError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{t(periodError)}</Text> : null}
+    {splitError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{t(splitError)}</Text> : null}
+    {budgets.length === 0 && !loading ? <EmptyState description={t("emptyDescription")} title={t("emptyTitle")} /> : <View style={styles.stack}>{budgets.map((budget) => {
       const periodLimit = localMode ? guest.data.planningPeriods[`${monthText}:${budget.id}`] ?? null : periodLimits?.month === monthText ? periodLimits.limits[budget.id] ?? null : null;
       const ready = localMode || cloudSplits?.month === monthText;
       const base = budgetOverview(budget, monthText, transactions, periodLimit, !localMode && cloudSplits?.month === monthText ? cloudSplits.splits : []);
@@ -99,23 +105,23 @@ export default function BudgetsScreen() {
       const { limit: monthlyLimit } = base;
       const percent = monthlyLimit > 0 ? Math.round(spent / monthlyLimit * 100) : 0;
       return <Surface key={budget.id} style={styles.budgetCard}>
-        <View style={cardStyles.header}><View style={cardStyles.icon}><AppIcon name="chart-donut" color={colors.mauve} size={24} /></View><View style={styles.budgetCopy}><Text style={styles.name}>{budget.name}</Text><Text style={styles.hint}>Ngân sách hàng tháng</Text></View><IconButton icon="dots-vertical" label={`Quản lý ngân sách ${budget.name}`} onPress={() => { setMessage(null); setManagingId(budget.id); }} /></View>
-        {ready ? <><View accessibilityRole="progressbar" accessibilityLabel={`Chi tiêu ngân sách ${budget.name}`} accessibilityValue={{ min: 0, max: 100, now: Math.min(100, Math.max(0, percent)), text: `${percent}% hạn mức` }} style={styles.progressTrack}><View style={[styles.progressFill, { width: `${Math.min(100, Math.max(0, percent))}%`, backgroundColor: spent > monthlyLimit ? colors.expense : colors.mauve }]} /></View><Text style={styles.hint}>{spent > monthlyLimit ? "Đã vượt hạn mức tháng này" : `Đã dùng ${percent}% hạn mức`}</Text></> : <Text style={styles.hint}>{splitError ? "Chưa thể tính số đã chi." : "Đang tải phân bổ danh mục..."}</Text>}
-        <View style={cardStyles.stats}>{[{ label: "Đã chi", value: ready ? formatVnd(spent) : "—" }, { label: spent > monthlyLimit ? "Vượt hạn mức" : "Còn lại", value: ready ? formatVnd(Math.abs(monthlyLimit - spent)) : "—" }, { label: "Hạn mức", value: formatVnd(monthlyLimit) }].map((stat) => <View key={stat.label} style={[cardStyles.stat, { minWidth: 86 * fontScale }]}><Text style={styles.hint}>{stat.label}</Text><Text style={cardStyles.value}>{stat.value}</Text></View>)}</View>
+        <View style={cardStyles.header}><View style={cardStyles.icon}><AppIcon name="chart-donut" color={colors.mauve} size={24} /></View><View style={styles.budgetCopy}><Text style={styles.name}>{budget.name}</Text><Text style={styles.hint}>{t("monthlyBudget")}</Text></View><IconButton icon="dots-vertical" label={t("manageBudget",{name:budget.name})} onPress={() => { setMessage(null); setManagingId(budget.id); }} /></View>
+        {ready ? <><View accessibilityRole="progressbar" accessibilityLabel={t("spendingLabel",{name:budget.name})} accessibilityValue={{ min: 0, max: 100, now: Math.min(100, Math.max(0, percent)), text: t("percentLimit",{percent}) }} style={styles.progressTrack}><View style={[styles.progressFill, { width: `${Math.min(100, Math.max(0, percent))}%`, backgroundColor: spent > monthlyLimit ? colors.expense : colors.mauve }]} /></View><Text style={styles.hint}>{spent > monthlyLimit ? t("exceeded") : t("used",{percent})}</Text></> : <Text style={styles.hint}>{splitError ? t("spentUnavailable") : t("loadingSplits")}</Text>}
+        <View style={cardStyles.stats}>{[{ label: t("spent"), value: ready ? money(spent) : "—" }, { label: spent > monthlyLimit ? t("overLimit") : t("remaining"), value: ready ? money(Math.abs(monthlyLimit - spent)) : "—" }, { label: t("limit"), value: money(monthlyLimit) }].map((stat) => <View key={stat.label} style={[cardStyles.stat, { minWidth: 86 * fontScale }]}><Text style={styles.hint}>{stat.label}</Text><Text style={cardStyles.value}>{stat.value}</Text></View>)}</View>
       </Surface>;
     })}</View>}
-    {message && !showCreate && !editing ? <Text accessibilityLiveRegion="polite" style={styles.error}>{message}</Text> : null}
-    <ActionSheet title={managing?.name ?? "Ngân sách"} visible={Boolean(managing)} onClose={() => setManagingId(null)}>
-      {managing ? <View style={styles.stack}><MenuRow icon="pencil-outline" title="Sửa hạn mức mặc định" onPress={() => { setEditedLimit(String(managing.defaultLimit)); setEditingId(managing.id); setManagingId(null); }} /><MenuRow icon="receipt-text-outline" title="Xem giao dịch tháng này" onPress={() => { setManagingId(null); router.push({ pathname: routes.transactions, params: { categoryId: managing.categoryId, month: monthText } }); }} /><DangerAction label="Lưu trữ ngân sách" disabled={busy} onPress={() => Alert.alert("Lưu trữ ngân sách?", "Ngân sách sẽ không còn trong danh sách đang hoạt động.", [{ text: "Hủy", style: "cancel" }, { text: "Lưu trữ", style: "destructive", onPress: () => { setManagingId(null); void archiveBudget(managing.id, managing.version); } }])} /></View> : null}
+    {message && !showCreate && !editing ? <Text accessibilityLiveRegion="polite" style={styles.error}>{t(message)}</Text> : null}
+    <ActionSheet title={managing?.name ?? t("title")} visible={Boolean(managing)} onClose={() => setManagingId(null)}>
+      {managing ? <View style={styles.stack}><MenuRow icon="pencil-outline" title={t("editDefault")} onPress={() => { setEditedLimit(String(managing.defaultLimit)); setEditingId(managing.id); setManagingId(null); }} /><MenuRow icon="receipt-text-outline" title={t("viewTransactions")} onPress={() => { setManagingId(null); router.push({ pathname: routes.transactions, params: { categoryId: managing.categoryId, month: monthText } }); }} /><DangerAction label={t("archive")} disabled={busy} onPress={() => Alert.alert(t("archiveTitle"), t("archiveDescription"), [{ text: t("cancel"), style: "cancel" }, { text: t("confirmArchive"), style: "destructive", onPress: () => { setManagingId(null); void archiveBudget(managing.id, managing.version); } }])} /></View> : null}
     </ActionSheet>
-    <ActionSheet title="Sửa hạn mức" visible={Boolean(editing)} onClose={() => setEditingId(null)}>
-      {editing ? <View style={styles.stack}><Text style={styles.name}>{editing.name}</Text><TextInput money accessibilityLabel={`Sửa hạn mức ${editing.name}`} keyboardType="number-pad" onChangeText={setEditedLimit} value={editedLimit} />{message ? <Text accessibilityLiveRegion="polite" style={styles.error}>{message}</Text> : null}<PrimaryAction label="Lưu hạn mức" busy={busy} onPress={() => void saveLimit(editing.id, editing.version)} /></View> : null}
+    <ActionSheet title={t("editLimit")} visible={Boolean(editing)} onClose={() => setEditingId(null)}>
+      {editing ? <View style={styles.stack}><Text style={styles.name}>{editing.name}</Text><TextInput money accessibilityLabel={t("editLimitLabel",{name:editing.name})} keyboardType="number-pad" onChangeText={setEditedLimit} value={editedLimit} />{message ? <Text accessibilityLiveRegion="polite" style={styles.error}>{t(message)}</Text> : null}<PrimaryAction label={t("saveLimit")} busy={busy} onPress={() => void saveLimit(editing.id, editing.version)} /></View> : null}
     </ActionSheet>
-    <SectionTitle title="Tạo ngân sách" action={showCreate ? "Thu gọn" : "Thêm mới"} onAction={() => setShowCreate(!showCreate)} />
-    <ActionSheet title="Tạo ngân sách" visible={showCreate} onClose={() => setShowCreate(false)}><Surface style={{ padding: 0 }}><Text style={styles.fieldLabel}>Danh mục chi tiêu</Text><View accessibilityRole="radiogroup" style={styles.choices}>{expenseCategories.map((category) => { const active=selected?.id===category.id; return <Pressable accessibilityRole="radio" accessibilityState={{checked:active}} key={category.id} onPress={() => setCategoryId(category.id)} style={[styles.choice,active&&styles.choiceActive]}><Text style={[styles.choiceText,active&&styles.choiceTextActive]}>{category.name}</Text></Pressable>; })}</View>
-      <Text style={styles.fieldLabel}>Hạn mức tháng</Text><TextInput money accessibilityLabel="Hạn mức ngân sách tháng" keyboardType="number-pad" onChangeText={setLimit} placeholder="Ví dụ: 1.000.000" placeholderTextColor={colors.muted} style={styles.input} value={limit} />
-      <Text style={styles.fieldHelp}>Picket sẽ nhắc khi chi tiêu đạt 80% hạn mức.</Text>{message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text> : null}
-      <Pressable accessibilityRole="button" accessibilityState={{busy}} disabled={busy} onPress={() => void add()} style={({pressed})=>[styles.primary,pressed&&styles.pressed]}>{busy?<ActivityIndicator accessibilityLabel="Đang tạo ngân sách" color={colors.white}/>:<Text style={styles.primaryText}>Tạo ngân sách</Text>}</Pressable>
+    <SectionTitle title={t("create")} action={showCreate ? t("collapse") : t("addNew")} onAction={() => setShowCreate(!showCreate)} />
+    <ActionSheet title={t("create")} visible={showCreate} onClose={() => setShowCreate(false)}><Surface style={{ padding: 0 }}><Text style={styles.fieldLabel}>{t("category")}</Text><View accessibilityRole="radiogroup" style={styles.choices}>{expenseCategories.map((category) => { const active=selected?.id===category.id; return <Pressable accessibilityRole="radio" accessibilityState={{checked:active}} key={category.id} onPress={() => setCategoryId(category.id)} style={[styles.choice,active&&styles.choiceActive]}><Text style={[styles.choiceText,active&&styles.choiceTextActive]}>{category.name}</Text></Pressable>; })}</View>
+      <Text style={styles.fieldLabel}>{t("monthlyLimit")}</Text><TextInput money accessibilityLabel={t("monthlyLimitLabel")} keyboardType="number-pad" onChangeText={setLimit} placeholder={t("limitPlaceholder")} placeholderTextColor={colors.muted} style={styles.input} value={limit} />
+      <Text style={styles.fieldHelp}>{t("reminderHelp")}</Text>{message ? <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{t(message)}</Text> : null}
+      <Pressable accessibilityRole="button" accessibilityState={{busy}} disabled={busy} onPress={() => void add()} style={({pressed})=>[styles.primary,pressed&&styles.pressed]}>{busy?<ActivityIndicator accessibilityLabel={t("creating")} color={colors.white}/>:<Text style={styles.primaryText}>{t("create")}</Text>}</Pressable>
     </Surface></ActionSheet>
   </PicketScreen>;
 }

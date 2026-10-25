@@ -2,6 +2,11 @@ export type PaymentFormError = "titleRequired" | "titleTooLong" | "invalidAmount
 type PaymentFields = { title: string; amount: string; dueDate: string };
 type PaymentPayload = { title: string; amount: number; dueAt: string };
 
+export function parsePaymentAmount(input: string): number | null {
+  const amount = Number(input);
+  return /^\d+$/.test(input) && Number.isSafeInteger(amount) && amount > 0 && amount <= 9_000_000_000_000 ? amount : null;
+}
+
 /** Form dates are local calendar days, not UTC dates. */
 export function paymentDateInput(instant: string): string {
   const date = new Date(instant);
@@ -19,8 +24,8 @@ export function parsePaymentForm(input: PaymentFields): { value: PaymentPayload 
   const title = input.title.trim();
   if (!title) return { error: "titleRequired" };
   if (title.length > 160) return { error: "titleTooLong" };
-  const amount = Number(input.amount);
-  if (!/^\d+$/.test(input.amount) || !Number.isSafeInteger(amount) || amount <= 0 || amount > 9_000_000_000_000) return { error: "invalidAmount" };
+  const amount = parsePaymentAmount(input.amount);
+  if (amount === null) return { error: "invalidAmount" };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dueDate)) return { error: "invalidDate" };
   const date = new Date(`${input.dueDate}T12:00:00`);
   // Date normalizes invalid days (e.g. 31 February); compare the calendar fields.
