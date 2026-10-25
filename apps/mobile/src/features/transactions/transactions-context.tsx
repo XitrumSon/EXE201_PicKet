@@ -41,7 +41,7 @@ interface TransactionsContextValue {
   transactions: Transaction[];
   error: string | null;
   loading: boolean;
-  refresh(): Promise<void>;
+  refresh(options?: { throwOnError?: boolean }): Promise<void>;
   createCategory(request: CreateCategoryRequest): Promise<Category>;
   updateCategory(id: string, request: UpdateCategoryRequest): Promise<Category>;
   archiveCategory(id: string, expectedVersion: number): Promise<void>;
@@ -81,8 +81,8 @@ export function TransactionsProvider({ children }: PropsWithChildren) {
     return () => { active = false; };
   }, [session, setTransactions]);
 
-  const refresh = useCallback(async () => {
-    if (!enabled || !session || !picketApi) return;
+  const refresh = useCallback(async (options?: { throwOnError?: boolean }) => {
+    if (!enabled || !session || !picketApi) { if (options?.throwOnError) throw new Error("Restore reload unavailable"); return; }
     const api = picketApi;
     setLoading(true);
     setError(null);
@@ -96,6 +96,7 @@ export function TransactionsProvider({ children }: PropsWithChildren) {
     } catch (error) {
       reportApiError("transactions.refresh", error);
       setError(apiErrorMessage(error, "Không tải được danh mục và giao dịch."));
+      if (options?.throwOnError) throw error;
     } finally {
       setLoading(false);
     }

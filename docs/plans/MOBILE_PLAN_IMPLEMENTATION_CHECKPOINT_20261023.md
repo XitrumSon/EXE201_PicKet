@@ -6,6 +6,23 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Restore continuation (25 October): restore UI and controlled validation/
+  recovery messages now have vi/en copy, preserving filenames, passwords and
+  the literal `RESTORE` confirmation. Unknown errors are not shown verbatim.
+  One prepared-backup runner blocks duplicate submits, retains uncertain
+  acknowledgements without claiming unchanged data, and retries only reload
+  after a confirmed commit. Raw JSON import dispatch shares the owner fence;
+  preparation/results/navigation are guarded against changed/unmounted owners.
+  All six finance providers support opt-in strict reload errors; restore now
+  reloads bills/subscriptions too and waits for every reload to settle.
+  Tests execute real provider refresh code with hook/storage/transport adapters,
+  not native UI rendering. All **681 mobile tests** pass; typecheck and Android
+  JS export pass; lint has 0 errors/25 preexisting warnings. Runner helper
+  coverage: 100% lines/functions, 93.02% branches. RED `b3d7a8e`, `d11edd2`;
+  evidence `.artifacts/mobile-restore-{complete-tests,types,lint,coverage,export}.log`.
+  Device picker/filesystem and end-to-end server restore/race acceptance remain
+  pending; these checks do not certify native execution or all release gates.
+
 - Budget continuation (25 October): budget list/create/edit/archive, month
   controls, progress accessibility labels, asynchronous period/split failures,
   queued notices and confirmations now use vi/en copy. Month and money follow

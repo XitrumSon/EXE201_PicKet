@@ -1,9 +1,14 @@
+import { useTranslation } from "react-i18next";
+import { createRestoreRunner, backupValidationMessage, refreshRestoredProviders } from "@/core/export/restore-attempt";
+import { withLocalOwnerAccess } from "@/core/sync/offline-cache";
+import { useBills } from "@/features/bills/bills-context";
+import { useSubscriptions } from "@/features/subscriptions/subscriptions-context";
 import { colors, radii } from "@picket/design-tokens";
 import type { FinanceExportEnvelope, FinanceImportSummary } from "@picket/domain";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { Redirect, router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import {
   ActivityIndicator,
@@ -39,8 +44,18 @@ interface PendingRestore {
 }
 
 export default function RestoreScreen() {
+  const {t}=useTranslation("restore");
   const { session, localMode } = useAuth();
   const guest = useGuestFinance();
+  const owner=session?.user.id??(localMode?"device-guest":null);
+  const currentOwner=useRef(owner),mounted=useRef(true),operationBusy=useRef(false);
+  useLayoutEffect(()=>{currentOwner.current=owner;return()=>{currentOwner.current=null;};},[owner]);
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[]);
+  const isCurrent=()=>mounted.current&&currentOwner.current===owner;
+  const restoreRunner=useRef(createRestoreRunner());
+  const [awaitingReload,setAwaitingReload]=useState(false);
+  const {refresh:refreshBills}=useBills();
+  const {refresh:refreshSubscriptions}=useSubscriptions();
   const { refresh: refreshProfile } = useProfile();
   const { refresh: refreshAccounts } = useAccounts();
   const { refresh: refreshTransactions } = useTransactions();
@@ -54,7 +69,9 @@ export default function RestoreScreen() {
   if (!session && !localMode) return <Redirect href={routes.login} />;
 
   async function chooseBackup() {
-    if (!localMode && (!session || !picketApi)) return setMessage("Hãy đăng nhập để khôi phục dữ liệu vào tài khoản.");
+    if(operationBusy.current||!isCurrent())return;
+    if (!localMode && (!session || !picketApi)) return setMessage("loginRequired");
+    operationBusy.current=true;restoreRunner.current=createRestoreRunner();setAwaitingReload(false);
     setBusy(true);
     setMessage(null);
     setPending(null);
@@ -64,35 +81,39 @@ export default function RestoreScreen() {
         copyToCacheDirectory: true,
         type: "*/*",
       });
-      if (result.canceled) return;
+      if (!isCurrent() || result.canceled) return;
       const file = result.assets[0];
-      if (!file) throw new Error("Không đọc được file đã chọn.");
+      if (!file) throw new Error("fileUnreadable");
       const encrypted = file.name.toLowerCase().endsWith(".picket");
+      if(encrypted&&!password)throw new Error("passwordRequired");
       const maxBytes = encrypted ? 100_000_000 : MAX_IMPORT_BYTES;
       if (file.size !== undefined && file.size > maxBytes) {
-        throw new Error("File vượt quá giới hạn cho phép.");
+        throw new Error("fileTooLarge");
       }
       const raw = await FileSystem.readAsStringAsync(file.uri, {
         encoding: FileSystem.EncodingType.UTF8,
       });
       if (new TextEncoder().encode(raw).length > maxBytes) {
-        throw new Error("File vượt quá giới hạn cho phép.");
+        throw new Error("fileTooLarge");
       }
+      if(!isCurrent())return;
       if (localMode) {
-        if (!encrypted) throw new Error("Chế độ trên máy chỉ nhận bản sao .picket mã hóa dành cho guest.");
+        if (!encrypted) throw new Error("guestFormatOnly");
         const backupFormat = (JSON.parse(raw) as { format?: unknown }).format;
         const decodedGuest = backupFormat === "picket-backup-v1"
           ? convertLegacyBackupToGuest(await decryptEncryptedBackup(raw, password))
           : await decryptGuestBackup(raw, password);
+        if(!isCurrent())return;
         setPending({ exported:null, encrypted:null, guest:decodedGuest, currentRevision:0, fileName:file.name,
           summary:{ valid:true, wallets:decodedGuest.finance.accounts.length, entries:decodedGuest.finance.transactions.length,
             budgets:decodedGuest.finance.budgets.length, bills:decodedGuest.finance.bills.length,
             keepsakes:decodedGuest.keepsakes.length, subscriptions:decodedGuest.finance.subscriptions.length } });
-        setMessage("File hợp lệ. Kiểm tra thống kê trước khi xác nhận.");
+        setMessage("valid");
         return;
       }
       const decoded = encrypted ? await decryptEncryptedBackup(raw, password) : null;
       const exported = encrypted ? null : JSON.parse(raw) as FinanceExportEnvelope;
+      if(!isCurrent())return;
       const [summary, snapshot] = await Promise.all([
         exported ? picketApi!.validateFinanceImport(session!.access_token, exported) : Promise.resolve({
           valid: true as const, wallets: decoded!.data.wallets.length, entries: decoded!.data.entries.length,
@@ -101,6 +122,8 @@ export default function RestoreScreen() {
         }),
         picketApi!.loadFinanceSnapshot(session!.access_token),
       ]);
+      if(!isCurrent())return;
+      if(!isCurrent())return;
       setPending({
         exported,
         encrypted: decoded,
@@ -109,100 +132,96 @@ export default function RestoreScreen() {
         currentRevision: snapshot.revision,
         fileName: file.name,
       });
-      setMessage("File hợp lệ. Kiểm tra thống kê trước khi xác nhận.");
+      setMessage("valid");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Không thể kiểm tra file backup.");
+      if(isCurrent())setMessage(backupValidationMessage(error));
     } finally {
-      setBusy(false);
+      operationBusy.current=false;if(isCurrent())setBusy(false);
     }
   }
 
   async function restore() {
-    if (confirmation !== "RESTORE") {
-      return setMessage("Hãy nhập chính xác RESTORE để xác nhận.");
-    }
+    if(operationBusy.current||!isCurrent())return;
+    if (!awaitingReload && confirmation !== "RESTORE") return setMessage("confirmationRequired");
     if (!pending || (!localMode && (!session || !picketApi))) return;
-    setBusy(true);
-    setMessage(null);
+    operationBusy.current=true;setBusy(true);setMessage(null);
     try {
-      if (localMode && pending.guest) await restoreGuestBackup(pending.guest, guest.replace);
-      else if (pending.encrypted) await restoreEncryptedBackup(session!.access_token, session!.user.id, pending.currentRevision, pending.encrypted);
-      else if (pending.exported) await picketApi!.restoreFinance(session!.access_token, {
-        confirmation: "RESTORE",
-        expectedRevision: pending.currentRevision,
-        export: pending.exported,
+      const result=await restoreRunner.current({
+        isCurrent,
+        restore:async()=>{
+          if(localMode&&pending.guest)await restoreGuestBackup(pending.guest,guest.replace);
+          else if(pending.encrypted){
+            const result=await restoreEncryptedBackup(session!.access_token,session!.user.id,pending.currentRevision,pending.encrypted);
+            if(result?.restored!==true)throw new Error("Unconfirmed restore");
+          }else if(pending.exported){
+            const result=await withLocalOwnerAccess(session!.user.id,()=>picketApi!.restoreFinance(session!.access_token,{
+              confirmation:"RESTORE",expectedRevision:pending.currentRevision,export:pending.exported!,
+            }));
+            if(result?.restored!==true)throw new Error("Unconfirmed restore");
+          }else throw new Error("No prepared restore payload");
+        },
+        refresh:async()=>{if(!localMode)await refreshRestoredProviders([refreshProfile,refreshAccounts,refreshTransactions,refreshBudgets,refreshBills,refreshSubscriptions]);},
       });
-      if (!localMode) await Promise.all([
-        refreshProfile(),
-        refreshAccounts(),
-        refreshTransactions(),
-        refreshBudgets(),
-      ]);
-      router.replace(routes.home);
-    } catch (error) {
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Không thể khôi phục. Dữ liệu hiện tại không bị thay đổi.",
-      );
-    } finally {
-      setBusy(false);
-    }
+      if(!isCurrent())return;
+      if(result==="restored")router.replace(routes.home);
+      else if(result==="refresh-failed"){setAwaitingReload(true);setMessage("refreshFailed");}
+      else if(result==="unconfirmed"){setPending(null);setMessage("unconfirmed");}
+    }finally{operationBusy.current=false;if(isCurrent())setBusy(false);}
   }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Pressable accessibilityRole="button" onPress={() => router.back()}>
-          <Text style={styles.back}>‹ Quay lại</Text>
+        <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.back()}>
+          <Text style={styles.back}>{t("back")}</Text>
         </Pressable>
-        <Text accessibilityRole="header" style={styles.title}>Khôi phục backup</Text>
+        <Text accessibilityRole="header" style={styles.title}>{t("title")}</Text>
         <Text style={styles.description}>
-          {localMode ? "Chọn bản sao .picket dành cho chế độ trên máy và nhập mật khẩu của file." : "Chọn bản export JSON hoặc bản sao mã hóa .picket. Nhập mật khẩu riêng nếu dùng .picket."}
+          {localMode ? t("deviceDescription") : t("cloudDescription")}
         </Text>
         <View style={styles.notice}>
-          <Text style={styles.noticeTitle}>Lưu ý</Text>
-          <Text style={styles.noticeText}>{localMode ? "Bản sao sẽ thay thế dữ liệu và ảnh kỷ vật trên máy. Hãy tạo một bản sao hiện tại trước khi khôi phục." : "Backup sẽ thay thế dữ liệu tài chính hiện tại. Nếu revision đã thay đổi hoặc có lỗi, giao dịch sẽ rollback toàn bộ."}</Text>
+          <Text style={styles.noticeTitle}>{t("notice")}</Text>
+          <Text style={styles.noticeText}>{localMode ? t("deviceNotice") : t("cloudNotice")}</Text>
         </View>
-        <TextInput accessibilityLabel="Mật khẩu bản sao mã hóa" autoCapitalize="none" autoComplete="off" onChangeText={setPassword} placeholder="Mật khẩu file .picket" secureTextEntry style={styles.input} value={password} />
+        <TextInput accessibilityLabel={t("password")} autoCapitalize="none" autoComplete="off" onChangeText={setPassword} placeholder={t("passwordPlaceholder")} editable={!busy} secureTextEntry style={styles.input} value={password} />
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void chooseBackup()} style={styles.secondary}>
-          {busy && !pending ? <ActivityIndicator accessibilityLabel="Đang đọc file backup" color={colors.mauve} /> : <Text style={styles.secondaryText}>Chọn file JSON hoặc .picket</Text>}
+          {busy && !pending ? <ActivityIndicator accessibilityLabel={t("reading")} color={colors.mauve} /> : <Text style={styles.secondaryText}>{t("choose")}</Text>}
         </Pressable>
         {pending && (
           <View style={styles.summary}>
             <Text style={styles.summaryTitle}>{pending.fileName}</Text>
-            <Text style={styles.summaryText}>Ví: {pending.summary.wallets}</Text>
-            <Text style={styles.summaryText}>Giao dịch: {pending.summary.entries}</Text>
-            {localMode && <Text style={styles.summaryText}>Ảnh hóa đơn: {pending.guest?.receipts.length ?? 0}</Text>}
-            <Text style={styles.summaryText}>Ngân sách: {pending.summary.budgets}</Text>
-            <Text style={styles.summaryText}>Hóa đơn: {pending.summary.bills}</Text>
-            <Text style={styles.summaryText}>Kỷ vật: {pending.summary.keepsakes}</Text>
-            <Text style={styles.summaryText}>Gói đăng ký: {pending.summary.subscriptions}</Text>
-            {!localMode && <Text style={styles.revision}>Revision hiện tại: {pending.currentRevision}</Text>}
+            <Text style={styles.summaryText}>{t("wallets",{count:pending.summary.wallets})}</Text>
+            <Text style={styles.summaryText}>{t("entries",{count:pending.summary.entries})}</Text>
+            {localMode && <Text style={styles.summaryText}>{t("receipts",{count:pending.guest?.receipts.length ?? 0})}</Text>}
+            <Text style={styles.summaryText}>{t("budgets",{count:pending.summary.budgets})}</Text>
+            <Text style={styles.summaryText}>{t("bills",{count:pending.summary.bills})}</Text>
+            <Text style={styles.summaryText}>{t("keepsakes",{count:pending.summary.keepsakes})}</Text>
+            <Text style={styles.summaryText}>{t("subscriptions",{count:pending.summary.subscriptions})}</Text>
+            {!localMode && <Text style={styles.revision}>{t("revision",{revision:pending.currentRevision})}</Text>}
           </View>
         )}
         {pending && (
           <>
-            <Text style={styles.label}>Nhập RESTORE để xác nhận</Text>
+            <Text style={styles.label}>{t("confirmation")}</Text>
             <TextInput
-              accessibilityLabel="Xác nhận khôi phục backup"
+              accessibilityLabel={t("confirmationLabel")}
               autoCapitalize="characters"
               autoComplete="off"
-              onChangeText={setConfirmation}
+              editable={!busy} onChangeText={setConfirmation}
               style={styles.input}
               value={confirmation}
             />
             <Pressable
               accessibilityRole="button"
-              disabled={busy || confirmation !== "RESTORE"}
+              disabled={busy || (!awaitingReload && confirmation !== "RESTORE")}
               onPress={() => void restore()}
-              style={[styles.primary, (busy || confirmation !== "RESTORE") && styles.disabled]}
+              style={[styles.primary, (busy || (!awaitingReload && confirmation !== "RESTORE")) && styles.disabled]}
             >
-              {busy ? <ActivityIndicator accessibilityLabel="Đang khôi phục dữ liệu" color={colors.white} /> : <Text style={styles.primaryText}>Khôi phục dữ liệu</Text>}
+              {busy ? <ActivityIndicator accessibilityLabel={t("restoring")} color={colors.white} /> : <Text style={styles.primaryText}>{t(awaitingReload?"retryReload":"restore")}</Text>}
             </Pressable>
           </>
         )}
-        {message && <Text accessibilityLiveRegion="polite" style={pending ? styles.success : styles.error}>{message}</Text>}
+        {message && <Text accessibilityLiveRegion="polite" style={message==="valid" ? styles.success : styles.error}>{t(message)}</Text>}
       </ScrollView>
     </SafeAreaView>
   );

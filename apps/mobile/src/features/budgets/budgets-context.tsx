@@ -11,12 +11,12 @@ import { useAuth } from "@/features/auth/auth-context";
 import { useCachedState } from "@/core/sync/use-cached-state";
 import { useGuestFinance } from "@/core/local/guest-finance-context";
 
-type Value = { budgets: Budget[]; loading: boolean; error: string | null; refresh(): Promise<void>; create(request: CreateBudgetRequest): Promise<Budget>; update(id: string, request: UpdateBudgetRequest): Promise<Budget>; archive(id: string, expectedVersion: number): Promise<void> };
+type Value = { budgets: Budget[]; loading: boolean; error: string | null; refresh(options?: { throwOnError?: boolean }): Promise<void>; create(request: CreateBudgetRequest): Promise<Budget>; update(id: string, request: UpdateBudgetRequest): Promise<Budget>; archive(id: string, expectedVersion: number): Promise<void> };
 const BudgetContext = createContext<Value | null>(null);
 
 export function BudgetsProvider({ children }: PropsWithChildren) {
   const { session, localMode } = useAuth(); const guest = useGuestFinance(); const [budgets, setBudgets] = useCachedState<Budget[]>(session?.user.id ?? null, "budgets", []); const [loading, setLoading] = useState(session !== null); const [error, setError] = useState<string | null>(null);
-  const refresh = useCallback(async () => { if (!session || !picketApi) return; setLoading(true); setError(null); try { setBudgets((await picketApi.listBudgets(session.access_token)).budgets); } catch (error) { reportApiError("budgets.refresh", error); setError(apiErrorMessage(error, "Không tải được ngân sách.")); } finally { setLoading(false); } }, [session]);
+  const refresh = useCallback(async (options?: { throwOnError?: boolean }) => { if (!session || !picketApi) { if (options?.throwOnError) throw new Error("Restore reload unavailable"); return; } setLoading(true); setError(null); try { setBudgets((await picketApi.listBudgets(session.access_token)).budgets); } catch (error) { reportApiError("budgets.refresh", error); setError(apiErrorMessage(error, "Không tải được ngân sách."));  if (options?.throwOnError) throw error; } finally { setLoading(false); } }, [session]);
   useEffect(() => {
     if (!session || !picketApi) return;
     let active = true;

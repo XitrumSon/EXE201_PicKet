@@ -30,7 +30,7 @@ interface AccountsContextValue {
   accounts: FinancialAccount[];
   error: string | null;
   loading: boolean;
-  refresh(): Promise<void>;
+  refresh(options?: { throwOnError?: boolean }): Promise<void>;
   create(request: CreateAccountRequest): Promise<FinancialAccount>;
   update(
     accountId: string,
@@ -60,8 +60,8 @@ export function AccountsProvider({ children }: PropsWithChildren) {
     return () => { active = false; };
   }, [session, setAccounts]);
 
-  const refresh = useCallback(async () => {
-    if (!session || !picketApi) return;
+  const refresh = useCallback(async (options?: { throwOnError?: boolean }) => {
+    if (!session || !picketApi) { if (options?.throwOnError) throw new Error("Restore reload unavailable"); return; }
     setLoading(true);
     setError(null);
     try {
@@ -70,6 +70,7 @@ export function AccountsProvider({ children }: PropsWithChildren) {
     } catch (error) {
       reportApiError("accounts.refresh", error);
       setError(apiErrorMessage(error, "Không tải được danh sách tài khoản."));
+      if (options?.throwOnError) throw error;
     } finally {
       setLoading(false);
     }

@@ -16,7 +16,7 @@ type BillsValue = {
   bills: Bill[];
   loading: boolean;
   error: string | null;
-  refresh(): Promise<void>;
+  refresh(options?: { throwOnError?: boolean }): Promise<void>;
   create(request: CreateBillRequest): Promise<Bill>;
   update(id: string, request: UpdateBillRequest): Promise<Bill>;
   archive(id: string, expectedVersion: number): Promise<void>;
@@ -31,12 +31,11 @@ export function BillsProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(session !== null);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    if (!session || !picketApi) return;
+  const refresh = useCallback(async (options?: { throwOnError?: boolean }) => {
+    if (!session || !picketApi) { if (options?.throwOnError) throw new Error("Restore reload unavailable"); return; }
     setLoading(true); setError(null);
     try { setBills((await picketApi.listBills(session.access_token)).bills); }
-    catch (caught) { reportApiError("bills.refresh", caught); setError(apiErrorMessage(caught, "Không tải được hóa đơn.")); }
-    finally { setLoading(false); }
+    catch (caught) { reportApiError("bills.refresh", caught); setError(apiErrorMessage(caught, "Không tải được hóa đơn."));  if (options?.throwOnError) throw caught; } finally { setLoading(false); }
   }, [session]);
 
   useEffect(() => {

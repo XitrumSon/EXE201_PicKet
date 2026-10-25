@@ -24,7 +24,7 @@ interface ProfileContextValue {
   loading: boolean;
   profile: CurrentProfile | null;
   error: string | null;
-  refresh(): Promise<void>;
+  refresh(options?: { throwOnError?: boolean }): Promise<void>;
   completeOnboarding(request: CompleteOnboardingRequest): Promise<void>;
   updateProfile(patch: ProfilePatch): Promise<void>;
   updatePreferences(patch: PreferencesPatch): Promise<void>;
@@ -39,8 +39,8 @@ export function ProfileProvider({ children }: PropsWithChildren) {
   const [profile, setProfile] = useCachedState<CurrentProfile | null>(session?.user.id ?? null, "profile", null);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    if (!session || !picketApi) return;
+  const refresh = useCallback(async (options?: { throwOnError?: boolean }) => {
+    if (!session || !picketApi) { if (options?.throwOnError) throw new Error("Restore reload unavailable"); return; }
     setError(null);
     try {
       const result = await picketApi.currentProfile(session.access_token);
@@ -48,6 +48,7 @@ export function ProfileProvider({ children }: PropsWithChildren) {
     } catch (error) {
       reportApiError("profile.refresh", error);
       setError(apiErrorMessage(error, "Không tải được hồ sơ."));
+      if (options?.throwOnError) throw error;
     } finally {
       setLoading(false);
     }
