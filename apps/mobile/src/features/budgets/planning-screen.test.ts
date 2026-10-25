@@ -26,6 +26,8 @@ function harness() {
   let transfer = async () => {};
   let fenceWait: Promise<void> = Promise.resolve();
   let confirm: (() => void) | undefined;
+  let history: unknown[] = [], allocations: unknown[] = [];
+  let budgets = [{ id: "food", name: "Food", defaultLimit: 1000 }, { id: "travel", name: "Travel", defaultLimit: 1000 }];
   const useState = (initial: unknown) => {
     const index = cursor++; if (!(index in slots)) slots[index] = typeof initial === "function" ? initial() : initial;
     return [slots[index], (value: unknown) => { slots[index] = typeof value === "function" ? value(slots[index]) : value; }];
@@ -51,9 +53,9 @@ function harness() {
     } },
     "@/features/auth/auth-context": { useAuth: () => ({ session, localMode: false }) },
     "@/core/local/guest-finance-context": { useGuestFinance: () => ({ data: {}, loading: false }) },
-    "@/features/budgets/budgets-context": { useBudgets: () => ({ budgets: [{ id: "food", name: "Food", defaultLimit: 1000 }, { id: "travel", name: "Travel", defaultLimit: 1000 }], update: async () => {} }) },
-    "@/features/transactions/use-transaction-history": { useTransactionHistory: () => ({ transactions: [], loading: false, error: null }) },
-    "@/features/transactions/use-spending-splits": { useSpendingSplits: () => ({ splits: [], loading: false, error: null }) },
+    "@/features/budgets/budgets-context": { useBudgets: () => ({ budgets, update: async () => {} }) },
+    "@/features/transactions/use-transaction-history": { useTransactionHistory: () => ({ transactions: history, loading: false, error: null }) },
+    "@/features/transactions/use-spending-splits": { useSpendingSplits: () => ({ splits: allocations, loading: false, error: null }) },
     "@/core/local/budget-overview": { budgetOverview: () => ({ spent: 0 }) },
     "@/core/api/client": { picketApi: {
       getPlanning: (token: string, month: string) => { state.reads++; return getPlanning(token, month); },
@@ -81,6 +83,7 @@ function harness() {
   return { state, render, find, selectTransfer,
     setGet: (value: typeof getPlanning) => { getPlanning = value; }, setTransfer: (value: typeof transfer) => { transfer = value; },
     setFenceWait: (value: Promise<void>) => { fenceWait = value; },
+    refreshFacts: (kind: "history" | "allocations" | "budgets") => { if (kind === "history") history = [...history]; if (kind === "allocations") allocations = [...allocations]; if (kind === "budgets") budgets = [...budgets]; },
     switchSession: (owner: string) => { state.owner = owner; session = { user: { id: owner }, access_token: `synthetic-${owner}` }; },
     confirmClose: () => { assert.ok(confirm); confirm(); },
   };
@@ -165,4 +168,30 @@ test("an owner change while a planning write waits for its lease prevents transp
   (app.find("PrimaryAction", "Transfer limit").props.onPress as () => void)();
   app.switchSession("owner-B"); app.render();
   held.resolve(); await settle(); assert.equal(app.state.transfers, 0);
+});
+
+test("reloading ledger, allocation or budget facts invalidates the prior month-close review", async () => {
+  for (const kind of ["history", "allocations", "budgets"] as const) {
+    const app = harness(); app.render(); await settle();
+    (app.find("Pressable", "Previous month").props.onPress as () => void)(); app.render(); await settle();
+    const checked = elements(app.render()).find(node => node.props.accessibilityLabel === "Reviewed categories, possible duplicates and account reconciliation");
+    assert.ok(checked); (checked.props.onValueChange as (value: boolean) => void)(true);
+    (app.find("PrimaryAction", "Close month").props.onPress as () => void)();
+    app.refreshFacts(kind); app.render(); app.confirmClose(); await settle();
+    assert.equal(app.state.closes, 0, kind);
+    assert.equal(app.find("PrimaryAction", "Close month").props.disabled, true);
+  }
+});
+
+test("a refreshed review needs a fresh confirmation instead of reusing an older native dialog", async () => {
+  const app = harness(); app.render(); await settle();
+  (app.find("Pressable", "Previous month").props.onPress as () => void)(); app.render(); await settle();
+  const checked = () => { const node = elements(app.render()).find(row => row.props.accessibilityLabel === "Reviewed categories, possible duplicates and account reconciliation"); assert.ok(node); return node; };
+  (checked().props.onValueChange as (value: boolean) => void)(true);
+  (app.find("PrimaryAction", "Close month").props.onPress as () => void)();
+  app.refreshFacts("history"); app.render(); (checked().props.onValueChange as (value: boolean) => void)(true);
+  app.render(); app.confirmClose(); await settle(); assert.equal(app.state.closes, 0);
+  assert.equal(app.find("PrimaryAction", "Close month").props.disabled, false);
+  (app.find("PrimaryAction", "Close month").props.onPress as () => void)(); app.confirmClose(); await settle();
+  assert.equal(app.state.closes, 1);
 });
