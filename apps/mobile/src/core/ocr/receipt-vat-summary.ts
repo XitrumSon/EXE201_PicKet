@@ -2,7 +2,8 @@ import type { ReceiptTextLine } from "./receipt-parser";
 
 type PositionedLine = ReceiptTextLine & {left: number; right: number; top: number; bottom: number};
 const normalize = (text: string) => text.toLowerCase().normalize("NFD")
-  .replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/\s+/g, " ").trim();
+  .replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/\s+/g, " ")
+  .replace(/^[\s|│┃]+|[\s|│┃]+$/g, "").trim();
 const positioned = (line: ReceiptTextLine): line is PositionedLine =>
   [line.left, line.right, line.top, line.bottom].every(value => typeof value === "number" && Number.isFinite(value)) &&
   line.right! > line.left! && line.bottom! > line.top!;
@@ -44,7 +45,7 @@ export function receiptVatSummaryRows(lines: ReceiptTextLine[]): ReceiptTextLine
       Math.abs(base + tax - total) > 1) continue;
     removed.delete(payable);
     removed.add(amounts[2]);
-    replacements.set(payable, {...payable, text: `${payable.text} ${total}`});
+    replacements.set(payable, {...payable, text: `Tiền thanh toán: ${total}`});
   }
   return lines.filter(line => !removed.has(line)).map(line => replacements.get(line) ?? line);
 }

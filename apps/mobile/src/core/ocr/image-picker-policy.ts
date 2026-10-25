@@ -5,6 +5,8 @@ import type { ImagePickerOptions } from "expo-image-picker";
 export const receiptImagePickerOptions = {
   mediaTypes: ["images"],
   allowsEditing: false,
-  quality: 0.8,
+  // Android's picker copies the source at quality 1 instead of recompressing it.
+  // Small VAT labels and dates must reach the native recognizer intact.
+  quality: 1,
   exif: false,
 } satisfies ImagePickerOptions;
