@@ -79,6 +79,22 @@ function LearningSession({ owner }: { owner: string }) {
       .catch(() => { if (active) setStorageError(true); });
     return () => { active = false; };
   }, [answers, draftReady, lesson, owner, storageError, submitted]);
+  async function retryStorage() {
+    if(!canInteract())return;
+    operationBusy.current=true;setSaving(true);
+    try {
+      const [value,draft]=await Promise.all([learningProgress.load(owner),learningDrafts.load(owner)]);
+      if(!alive.current)return;
+      setProgress(value);
+      // After hydration, current answers may be newer than the stored draft.
+      if(!draftReady && draft){
+        setLessonIndex(curriculumForLanguage("vi").lessons.findIndex(row=>row.lessonId===draft.lessonId));
+        setAnswers(Object.fromEntries(draft.answers.flatMap((answer,i)=>answer===null?[]:[[i,answer]])));
+      }
+      setDraftReady(true);setStorageError(false);
+    } catch { if(alive.current)setStorageError(true); }
+    finally { operationBusy.current=false;if(alive.current)setSaving(false); }
+  }
   const result = lesson && submitted ? gradeQuiz(lesson, lesson.questions.map((_,i) => answers[i])) : null;
   const complete = lesson?.questions.every((_,i) => answers[i] !== undefined) ?? false;
   return <SafeAreaView style={{ flex: 1, backgroundColor: c.canvas }}><ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
@@ -92,6 +108,7 @@ function LearningSession({ owner }: { owner: string }) {
     {!lesson&&!localMode&&session&&process.env.EXPO_PUBLIC_CASHFLOW_CLOUD_ENABLED==="true"&&<Pressable accessibilityRole="button" onPress={()=>router.push("/weekly-story-preview")} style={{minHeight:48,padding:16,backgroundColor:c.surface,borderRadius:12}}><Text style={{color:c.primary}}>{t("storyTitle",{ns:"cashflow"})}</Text></Pressable>}
     {!lesson && reviews.length>0 && <View style={{gap:12}}><Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("reviewTitle")}</Text>{reviews.map(review=><Pressable key={`${review.lessonId}:${review.version}:${review.offset}`} accessibilityRole="button" disabled={saving || !draftReady} accessibilityState={{disabled:saving || !draftReady}} onPress={()=>{if(!canInteract() || !draftReady)return;setLessonIndex(curriculum.lessons.findIndex(item=>item.lessonId===review.lessonId));setReviewOffset(review.offset);setReviewSaved(false);setAnswers({});setSubmitted(false);}} style={{padding:16,backgroundColor:c.surface,borderRadius:12}}><Text style={{color:c.primary}}>{t("reviewOpen")} · {curriculum.lessons.find(item=>item.lessonId===review.lessonId)?.title} · {review.dueDay}</Text></Pressable>)}</View>}
     <Text accessibilityLiveRegion="polite" style={{ color: c.muted }}>{storageError ? t("storageError") : progress ? `${progress.completed.length}/12` : t("loading")}</Text>
+    {storageError && <Pressable accessibilityRole="button" disabled={saving} accessibilityState={{disabled:saving}} onPress={()=>void retryStorage()} style={{minHeight:48,padding:14,backgroundColor:c.surface}}><Text style={{color:c.primary}}>{t("retryStorage")}</Text></Pressable>}
     {!lesson ? curriculum.lessons.map((item,i) => <Pressable key={item.lessonId} accessibilityRole="button" disabled={saving || !draftReady} accessibilityState={{disabled:saving || !draftReady}} onPress={() => { if(!canInteract() || !draftReady)return;setLessonIndex(i); setAnswers({}); setSubmitted(false); }} style={{ backgroundColor: c.surface, borderRadius: 14, padding: 18, minHeight: 56 }}><Text style={{ color: c.text, fontWeight: "700" }}>{i+1}. {item.title}</Text><Text style={{ color: c.muted }}>{item.objective}</Text></Pressable>) : <>
       <Text style={{ color: c.muted }}>{lesson.objective}</Text>
       <Text style={{ color: c.text, lineHeight: 25 }}>{lesson.body}</Text>

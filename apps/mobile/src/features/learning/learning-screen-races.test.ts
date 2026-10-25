@@ -38,3 +38,7 @@ test("lesson selection waits for stored draft hydration",async()=>{
 test("learning storage can recover without restarting and rapid retries read once",async()=>{const app=harness(true);app.render();await settle();app.setReadFailure(false);const retry=app.button("retryStorage").props.onPress as ()=>void;const before=app.reads();retry();retry();await settle();assert.equal(app.reads(),before+1);(app.button("Lesson").props.onPress as ()=>void)();assert.ok(app.button("Answer"));});
 
 test("storage recovery preserves submitted answers and does not resubmit completion",async()=>{const app=await ready();(app.button("saveCompletion").props.onPress as ()=>void)();app.failSave();await settle();(app.button("retryStorage").props.onPress as ()=>void)();await settle();assert.ok(app.button("saveCompletion"));assert.equal(app.counts().completions,1);assert.equal(app.counts().clears,0);});
+
+test("unavailable storage stays recoverable without clearing drafts or recording completion",async()=>{
+ const app=harness(true);app.render();await settle();(app.button("retryStorage").props.onPress as ()=>void)();await settle();assert.ok(app.button("retryStorage"));assert.deepEqual(app.counts(),{completions:0,clears:0});
+});
