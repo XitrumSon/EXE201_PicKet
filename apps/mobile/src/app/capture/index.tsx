@@ -193,7 +193,9 @@ export default function CaptureReceiptScreen() {
       if (draft.merchant) setTitle(draft.merchant);
       if (draft.amount) setAmount(String(draft.amount));
       setMessage(
-        draft.needsReview
+        !draft.date
+          ? "Chưa đọc được ngày mua trên hóa đơn. Ngày đang hiển thị là ngày dự phòng; hãy chọn đúng ngày trên hóa đơn trước khi lưu."
+          : draft.needsReview
           ? `${draft.reviewReason ?? "Kết quả cần được kiểm tra."} Hãy sửa thông tin trước khi lưu.`
           : `Đã nhận diện ${draft.recognizedLineCount} dòng. Hãy kiểm tra lại trước khi lưu.`,
       );
