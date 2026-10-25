@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.picket.mobile",
-      "versionCode": 11,
+      "versionCode": 12,
       "adaptiveIcon": {
         "backgroundColor": "#FFF8F0",
         "foregroundImage": "./assets/picket-logo.png"
