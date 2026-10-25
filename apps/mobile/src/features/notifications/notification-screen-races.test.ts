@@ -30,8 +30,10 @@ function harness(){
  const exports:{default?:()=>unknown}={};vm.runInNewContext(ts.transpileModule(readFileSync("src/app/notifications.tsx","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{exports,require:(key:string)=>adapters[key]??{},Date});
  const render=()=>{cursor=0;return exports.default!();};
  const control=()=>{const n=all(render()).find(n=>n.type==="Switch");assert.ok(n);return n;};
- return {render,control,release,switchOwner:()=>{owner="B";render();},counts:()=>({writes,schedules})};
+ return {render,control,release,switchOwner:(next="B")=>{owner=next;render();},counts:()=>({writes,schedules})};
 }
 async function settle(){for(let i=0;i<5;i++)await new Promise(done=>setImmediate(done));}
 test("rapid notification toggle callbacks dispatch one preference write",async()=>{const app=harness();app.render();await settle();const callback=app.control().props.onValueChange as (v:boolean)=>void;callback(true);callback(true);assert.equal(app.counts().writes,1);app.release();await settle();});
 test("old owner toggle completion cannot enable or reschedule the new owner's reminders",async()=>{const app=harness();app.render();await settle();(app.control().props.onValueChange as (v:boolean)=>void)(true);app.switchOwner();await settle();app.release();await settle();assert.equal(app.control().props.value,false);assert.equal(app.counts().schedules,0);});
+
+test("returning to the same owner cannot revive a retired screen operation",async()=>{const app=harness();app.render();await settle();(app.control().props.onValueChange as (v:boolean)=>void)(true);app.switchOwner("B");app.switchOwner("A");await settle();app.release();await settle();assert.equal(app.control().props.value,false);assert.equal(app.counts().schedules,0);});

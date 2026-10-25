@@ -9,3 +9,8 @@ The notification screen, coordinator and reminder collector now select the devic
 
 ## Reminder priority continuation
 The native scheduling batch now selects the earliest 50 future notification times instead of the first 50 collection rows. Sorting uses the filtered copy and preserves caller input. RED 973264be reproduces the omitted nearest reminder among 51 reverse-ordered items using real scheduleNow code and an OS adapter. All 734 mobile tests and 21 notification tests pass; typecheck passes. Evidence: .artifacts/reminder-priority-{tests,focused,types}.log. The existing 50-item cap remains; background replenishment and native delivery acceptance are not established by this increment.
+
+## Notification screen concurrency continuation
+A synchronous per-screen-operation lock blocks rapid toggle/reschedule writes. Owner/language lifetime checks reject stale success/error/read-state updates; exact scope identity also prevents an old A operation from becoming valid after A→B→A. Scope changes reset transient UI and focus loading includes language changes. Scheduling receives the same exact-lifetime predicate. This cannot undo a preference write already dispatched for its original owner.
+
+RED 0b41be6d reproduces duplicate writes and stale owner completion. Real screen callback tests use deterministic hook/native/transport adapters, not native rendering. All 737 mobile tests pass; focused notification tests pass 24/24, typecheck passes and Android JS export passes. Evidence: .artifacts/notification-races-{tests,focused,types,export}.log. User theme changes remain unstaged and preserved. Native/device and broader release acceptance remain open.

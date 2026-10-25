@@ -2,7 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { colors } from "@picket/design-tokens";
 import { Redirect, useFocusEffect } from "expo-router";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Switch, Text, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
@@ -27,13 +27,8 @@ export default function NotificationsScreen() {
   const {language}=useAppTheme();
   const { session, localMode } = useAuth();
   const ownerId = session?.user.id ?? (localMode ? guestOwnerId : null);
-  const deliveryScope = useRef({ ownerId, language,active: true });
-  useEffect(() => {
-    const scope = deliveryScope.current;
-    scope.ownerId = ownerId; scope.language=language;scope.active = true;
-    return () => { scope.active = false; };
-  }, [ownerId,language]);
-  const isCurrentOwner = () => deliveryScope.current.active && deliveryScope.current.ownerId === ownerId && deliveryScope.current.language===language;
+  const deliveryScope = useRef({ ownerId, language, active: true, busy: false });
+  const isCurrentOwner = () => deliveryScope.current.active && deliveryScope.current.ownerId === ownerId && deliveryScope.current.language === language;
   const { bills } = useBills();
   const { budgets } = useBudgets();
   const { subscriptions } = useSubscriptions();
@@ -48,6 +43,11 @@ export default function NotificationsScreen() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  useLayoutEffect(() => {
+    const scope = {ownerId,language,active:true,busy:false};
+    deliveryScope.current=scope;
+    return () => {scope.active=false;};
+  },[ownerId,language]);
   const reminders = useMemo(() => collectReminders({ bills, subscriptions, keepsakes, budgets: historyLoading || historyError || splitLoading || splitError || !periodsReady ? [] : budgets, transactions, splits, periodLimits },language), [bills, subscriptions, keepsakes, budgets, transactions, splits, periodLimits, periodsReady, historyLoading, historyError, splitLoading, splitError,language]);
   const dueSoon = reminders.filter((item) => item.notifyAt === null || new Date(item.dueAt).getTime() <= now + 7 * 86400000);
   useFocusEffect(useCallback(() => {
@@ -55,6 +55,8 @@ export default function NotificationsScreen() {
     setSettingsLoading(true);
     setNow(Date.now());
     let active = true;
+    const scope=deliveryScope.current;
+    const current=()=>active && deliveryScope.current===scope && scope.language===language;
     void Promise.all([
       loadReminderKeepsakes({
         localMode,
@@ -66,31 +68,41 @@ export default function NotificationsScreen() {
       remindersEnabled(ownerId),
       readReminderIds(ownerId),
     ])
-      .then(([items, setting, ids]) => { if (active) { setKeepsakes(items); setEnabled(setting); setRead(ids); } })
-      .catch(() => { if (active) setMessage("Không tải được cài đặt thông báo trên thiết bị."); })
-      .finally(() => { if (active) setSettingsLoading(false); });
+      .then(([items, setting, ids]) => { if (current()) { setKeepsakes(items); setEnabled(setting); setRead(ids); setBusy(false);setMessage(null); } })
+      .catch(() => { if (current()) {setBusy(false);setMessage("Không tải được cài đặt thông báo trên thiết bị.");} })
+      .finally(() => { if (current()) setSettingsLoading(false); });
     return () => { active = false; };
-  }, [localMode, ownerId, session?.access_token]));
+  }, [localMode, ownerId, session?.access_token, language]));
   if (!ownerId) return <Redirect href={routes.login} />;
   async function toggle(value: boolean) {
+    if (!isCurrentOwner() || deliveryScope.current.busy || settingsLoading) return;
+    const operation=deliveryScope.current;operation.busy=true;
+    const current=()=>isCurrentOwner() && deliveryScope.current===operation;
     setBusy(true); setMessage(null);
     try {
       const saved = await setRemindersEnabled(ownerId!, value,language);
+      if (!current()) return;
       if (!saved) { setMessage("Quyền thông báo chưa được cấp trong cài đặt Android."); return; }
       setEnabled(value);
-      if (value) await scheduleUserReminders(ownerId!, reminders, isCurrentOwner,language);
-    } catch { setMessage("Không cập nhật được lịch nhắc. Hãy thử lại."); }
-    finally { setBusy(false); }
+      if (value) await scheduleUserReminders(ownerId!, reminders, current,language);
+    } catch { if(current())setMessage("Không cập nhật được lịch nhắc. Hãy thử lại."); }
+    finally { operation.busy=false;if(current())setBusy(false); }
   }
   async function markRead(id: string) {
-    try { await markReminderRead(ownerId!, id); setRead((current) => [...new Set([...current, id])]); }
-    catch { setMessage("Không đánh dấu đã đọc được."); }
+    const operation=deliveryScope.current;
+    const current=()=>isCurrentOwner() && deliveryScope.current===operation;
+    if(!current())return;
+    try { await markReminderRead(ownerId!, id); if(!current())return; setRead((current) => [...new Set([...current, id])]); }
+    catch { if(current())setMessage("Không đánh dấu đã đọc được."); }
   }
   async function reschedule() {
+    if(!isCurrentOwner() || deliveryScope.current.busy || settingsLoading)return;
+    const operation=deliveryScope.current;operation.busy=true;
+    const current=()=>isCurrentOwner() && deliveryScope.current===operation;
     setBusy(true); setMessage(null);
-    try { await scheduleUserReminders(ownerId!, reminders, isCurrentOwner,language); setMessage("Đã cập nhật lịch nhắc trên thiết bị."); }
-    catch { setMessage("Không cập nhật được lịch nhắc."); }
-    finally { setBusy(false); }
+    try { await scheduleUserReminders(ownerId!, reminders, current,language); if(current())setMessage("Đã cập nhật lịch nhắc trên thiết bị."); }
+    catch { if(current())setMessage("Không cập nhật được lịch nhắc."); }
+    finally { operation.busy=false;if(current())setBusy(false); }
   }
   return <PicketScreen>
     <TopAppBar title={tx("Thông báo")} />
