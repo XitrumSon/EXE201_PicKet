@@ -3,9 +3,10 @@ import {readFileSync} from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import type {ReceiptDraftLine} from "../ocr/receipt-parser";
 
 type Node = {type: string; props: Record<string,unknown>; children: unknown[]};
-function render(eligible: boolean, recognizing = false) {
+function render(eligible: boolean, recognizing = false, lineItems: ReceiptDraftLine[] = []) {
  const source=readFileSync(new URL("../../app/capture/index.tsx",import.meta.url),"utf8").replace(/\r\n/g,"\n");
  const start=source.indexOf("  return (\n    <SafeAreaView",source.indexOf("if (!hydrated)"));
  const end=source.indexOf("\n}",start);
@@ -13,7 +14,7 @@ function render(eligible: boolean, recognizing = false) {
  const noop=()=>{};
  const context:Record<string,unknown>={exports,element:(type:string,props:Record<string,unknown>,...children:unknown[])=>({type,props:props??{},children}),Fragment:"Fragment",
   styles:{},colors:{},imageUri:"file:///receipt.jpg",receiptEligible:eligible,isRecognizing:recognizing,isContinuing:false,isQueueingFallback:false,
-  message:"Không nhận diện được hóa đơn hợp lệ.",ocrDurationMs:null,__DEV__:false,lineItems:[],serverFallbackEnabled:false,localMode:false,needsFallback:false,fallbackStatus:null,attachReceipt:false,
+  message:"Không nhận diện được hóa đơn hợp lệ.",ocrDurationMs:null,__DEV__:false,lineItems,formatMoney:(amount:number)=>`${amount} VND`,serverFallbackEnabled:false,localMode:false,needsFallback:false,fallbackStatus:null,attachReceipt:false,
   title:"",amount:"",purchasedAt:"2026-10-26",calendarReceiptDay:()=>"2026-10-26",setTitle:noop,setAmount:noop,
  };
  for(const name of ["SafeAreaView","ScrollView","TopAppBar","Text","Image","View","AppIcon","Pressable","ActivityIndicator","TextInput"])context[name]=name;
@@ -37,4 +38,9 @@ test("recognized receipt exposes the review fields and handoff",()=>{
 test("recognition in progress does not expose editable transaction fields",()=>{
  const result=render(false,true);assert.equal(result.nodes.filter(node=>node.type==="TextInput").length,0);
  assert.match(result.text,/Đang đọc hóa đơn/);
+});
+
+test("review displays each recognized product quantity unit price and total before saving",()=>{
+ const result=render(true,false,[{name:"Sản phẩm demo",quantity:2,unitPrice:25000,total:50000,confidence:0.9}]);
+ assert.match(result.text,/Sản phẩm demo/);assert.match(result.text,/Số lượng:/);assert.match(result.text,/25000 VND/);assert.match(result.text,/50000 VND/);
 });
