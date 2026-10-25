@@ -64,6 +64,12 @@ export function validateGuestBackupPayload(value: unknown): GuestBackupPayload {
   }
   const transactionsById = new Map((finance.transactions as Record<string, unknown>[]).map(item => [item.id, item]));
   const categoryIds = new Set((finance.categories as { id: string }[]).map(item => item.id));
+  for (const budget of finance.budgets as Record<string, unknown>[]) {
+    if (typeof budget.name !== "string" || typeof budget.categoryId !== "string" || !categoryIds.has(budget.categoryId) ||
+        !validMoney(budget.defaultLimit) || !Number.isInteger(budget.alertPercent) ||
+        (budget.alertPercent as number) < 1 || (budget.alertPercent as number) > 100 || typeof budget.active !== "boolean" ||
+        (budget.currencyCode !== undefined && (typeof budget.currencyCode !== "string" || !/^[A-Z]{3}$/.test(budget.currencyCode)))) throw new Error("Ngân sách trong bản sao không hợp lệ.");
+  }
   const splitIds = new Set<string>();
   for (const [transactionId, parts] of Object.entries(finance.splits)) {
     const transaction = transactionsById.get(transactionId);

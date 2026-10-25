@@ -20,3 +20,6 @@ All six financial collections now reject duplicate IDs before restore. IDs remai
 
 ## Backup allocation continuation
 Restore validates split arrays, transaction ownership, existing category references, positive bounded integer amounts and globally unique split IDs. Live split totals use integer arithmetic and cannot exceed the transaction amount; deleted splits remain preserved and excluded from live totals. Partial allocations and empty arrays remain compatible. RED f11d47e6 reproduces malformed acceptance. All 725 mobile tests passed; the 40-test export suite passed again after a TypeScript narrowing correction, and typecheck passed. This does not certify all backup fields, native restoration or full release acceptance. Evidence: .artifacts/backup-splits-{tests,focused,types}.log.
+
+## Backup budget continuation
+Restore now validates budget category references, nonnegative bounded integer limits, integer alert thresholds 1–100, boolean active state, string names and optional three-letter currency codes. Zero limits and inactive budgets remain valid; no existing records are rewritten. RED b183e073 reproduces invalid acceptance. All 727 mobile tests and 42 export/restore tests pass; typecheck passes. Evidence: .artifacts/backup-budgets-{tests,focused,types}.log. Native/device, server and release gates remain outstanding.
