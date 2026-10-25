@@ -25,3 +25,18 @@ test('VAT footer totals never become a product',()=>{
  const result=parseReceiptLines([...invoice(),cell('Tiền thuế',60,360,200),cell('1',700,375,15),cell('8.000',820,380,75),cell('8.000',990,385,80)]);
  assert.ok(!result.lineItems.some(item=>/thuế/.test(item.name)));
 });
+
+test('a missing quantity is derived only from a consistent integer unit-price and line-total ratio',()=>{
+ const rows=invoice().filter(line=>!(line.text==='2'&&line.left===700));
+ const item=parseReceiptLines(rows).lineItems.find(item=>item.name.startsWith('Bánh mẫu'));
+ assert.ok(item);assert.equal(item.quantity,2);assert.ok(item.confidence<0.7);
+});
+test('an unreadable unit price can be calculated from observed quantity and line total with review confidence',()=>{
+ const rows=invoice().map(line=>line.text==='35.185'&&line.left===820?{...line,text:'unreadable'}:line);
+ const item=parseReceiptLines(rows).lineItems.find(item=>item.name==='Nước mẫu');
+ assert.ok(item);assert.equal(item.unitPrice,35185);assert.ok(item.confidence<0.7);
+});
+test('missing quantity and price together cannot create an item from its total alone',()=>{
+ const rows=invoice().filter(line=>!((line.text==='2'&&line.left===700)||(line.text==='15.556'&&line.left===820)));
+ assert.ok(!parseReceiptLines(rows).lineItems.some(item=>item.name.startsWith('Bánh mẫu')));
+});
