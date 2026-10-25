@@ -7,7 +7,7 @@ test("bill validation rejects impossible calendar days and unsafe money before c
   for (const dueDate of ["2026-02-29", "2026-02-31", "2026-04-31", "2026-13-01", "2026-00-01", "2026-01-00", "26-01-01", "2026-1-01", "invalid"]) {
     assert.deepEqual(parseBillForm({ title: "Electricity", amount: "100", dueDate }), { error: "invalidDate" });
   }
-  for (const amount of ["0", "-1", "1.5", "1e3", "12abc", "", "9007199254740992"]) {
+  for (const amount of ["0", "-1", "1.5", "1e3", "12abc", "", "9000000000001", "9007199254740992"]) {
     assert.deepEqual(parseBillForm({ title: "Electricity", amount, dueDate: "2026-10-25" }), { error: "invalidAmount" });
   }
 });
@@ -19,6 +19,7 @@ test("bill payload preserves user text, accepts leap days and uses the selected 
   });
   assert.deepEqual(parseBillForm({ title: "  ", amount: "1", dueDate: "2026-10-25" }), { error: "titleRequired" });
   assert.deepEqual(parseBillForm({ title: "x".repeat(161), amount: "1", dueDate: "2026-10-25" }), { error: "titleTooLong" });
+  assert.equal(parseBillForm({ title: "Maximum", amount: "9000000000000", dueDate: "2026-10-25" }).value.amount, 9000000000000);
   const local = new Date(2026, 9, 31, 0, 15);
   assert.equal(initialBillDueDate(local), "2026-11-07");
   assert.equal(billDateInput(new Date(2026, 9, 25, 12).toISOString()), "2026-10-25");
