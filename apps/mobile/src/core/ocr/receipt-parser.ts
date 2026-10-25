@@ -1,4 +1,5 @@
 import {receiptTableRows} from "./receipt-table-layout";
+import { receiptVatSummaryRows } from "./receipt-vat-summary";
 
 export type ReceiptTextLine = {
   text: string;
@@ -130,9 +131,9 @@ function spatialTotalCandidates(label:ReceiptTextLine,lines:ReceiptTextLine[]):R
 
 /** Pure parser shared by the future native ML Kit adapter and review UI. */
 export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDraft {
-  const lines = receiptTableRows(recognizedLines
+  const lines = receiptVatSummaryRows(receiptTableRows(recognizedLines
     .map((line) => ({ ...line, text: line.text.trim() }))
-    .filter((line) => line.text.length > 0));
+    .filter((line) => line.text.length > 0)));
   // Preserve an unambiguous visual total row in the text saved to drafts.
   // Re-parsing that text after restart must not depend on lost native frames.
   const joinedTotals=new Map<ReceiptTextLine,ReceiptTextLine>();

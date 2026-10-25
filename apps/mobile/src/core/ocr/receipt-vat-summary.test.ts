@@ -26,6 +26,7 @@ test("a skewed VAT summary uses the total column and checked subtotal plus tax",
 test("an inconsistent VAT summary cannot authorize a guessed total", () => {
   const lines = invoice().map(line => line.text === "162.000" ? {...line, text: "172.000"} : line);
   assert.equal(parseReceiptLines(lines).amount, null);
+  assert.equal(parseReceiptText(parseReceiptLines(lines).rawText).amount, null);
 });
 
 test("an extra amount in the VAT total column requires review", () => {
@@ -34,4 +35,11 @@ test("an extra amount in the VAT total column requires review", () => {
 
 test("VAT amount association requires the explicit summary total column", () => {
   assert.equal(parseReceiptLines(invoice().filter(line => line.text !== "Tổng cộng")).amount, null);
+});
+
+test("a VAT summary accepts zero tax and decimal currency suffixes", () => {
+  const lines = invoice().map(line => line.text === "150.000" ? {...line, text: "150.000,00"} :
+    line.text === "12.000" ? {...line, text: "0,00"} :
+    line.text === "162.000" ? {...line, text: "150.000,00"} : line);
+  assert.equal(parseReceiptLines(lines).amount, 150000);
 });
