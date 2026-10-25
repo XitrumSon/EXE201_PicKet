@@ -28,6 +28,9 @@ export default function LearningPreview() {
 function LearningSession({ owner }: { owner: string }) {
   const { session, localMode } = useAuth();
   const attemptKey = useRef<{signature:string;key:string} | null>(null);
+  const alive = useRef(true), operationBusy = useRef(false);
+  useEffect(() => { alive.current=true;return () => {alive.current=false;}; },[owner]);
+  const canInteract = () => alive.current && !operationBusy.current;
   const { colors: c, language } = useAppTheme();
   const curriculum = curriculumForLanguage(language);
   const { t } = useTranslation("learning");
@@ -79,7 +82,7 @@ function LearningSession({ owner }: { owner: string }) {
   const result = lesson && submitted ? gradeQuiz(lesson, lesson.questions.map((_,i) => answers[i])) : null;
   const complete = lesson?.questions.every((_,i) => answers[i] !== undefined) ?? false;
   return <SafeAreaView style={{ flex: 1, backgroundColor: c.canvas }}><ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 60 }} keyboardShouldPersistTaps="handled">
-    <Pressable accessibilityRole="button" onPress={() => { if (lesson) { setLessonIndex(null); setAnswers({}); setSubmitted(false); setReviewOffset(null);setReviewSaved(false); } else router.back(); }}><Text style={{ color: c.primary }}>{t("back")}</Text></Pressable>
+    <Pressable accessibilityRole="button" disabled={saving} accessibilityState={{disabled:saving}} onPress={() => { if(!canInteract())return; if (lesson) { setLessonIndex(null); setAnswers({}); setSubmitted(false); setReviewOffset(null);setReviewSaved(false); } else router.back(); }}><Text style={{ color: c.primary }}>{t("back")}</Text></Pressable>
     <Text accessibilityRole="header" style={{ color: c.text, fontSize: 26, fontWeight: "800" }}>{lesson?.title ?? t("title")}</Text>
     <Text style={{ color: c.muted }}>{t("underReview")}</Text>
     {!lesson && <WeeklyPractice owner={owner} />}
@@ -87,19 +90,21 @@ function LearningSession({ owner }: { owner: string }) {
     {!lesson && <LearningAiCard />}
     {!lesson && <AssessmentDraftCard key={owner} owner={owner} />}
     {!lesson&&!localMode&&session&&process.env.EXPO_PUBLIC_CASHFLOW_CLOUD_ENABLED==="true"&&<Pressable accessibilityRole="button" onPress={()=>router.push("/weekly-story-preview")} style={{minHeight:48,padding:16,backgroundColor:c.surface,borderRadius:12}}><Text style={{color:c.primary}}>{t("storyTitle",{ns:"cashflow"})}</Text></Pressable>}
-    {!lesson && reviews.length>0 && <View style={{gap:12}}><Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("reviewTitle")}</Text>{reviews.map(review=><Pressable key={`${review.lessonId}:${review.version}:${review.offset}`} accessibilityRole="button" onPress={()=>{setLessonIndex(curriculum.lessons.findIndex(item=>item.lessonId===review.lessonId));setReviewOffset(review.offset);setReviewSaved(false);setAnswers({});setSubmitted(false);}} style={{padding:16,backgroundColor:c.surface,borderRadius:12}}><Text style={{color:c.primary}}>{t("reviewOpen")} · {curriculum.lessons.find(item=>item.lessonId===review.lessonId)?.title} · {review.dueDay}</Text></Pressable>)}</View>}
+    {!lesson && reviews.length>0 && <View style={{gap:12}}><Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("reviewTitle")}</Text>{reviews.map(review=><Pressable key={`${review.lessonId}:${review.version}:${review.offset}`} accessibilityRole="button" disabled={saving || !draftReady} accessibilityState={{disabled:saving || !draftReady}} onPress={()=>{if(!canInteract() || !draftReady)return;setLessonIndex(curriculum.lessons.findIndex(item=>item.lessonId===review.lessonId));setReviewOffset(review.offset);setReviewSaved(false);setAnswers({});setSubmitted(false);}} style={{padding:16,backgroundColor:c.surface,borderRadius:12}}><Text style={{color:c.primary}}>{t("reviewOpen")} · {curriculum.lessons.find(item=>item.lessonId===review.lessonId)?.title} · {review.dueDay}</Text></Pressable>)}</View>}
     <Text accessibilityLiveRegion="polite" style={{ color: c.muted }}>{storageError ? t("storageError") : progress ? `${progress.completed.length}/12` : t("loading")}</Text>
-    {!lesson ? curriculum.lessons.map((item,i) => <Pressable key={item.lessonId} accessibilityRole="button" onPress={() => { setLessonIndex(i); setAnswers({}); setSubmitted(false); }} style={{ backgroundColor: c.surface, borderRadius: 14, padding: 18, minHeight: 56 }}><Text style={{ color: c.text, fontWeight: "700" }}>{i+1}. {item.title}</Text><Text style={{ color: c.muted }}>{item.objective}</Text></Pressable>) : <>
+    {!lesson ? curriculum.lessons.map((item,i) => <Pressable key={item.lessonId} accessibilityRole="button" disabled={saving || !draftReady} accessibilityState={{disabled:saving || !draftReady}} onPress={() => { if(!canInteract() || !draftReady)return;setLessonIndex(i); setAnswers({}); setSubmitted(false); }} style={{ backgroundColor: c.surface, borderRadius: 14, padding: 18, minHeight: 56 }}><Text style={{ color: c.text, fontWeight: "700" }}>{i+1}. {item.title}</Text><Text style={{ color: c.muted }}>{item.objective}</Text></Pressable>) : <>
       <Text style={{ color: c.muted }}>{lesson.objective}</Text>
       <Text style={{ color: c.text, lineHeight: 25 }}>{lesson.body}</Text>
       <Text style={{ color: c.text, lineHeight: 24, backgroundColor: c.elevated, padding: 16 }}>{lesson.workedExample.description}</Text>
       {lesson.questions.map((question,i) => <View key={`${lesson.lessonId}:${i}`} style={{ gap: 10 }}>
         <Text accessibilityRole="header" style={{ color: c.text, fontWeight: "700" }}>{i+1}. {question.prompt}</Text>
-        <View accessibilityRole="radiogroup" accessibilityLabel={question.prompt} style={{ gap: 8 }}>{question.choices.map((choice,j) => <Pressable key={j} accessibilityRole="radio" disabled={submitted} accessibilityState={{ checked: answers[i] === j, disabled: submitted }} onPress={() => setAnswers(old => ({ ...old, [i]: j }))} style={{ minHeight: 48, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: answers[i] === j ? c.primary : c.border, backgroundColor: c.surface }}><Text style={{ color: c.text }}>{choice.text}</Text>{submitted && <Text style={{ color: c.muted, marginTop: 8 }}>{choice.explanation}</Text>}</Pressable>)}</View>
+        <View accessibilityRole="radiogroup" accessibilityLabel={question.prompt} style={{ gap: 8 }}>{question.choices.map((choice,j) => <Pressable key={j} accessibilityRole="radio" disabled={submitted || saving} accessibilityState={{ checked: answers[i] === j, disabled: submitted || saving }} onPress={() => {if(!canInteract() || submitted)return;setAnswers(old => ({ ...old, [i]: j }));}} style={{ minHeight: 48, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: answers[i] === j ? c.primary : c.border, backgroundColor: c.surface }}><Text style={{ color: c.text }}>{choice.text}</Text>{submitted && <Text style={{ color: c.muted, marginTop: 8 }}>{choice.explanation}</Text>}</Pressable>)}</View>
       </View>)}
-      {!submitted && <Pressable accessibilityRole="button" disabled={!complete} accessibilityState={{ disabled: !complete }} onPress={() => setSubmitted(true)} style={{ minHeight: 52, padding: 16, borderRadius: 14, backgroundColor: complete ? c.primary : c.disabledSurface }}><Text style={{ color: complete ? c.onPrimary : c.disabledText }}>{t("explanations")}</Text></Pressable>}
-      {result && <><Text accessibilityLiveRegion="polite" style={{ color: c.text }}>{t("result", {correct: result.correct, total: result.total})}</Text><Pressable accessibilityRole="button" onPress={() => { setSubmitted(false); setAnswers({}); }}><Text style={{ color: c.primary }}>{t("retry")}</Text></Pressable></>}
+      {!submitted && <Pressable accessibilityRole="button" disabled={!complete} accessibilityState={{ disabled: !complete }} onPress={() => {if(canInteract() && complete)setSubmitted(true);}} style={{ minHeight: 52, padding: 16, borderRadius: 14, backgroundColor: complete ? c.primary : c.disabledSurface }}><Text style={{ color: complete ? c.onPrimary : c.disabledText }}>{t("explanations")}</Text></Pressable>}
+      {result && <><Text accessibilityLiveRegion="polite" style={{ color: c.text }}>{t("result", {correct: result.correct, total: result.total})}</Text><Pressable accessibilityRole="button" disabled={saving} accessibilityState={{disabled:saving}} onPress={() => { if(!canInteract())return; setSubmitted(false); setAnswers({}); }}><Text style={{ color: c.primary }}>{t("retry")}</Text></Pressable></>}
       {result && <Pressable accessibilityRole="button" disabled={!progress || saving || storageError} accessibilityState={{ disabled: !progress || saving || storageError }} onPress={async () => {
+        if(!canInteract() || !progress || storageError)return;
+        operationBusy.current=true;
         setSaving(true);
         try {
           if (reviewOffset===null && !localMode && session?.user.id===owner && curriculum.publicationGate.publishable &&
@@ -109,13 +114,16 @@ function LearningSession({ owner }: { owner: string }) {
             if(attemptKey.current?.signature!==signature)attemptKey.current={signature,key:Crypto.randomUUID()};
             await learningAttempts.enqueue(owner,{key:attemptKey.current.key,lessonId:lesson.lessonId,
               contentVersion:lesson.version,answers:selectedAnswers});
+            if(!alive.current)return;
           }
-          setProgress(reviewOffset===null ? await learningProgress.complete(owner, lesson.lessonId, lesson.version) : await learningProgress.review(owner,lesson.lessonId,lesson.version,reviewOffset));
+          const nextProgress=reviewOffset===null ? await learningProgress.complete(owner, lesson.lessonId, lesson.version) : await learningProgress.review(owner,lesson.lessonId,lesson.version,reviewOffset);
+          if(!alive.current)return;
+          setProgress(nextProgress);
           if(reviewOffset!==null)setReviewSaved(true);
           await learningDrafts.clearIfUnchanged(owner, {lessonId:lesson.lessonId,version:lesson.version,answers:lesson.questions.map((_,i)=>answers[i] ?? null)});
         }
-        catch { setStorageError(true); }
-        finally { setSaving(false); }
+        catch { if(alive.current)setStorageError(true); }
+        finally { operationBusy.current=false;if(alive.current)setSaving(false); }
       }} style={{ minHeight: 48, padding: 14, backgroundColor: c.surface }}><Text style={{ color: c.primary }}>{t(reviewOffset===null?"saveCompletion":"reviewSave")}</Text></Pressable>}
       {reviewSaved && <Text accessibilityLiveRegion="polite" style={{color:c.text}}>{t("reviewSaved")}</Text>}
       <Text style={{ color: c.text }}>{lesson.optionalAction.text}</Text>

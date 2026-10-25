@@ -29,3 +29,8 @@ async function ready(){const app=harness();app.render();await settle();(app.butt
 test("rapid lesson save callbacks persist completion once",async()=>{const app=await ready();const save=app.button("saveCompletion").props.onPress as ()=>void;save();save();assert.equal(app.counts().completions,1);app.release();await settle();});
 test("lesson navigation and retry remain blocked until completion settles",async()=>{const app=await ready();const back=app.button("back").props.onPress as ()=>void,retry=app.button("retry").props.onPress as ()=>void;(app.button("saveCompletion").props.onPress as ()=>void)();back();retry();assert.ok(app.button("saveCompletion"));app.release();await settle();});
 test("unmounted lesson completion does not clear a draft after returning",async()=>{const app=await ready();(app.button("saveCompletion").props.onPress as ()=>void)();app.stop();app.release();await settle();assert.equal(app.counts().clears,0);});
+
+test("lesson selection waits for stored draft hydration",async()=>{
+ const app=harness();app.render();(app.button("Lesson").props.onPress as ()=>void)();assert.throws(()=>app.button("Answer"));
+ await settle();(app.button("Lesson").props.onPress as ()=>void)();assert.ok(app.button("Answer"));
+});

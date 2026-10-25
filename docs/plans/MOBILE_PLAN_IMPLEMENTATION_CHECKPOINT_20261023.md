@@ -6,6 +6,15 @@ This is an engineering checkpoint, not final acceptance or a completed P1–P5 r
 
 The latest continuation below supersedes older pending lists in this file.
 
+- Latest continuation (25 October): reminder calendars refresh on rollover and
+  foreground; keepsake reloads discard superseded responses and keep owner-tagged
+  state in the coordinator and notification screen. Learning save/navigation
+  callbacks are serialized, draft hydration is respected and late completion
+  cleanup stops after unmount. All 753 mobile tests pass, typecheck/Android JS
+  export pass. See REMINDER_ARCHIVE_CHECKPOINT_20261025.md and
+  LEARNING_DRAFT_CLEANUP_CHECKPOINT_20261025.md. Native acceptance, independent
+  content review, staging/production and actual Play billing/cohort gates remain.
+
 - Latest integrity continuation (25 October): guest planning/refund calculations,
   restored financial collection identities/budgets/payment schedules/calendar dates
   and split allocations are validated. Notification collection excludes deleted
