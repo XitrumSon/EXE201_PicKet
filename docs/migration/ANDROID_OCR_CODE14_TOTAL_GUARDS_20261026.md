@@ -50,3 +50,8 @@ Upload is serialized; no other Play Edit is opened while it is in flight.
 After update the owner must select the upside-down image again for a fresh scan.
 A restored draft may contain code-13 values, including a manually edited value;
 this release does not overwrite existing drafts or create financial records.
+
+Deployment succeeded at 13:48 ICT on 26 October 2026. A fresh live get_releases
+confirms Internal completed, versionCode 14, 100%; production remains empty and
+alpha remains draft code 6. An assisted fresh scan of the same 180-degree image
+on Redmi is requested. Physical code-14 accuracy/performance is not yet accepted.
