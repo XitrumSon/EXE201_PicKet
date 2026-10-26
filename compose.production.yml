@@ -22,6 +22,9 @@ services:
       ACME_EMAIL: ${ACME_EMAIL}
       PICKET_API_DOMAIN: ${PICKET_API_DOMAIN}
       PICKET_WEB_DOMAIN: ${PICKET_WEB_DOMAIN}
+      PICKET_LANDING_DOMAIN: ${PICKET_LANDING_DOMAIN}
+      PICKET_LEGACY_WEB_DOMAIN: ${PICKET_LEGACY_WEB_DOMAIN:-picket.51-79-207-154.sslip.io}
+      PICKET_LEGACY_API_DOMAIN: ${PICKET_LEGACY_API_DOMAIN:-api.51-79-207-154.sslip.io}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./apps/landing/dist:/srv/picket-landing:ro
