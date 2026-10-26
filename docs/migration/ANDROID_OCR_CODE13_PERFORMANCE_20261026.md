@@ -94,3 +94,9 @@ Post-scan total PSS: 398,635KiB, swap PSS: 140KiB. One memory sample cannot prov
 leak-free repeated use. Accuracy confirmation and an assisted 180-degree scan
 have been requested; neither is assumed from a successful timing log. No receipt
 transaction was saved by this diagnostic.
+
+The owner confirms the upright scan total is correct and product details are
+present. The initial report that an inverted scan was complete had no matching
+new native log; local screen inspection still showed an upright source image.
+A new assisted test explicitly using an upside-down source preview was requested.
+Do not count the initial report as verified inverted-device acceptance.
