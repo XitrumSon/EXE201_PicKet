@@ -17,7 +17,7 @@ function harness(options:{strongAt?:number;slow?:boolean;throwPreview?:boolean}=
  full:async()=>{events.push('full');return vat();},crop:async()=>{events.push('crop');return {width:3000,height:600,lines:[]};},close:async()=>{events.push('close');}};
  return {native,events,now:()=>clock};
 }
-test('upright VAT uses one bounded preview and at most one detail crop, with no full-image rereads',async()=>{
+test('upright VAT uses one bounded preview and at most one detail crop, without a redundant full-image read',async()=>{
  const app=harness();const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
  assert.equal(result.draft.amount,54000);assert.deepEqual(app.events.filter(e=>e.startsWith('preview:')),['preview:0']);
  assert.equal(app.events.filter(e=>e==='full').length,0);assert.equal(app.events.filter(e=>e==='crop').length,1);assert.equal(app.events[0],'open');assert.equal(app.events.at(-1),'close');
@@ -32,4 +32,15 @@ test('no new native OCR or detail work starts after the processing budget expire
 });
 test('failed native OCR always closes the sole image session',async()=>{
  const app=harness({throwPreview:true});await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,app.now));assert.equal(app.events.at(-1),'close');
+});
+
+test('unverified preview still gets one authoritative full-image read',async()=>{
+ const app=harness({strongAt:999});const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
+ assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='full').length,1);
+});
+test('leaving the scan cancels subsequent OCR work and closes the session',async()=>{
+ const app=harness(),controller=new AbortController();const original=app.native.preview;
+ app.native.preview=async(...args)=>{const result=await original(...args);controller.abort();return result;};
+ await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,app.now,controller.signal),/OCR_CANCELLED/);
+ assert.deepEqual(app.events,['open','preview:0','close']);
 });

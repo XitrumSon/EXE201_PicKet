@@ -10,7 +10,7 @@ export type ReceiptOcrSession={
  close(id:string):Promise<void>;
 };
 export type ReceiptScanResult={draft:ReceiptDraft;durationMs:number;budgetExceeded:boolean;stats:{previews:number;fullReads:number;cropReads:number}};
-export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now=()=>Date.now()):Promise<ReceiptScanResult>{
+export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now=()=>Date.now(), _signal?:AbortSignal):Promise<ReceiptScanResult>{
  const start=now(),opened=await native.open(uri);let draft:ReceiptDraft|undefined;
  const stats={previews:0,fullReads:0,cropReads:0};
  try {for(const angle of [0,90,180,270]){await native.preview(opened.id,angle,2048,20000);stats.previews++;await native.select(opened.id,angle);draft=parseReceiptLines((await native.full(opened.id,20000)).lines);stats.fullReads++;}
