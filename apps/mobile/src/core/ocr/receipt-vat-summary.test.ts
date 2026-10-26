@@ -79,3 +79,27 @@ test("generic VAT headings cannot become a merchant above the actual company nam
   ]);
   assert.equal(result.merchant,"CÔNG TY THƯƠNG MẠI PICKET");
 });
+
+function paymentColumns(){return [
+ cell("Thuế suất 5%",350,880,130),cell("Thuế suất 8%",600,880,130),
+ cell("51.429",400,900),cell("2.571",400,925),cell("54.000",400,950),
+ cell("100.000",650,900),cell("8.000",650,925),cell("108.000",650,950),
+];}
+test("independent payment-column sums can verify an observed total when a VAT component is misread",()=>{
+ const lines=invoice().filter(line=>line.text!=="Thuế suất 8%").map(line=>line.text==="150.000"?{...line,text:"160.000"}:line);
+ const result=parseReceiptLines([...lines,...paymentColumns()]);
+ assert.equal(result.amount,162000);assert.equal(result.needsReview,true);
+ assert.equal(parseReceiptText(result.rawText).amount,162000);
+});
+
+test("missing primary summary components can use complete independently observed payment columns",()=>{
+ const lines=invoice().filter(line=>!["Thuế suất 8%","150.000","12.000"].includes(line.text));
+ assert.equal(parseReceiptLines([...lines,...paymentColumns()]).amount,162000);
+});
+
+test("unverified or incomplete payment columns never authorize an inconsistent total",()=>{
+ const lines=invoice().filter(line=>line.text!=="Thuế suất 8%").map(line=>line.text==="150.000"?{...line,text:"160.000"}:line);
+ const wrong=paymentColumns().map(line=>line.text==="108.000"?{...line,text:"109.000"}:line);
+ assert.equal(parseReceiptLines([...lines,...wrong]).amount,null);
+ assert.equal(parseReceiptLines([...lines,...paymentColumns().filter(line=>line.text!=="8.000")]).amount,null);
+});

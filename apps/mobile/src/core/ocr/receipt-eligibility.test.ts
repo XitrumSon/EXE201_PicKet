@@ -18,3 +18,15 @@ test("typed fields cannot authorize an image with no OCR evidence", () => {
 test("supported synthetic receipt layouts retain the review flow", () => {
   for (const receipt of receiptCorpus) assert.equal(canAttachReceipt(parseReceiptText(receipt.rawText)), true, receipt.name);
 });
+
+const partialTable="PICKET DEMO\nHÓA ĐƠN\n26/10/2026\nTên sản phẩm\nSL\nĐơn giá\nThành tiền\nSữa mẫu 2 x 25000 | 50000\nTrà mẫu 1 x 10000 | 10000\nTiền hàng:\nTiền thuế:\nTiền thanh toán:";
+test("a proven invoice with multiple coherent product rows can request a missing total",()=>{
+ const draft=parseReceiptText(partialTable);
+ assert.equal(draft.amount,null);assert.equal(draft.lineItems.length,2);
+ assert.equal(canAttachReceipt(draft),true);assert.equal(draft.needsReview,true);
+});
+
+test("a shopping list or typed amount cannot substitute for explicit invoice evidence",()=>{
+ const rawText=partialTable.replace("HÓA ĐƠN\n","");
+ assert.equal(canAttachReceipt({rawText,amount:60000,merchant:"Typed store"}),false);
+});
