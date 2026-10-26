@@ -73,3 +73,9 @@ and the temporary P: build mapping removed after checks.
 Upload attempt 1 returned an expired Edit after a concurrent release-status
 read. Serialize Play Edit operations; retry uses a fresh process/edit with no
 parallel Play status calls. Verify the live track only after upload completes.
+
+Retry deployment succeeded. A fresh live get_releases after upload confirms
+Internal `completed`, versionCode 13, 100% on 26 October 2026 at 12:52 ICT.
+Production remains empty; alpha remains draft code 6. Redmi was still code 12
+before owner update. An assisted code-13 upright scan is requested; no physical
+code-13 latency/accuracy or whole-product acceptance is claimed yet.
