@@ -52,3 +52,27 @@ test('a full read exhausting the budget keeps its draft and starts no crop',asyn
  assert.equal(result.draft.amount,54000);assert.equal(result.budgetExceeded,true);assert.equal(result.draft.needsReview,true);
  assert.deepEqual(app.events,['open','direction','select:0','inspect','close']);
 });
+
+test('an unreadable VAT total gets one bounded summary retry without repeating full-image OCR',async()=>{
+ const app=harness();
+ app.native.inspect=async()=>{app.events.push('inspect');return {...vat(),lines:vat().lines.filter(line=>!(line.top!>=1000&&/^\d/.test(line.text)))};};
+ const regions:{originY:number}[]=[];
+ app.native.crop=async(_id,region)=>{
+  app.events.push('crop');regions.push(region);
+  return {width:1000,height:region.height,lines:region.originY>=800?vat().lines.filter(line=>line.top!>=960).map(line=>({...line,top:line.top!-region.originY,bottom:line.bottom!-region.originY})):[]};
+ };
+ const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
+ assert.equal(result.draft.amount,54000);
+ assert.equal(app.events.filter(event=>event==='inspect').length,1);
+ assert.equal(regions.filter(region=>region.originY>=800).length,1);
+ assert.ok(regions.length<=2);
+});
+
+test('a missing thumbnail direction can use verified upright full-text direction',async()=>{
+ const app=harness();app.native.direction=async()=>{app.events.push('direction');return {width:100,height:100,lines:[]};};
+ app.native.inspect=async()=>{app.events.push('inspect');return {width:1000,height:1400,lines:[
+  cell('PICKET DEMO',10,10,200),cell('Ngày 26/10/2026',10,40,250),cell('Tổng cộng 54.000',10,200,300),
+ ].map(line=>({...line,angle:0,confidence:0.95}))};};
+ const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
+ assert.equal(result.draft.amount,54000);assert.equal(result.stats.fullReads,1);
+});
