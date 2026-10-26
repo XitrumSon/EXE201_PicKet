@@ -32,7 +32,10 @@ test("separate OCR columns preserve each product quantity unit price and total",
 });
 test("inconsistent table quantity and prices are not silently accepted",()=>{
  const lines=table().map(line=>line.text==="240.000 đ"?{...line,text:"230.000 đ"}:line);
- assert.ok(!parseReceiptLines(lines).lineItems.some(line=>line.name==="Bàn phím demo"));
+ const result=parseReceiptLines(lines);
+ assert.ok(!result.lineItems.some(line=>line.name==="Bàn phím demo"));
+ assert.equal(result.needsReview,true);
+ assert.match(result.reviewReason??"",/chưa được đưa vào danh sách/);
 });
 test("a long table retains thirty distinct products without counting its summary",()=>{
  const lines=table().filter(line=>line.top!<=80);
