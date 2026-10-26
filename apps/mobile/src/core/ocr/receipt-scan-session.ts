@@ -3,6 +3,7 @@ export type OcrSample={lines:ReceiptTextLine[];width:number;height:number;durati
 export type OcrRegion={originX:number;originY:number;width:number;height:number};
 export type ReceiptOcrSession={
  open(uri:string):Promise<{id:string;width:number;height:number}>;
+ inspect(id:string,timeoutMs:number):Promise<OcrSample>;
  preview(id:string,angle:number,edge:number,timeoutMs:number):Promise<OcrSample>;
  select(id:string,angle:number):Promise<{width:number;height:number}>;
  full(id:string,timeoutMs:number):Promise<OcrSample>;

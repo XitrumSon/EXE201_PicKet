@@ -12,6 +12,7 @@ const weak=():OcrSample=>({width:1000,height:1400,lines:[cell('SHOP',10,10),cell
 function harness(options:{strongAt?:number;slow?:boolean;throwPreview?:boolean}={}){
  let clock=0;const events:string[]=[];
  const native:ReceiptOcrSession={open:async()=>{events.push('open');return {id:'test',width:3000,height:4200};},
+ inspect:async()=>{events.push('inspect');if(options.slow)clock=25000;if(options.throwPreview)throw new Error('failed');return {...vat(),lines:vat().lines.map(line=>({...line,angle:options.strongAt===180?180:0,confidence:0.95}))};},
  preview:async(_id,angle,edge,timeout)=>{events.push(`preview:${angle}`);assert.ok(edge<=2048);assert.ok(timeout<=20000);if(options.slow)clock=25000;if(options.throwPreview)throw new Error('failed');return angle===(options.strongAt??0)?vat():weak();},
  select:async(_id,angle)=>{events.push(`select:${angle}`);return {width:3000,height:4200};},
  full:async()=>{events.push('full');return vat();},crop:async()=>{events.push('crop');return {width:3000,height:600,lines:[]};},close:async()=>{events.push('close');}};
@@ -19,28 +20,28 @@ function harness(options:{strongAt?:number;slow?:boolean;throwPreview?:boolean}=
 }
 test('upright VAT uses one bounded preview and at most one detail crop, without a redundant full-image read',async()=>{
  const app=harness();const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
- assert.equal(result.draft.amount,54000);assert.deepEqual(app.events.filter(e=>e.startsWith('preview:')),['preview:0']);
+ assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='inspect').length,1);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);
  assert.equal(app.events.filter(e=>e==='full').length,0);assert.equal(app.events.filter(e=>e==='crop').length,1);assert.equal(app.events[0],'open');assert.equal(app.events.at(-1),'close');
 });
 test('upside-down VAT tests 180 degrees immediately after a weak upright preview',async()=>{
  const app=harness({strongAt:180});const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
- assert.equal(result.draft.amount,54000);assert.deepEqual(app.events.filter(e=>e.startsWith('preview:')),['preview:0','preview:180']);assert.ok(app.events.includes('select:180'));
+ assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='inspect').length,1);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);assert.ok(app.events.includes('select:180'));
 });
 test('no new native OCR or detail work starts after the processing budget expires',async()=>{
  const app=harness({slow:true});const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
- assert.equal(result.budgetExceeded,true);assert.deepEqual(app.events,['open','preview:0','close']);
+ assert.equal(result.budgetExceeded,true);assert.deepEqual(app.events,['open','inspect','close']);
 });
 test('failed native OCR always closes the sole image session',async()=>{
  const app=harness({throwPreview:true});await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,app.now));assert.equal(app.events.at(-1),'close');
 });
 
-test('unverified preview still gets one authoritative full-image read',async()=>{
+test('native direction and the initial full-image reading do not trigger a duplicate full pass',async()=>{
  const app=harness({strongAt:999});const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
- assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='full').length,1);
+ assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='full').length,0);
 });
 test('leaving the scan cancels subsequent OCR work and closes the session',async()=>{
- const app=harness(),controller=new AbortController();const original=app.native.preview;
- app.native.preview=async(...args)=>{const result=await original(...args);controller.abort();return result;};
+ const app=harness(),controller=new AbortController();const original=app.native.inspect;
+ app.native.inspect=async(...args)=>{const result=await original(...args);controller.abort();return result;};
  await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,app.now,controller.signal),/OCR_CANCELLED/);
- assert.deepEqual(app.events,['open','preview:0','close']);
+ assert.deepEqual(app.events,['open','inspect','close']);
 });
