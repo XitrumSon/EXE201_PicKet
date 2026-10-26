@@ -43,3 +43,27 @@ Build and verify code 15 APK/AAB, keep immutable release backups, then update on
 production APK links/metadata while preserving the existing live page design and
 previous downloads. Physical code-15 inverted accuracy and camera/splash acceptance
 remain pending; do not claim them from unit tests or code-13/14 measurements.
+
+## Release and landing production
+
+Signed code-15 ARM64 APK/AAB build PASS (4m10s). Final APK signature verifies
+and matches the previous landing APK certificate. The installed Google Play
+certificate differs, so the Redmi should update via Internal testing rather than
+replacing its Play installation with this direct APK. Packaged splash pixels
+match the generated Picket artwork; compiled splash theme references that image.
+APK/AAB JavaScript bytes match. Release APK points to production HTTPS API and
+contains no QA loopback endpoints. It is non-debuggable and has no forbidden
+installer/overlay permissions.
+
+APK: 71,415,044 bytes; SHA-256
+`611837a4969d8477c77fdcb29fe0acfc98d7350100a29f51c2615e7d70fba737`.
+Landing metadata/build PASS; 10/10 landing tests PASS. Production now serves
+`picket-1.0.4-15-20261026-611837a4-arm64.apk`. Full HTTPS re-download SHA-256 and
+size match; attachment MIME, 206 byte ranges, old APK availability, login and API
+health PASS. Live markup/design was retained, with only download links, checksum,
+size/date metadata changed. Previous download and rollback metadata remain;
+no application container was restarted. Local APK/AAB backups and backup manifest
+are preserved; generated/diagnostic payloads are not committed.
+
+The code-15 Play upload and physical Redmi acceptance are still tracked separately.
+Publishing the requested APK does not establish all OCR/photo accuracy cases.
