@@ -9,7 +9,7 @@ import { restoreCaptureSnapshot } from "../ocr/capture-journal";
 type Element={type:unknown;props:Record<string,unknown>};
 function harness() {
   const slots:unknown[]=[];let cursor=0;
-  const effects:(()=>unknown)[]=[];
+  const effects:(()=>unknown)[]=[];let focusEffect:(()=>unknown)|undefined;
   const calls={load:0,imageRestore:0,recognize:0,persist:0};
   let finishPersist!:(value:{id:string;imageRef:string})=>void;
   const persistence=new Promise<{id:string;imageRef:string}>(resolve=>{finishPersist=resolve;});
@@ -28,10 +28,12 @@ function harness() {
     "react-native":{...Object.fromEntries(["ActivityIndicator","Image","ScrollView","Text","View"].map(name=>[name,name])),StyleSheet:{create:(value:unknown)=>value},Alert:{}},
     "react-native-safe-area-context":{SafeAreaView:"SafeAreaView"},
     "expo-crypto":{randomUUID:()=>"operation"},
-    "expo-router":{router:{back(){},replace(){},push(){}},useLocalSearchParams:()=>({}),useFocusEffect:()=>{}},
+    "expo-router":{router:{back(){},replace(){},push(){}},useLocalSearchParams:()=>({}),useFocusEffect:(fn:()=>unknown)=>{focusEffect=fn;}},
     "@/core/theme/use-mobile-styles":{useMobileStyles:()=>({colors:fallback,styles:fallback})},
     "@/features/auth/auth-context":{useAuth:()=>({session:{user:{id:"owner"}},localMode:false})},
     "@/core/ui/receipt-flow-policy":{receiptCalendarDate:()=>null,receiptCaptureDate:()=>saved.purchasedAt},
+    "@/core/ui/receipt-calendar":{calendarReceiptDay:()=>"2026-10-26"},
+    "@/core/i18n/formatters":{formatMoney:(amount:number)=>String(amount)},
     "@/core/ocr/capture-work":{prepareCapture},
     "@/core/ocr/capture-journal":{restoreCaptureSnapshot},
     "@/core/ocr/capture-storage":{
@@ -46,10 +48,10 @@ function harness() {
   const source=readFileSync(new URL("../../app/capture/index.tsx",import.meta.url),"utf8");
   const exports:{default?:()=>Element}={};
   vm.runInNewContext(ts.transpileModule(source,{fileName:"capture.tsx",compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX}}).outputText,
-    {exports,require:(name:string)=>modules[name]??fallback,process:{env:{}},AbortController,console:{info(){}}});
+    {exports,require:(name:string)=>modules[name]??fallback,process:{env:{}},AbortController,__DEV__:false,console:{info(){}}});
   const render=()=>{cursor=0;return exports.default!();};
   const flush=async()=>{for(const effect of effects.splice(0))effect();await new Promise(resolve=>setImmediate(resolve));};
-  return {render,flush,calls,finishPersist:()=>finishPersist({id:"new",imageRef:"file:///new.enc"})};
+  return {render,flush,calls,focus:()=>focusEffect?.(),finishPersist:()=>finishPersist({id:"new",imageRef:"file:///new.enc"})};
 }
 
 test("entering capture opens camera without reading or decrypting the old draft",async()=>{
@@ -75,4 +77,12 @@ test("a new capture starts recognition and displays processing before photo pers
   assert.match(JSON.stringify(tree),/Đang đọc hóa đơn/);
   assert.doesNotMatch(JSON.stringify(tree),/Kiểm tra và tạo giao dịch/);
   app.finishPersist();await app.flush();
+});
+
+test("returning to the capture route opens camera while preserving explicit draft recovery",async()=>{
+  const app=harness();app.render();await app.flush();const camera=app.render();
+  (camera.props.onCapture as (uri:string)=>void)("file:///new.jpg");
+  await app.flush();app.finishPersist();await app.flush();app.render();
+  app.focus();const tree=app.render();
+  assert.equal(tree.type,"ReceiptCamera");assert.equal(app.calls.load,0);
 });
