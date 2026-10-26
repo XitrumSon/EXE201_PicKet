@@ -55,3 +55,21 @@ Before acceptance, update Redmi through Internal testing, confirm code 13 opens,
 then scan the same upright and 180-degree invoice. Check timing, responsiveness,
 product rows, totals, date warning, retake handling, and repeated-scan memory.
 Do not uninstall or clear app data. No production rollout is implied.
+
+Verified before upload: 830/830 mobile tests; mobile lint exits successfully
+(0 errors, 27 existing warnings); TypeScript check PASS; 3/3 native JVM tests;
+signed ARM64 release AAB build PASS (2m28s). Generated Expo module registration
+and final DEX include PicketReceiptOcr. Play-forbidden install/overlay permissions
+are absent; manifest is 1.0.4 (13). AAB: 48,153,207 bytes, SHA-256
+`a8d45a4fbc0bbb5120b16d5af98183d18c10adc7a2dde6362f9ba439ea257d91`.
+Local ignored backup and manifest updated. Build uses the existing shared
+workspace; unrelated owner edits remain uncommitted and preserved.
+
+Repeat combined native runs: upright 14,776ms; inverted 15,445ms; both retain the
+printed total and six paid rows, with resources closed. This repeats the native
+fixture diagnostic, not Redmi/Expo acceptance. The diagnostic emulator was closed
+and the temporary P: build mapping removed after checks.
+
+Upload attempt 1 returned an expired Edit after a concurrent release-status
+read. Serialize Play Edit operations; retry uses a fresh process/edit with no
+parallel Play status calls. Verify the live track only after upload completes.
