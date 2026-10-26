@@ -7,6 +7,7 @@ export type ReceiptTextLine = {
   text: string;
   confidence?: number;
   angle?: number;
+  reviewIssue?: "inconsistent-item";
   top?: number;
   bottom?: number;
   left?: number;
@@ -38,7 +39,7 @@ export type ReceiptDraftLine = {
 const totalWords = /tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*thanh\s*toan|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^total\b|^due$/i;
 const strongTotalWords = /tong\s*cong|tng\s*cng|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^due$/i;
 const trailingTotalWords = /^(?:total\s*due|amount\s*due|due)$/i;
-const rejectedTotalWords = /subtotal|tam\s*tinh|tien\s*khach|tien\s*thua|change|tendered|cash\s*received|so\s*luong/i;
+const rejectedTotalWords = /hinh\s*thuc|phuong\s*thuc|payment\s*method|\b(?:dt|dien\s*thoai|phone|hotline|tel)\b|subtotal|tam\s*tinh|tien\s*khach|tien\s*thua|change|tendered|cash\s*received|so\s*luong/i;
 const rejectedItemWords = /\b(tong|total|subtotal|tam\s*tinh|thanh\s*toan|phai\s*tra|vat|tax|thue|giam\s*gia|discount|tien\s*thua|tien\s*khach|change|cash|barcode|ma\s*hang|don\s*gia|so\s*luong|so\s*chung\s*tu|qty|ngay|date|gio|time|mst|ma\s*so\s*thue|hoa\s*don|receipt|invoice|dia\s*chi|address|hotline|tel)\b/i;
 
 function normalized(value: string) {
@@ -201,7 +202,7 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     .map((line, index) => {
       const clean = normalized(line.text);
       const digitCount = (line.text.match(/\d/g) ?? []).length;
-      if(/phieu\s*(mua|ban|giao|thu)|ten\s*(san pham|hang hoa)|^sl$|^bh$|don\s*gia|thanh\s*tien|phuong\s*thuc|thong\s*tin|khach\s*hang|website|www\.|https?:|@/i.test(clean))return null;
+      if(/gia\s*tri\s*gia\s*tang|phieu\s*(mua|ban|giao|thu)|ten\s*(san pham|hang hoa)|^sl$|^bh$|don\s*gia|thanh\s*tien|phuong\s*thuc|thong\s*tin|khach\s*hang|website|www\.|https?:|@/i.test(clean))return null;
       if (line.text.length < 3 || !/[A-Za-zÀ-ỹ]/.test(line.text) || /hoa\s*don|bi(?:e)?n\s*lai|cash\s*bill|receipt|invoice|mst|tax|dia\s*chi|address|hotline|tel\b|ngay\b|date\b|tong|subtotal|thanh\s*toan|^no\.?\s*\d|\bjalan\b|\b\d{5}\b/i.test(clean) || digitCount > line.text.length / 3) return null;
       const relativeTop = maxBottom > 0 && line.top !== undefined ? line.top / maxBottom : index / Math.max(1, lines.length);
       const letters = line.text.replace(/[^A-Za-zÀ-ỹ]/g, "");
@@ -219,6 +220,8 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
 
   const reviewReason = rawText.length === 0
     ? "Không nhận diện được chữ trong ảnh."
+    : lines.some(line => line.reviewIssue === "inconsistent-item")
+      ? "Một số dòng sản phẩm có số lượng, đơn giá và thành tiền không khớp nên chưa được đưa vào danh sách. Hãy đối chiếu và bổ sung dòng thiếu."
     : lineItems.some(item => item.confidence < 0.7)
       ? "Một số dòng hàng có giá trị được tính lại từ các ô đọc được. Hãy đối chiếu từng dòng với hóa đơn."
     : selectedTotal === null

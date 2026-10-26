@@ -66,7 +66,12 @@ export function receiptTableRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
    if(amount===null)continue;
    if(quantity===null&&unit!==null&&unit>0){quantity=Math.round(amount/unit);inferred=true;}
    else if(unit===null&&quantity!==null&&quantity>0){unit=Math.round(amount/quantity);inferred=true;}
-   if(quantity===null||unit===null||!Number.isFinite(quantity)||quantity<=0||quantity>1_000_000||Math.abs(quantity*unit-amount)>1)continue;
+   if(quantity===null||unit===null||!Number.isFinite(quantity)||quantity<=0||quantity>1_000_000||Math.abs(quantity*unit-amount)>1){
+    const unresolved=(partsByTotal.get(total)??[])[0];
+    if(unresolved&&amount>0&&quantity!==null&&quantity>0&&unit!==null&&Math.abs(quantity*unit-amount)>1)
+     replacements.set(unresolved,{...unresolved,reviewIssue:"inconsistent-item"});
+    continue;
+   }
    const parts=(partsByTotal.get(total)??[]).sort((a,b)=>a.top-b.top);
    if(parts.length===0)continue;
    const name=parts[0],text=parts.map(part=>part.text).join(" ");
