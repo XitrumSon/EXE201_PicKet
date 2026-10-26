@@ -46,3 +46,27 @@ verification tests but was not published: the owner's new requests are combined
 in code 17. Landing production remains code 15 until this release is verified.
 Do not claim physical code-17 OCR/splash/UI or whole-product acceptance before
 assisted tests. Publish signed APK to landing and Play AAB only to Internal.
+
+## Artifact and production verification
+
+Direct APK build PASS in 2m08s; Play AAB build PASS in 2m15s. Nine native tests
+pass (6 update-verification, 3 OCR decode bounds). Both signed archives verify.
+APK source map includes the direct adapter, native updater and installer
+permission; Play AAB includes the Play adapter, omits the updater and installer
+permission. The five capture/OCR source contents match between channels. Splash
+pixels match generated artwork and all nontransparent pixels fit the circle mask.
+
+APK 71,159,756 bytes, SHA-256
+`e7b32d350946ddd5cc960d4327fd6fac0591fba7ea58d9ff0014797766676412`.
+AAB 48,252,640 bytes, SHA-256
+`eeb4f1251c66ec46d9bba965069df8e31745a3d6978a4b3aad060052d29b8f9c`.
+Production landing now serves
+`picket-1.0.4-17-20261026-e7b32d35-arm64.apk`. Full HTTPS download checksum/size,
+MIME, 206 ranges, prior immutable APK availability, login/API health PASS.
+Landing build and 10 landing tests PASS; live design was retained. Release JSON
+checked with the actual updater policy: older direct install -> available,
+code-17 direct -> current, Play install -> play-store. No containers restarted.
+Local signed backups/manifest retained. APK-15 direct users need one manual
+landing update to enter the repaired APK-17 updater; Play users remain on Play.
+
+Play Internal upload and physical code-17 acceptance are tracked independently.

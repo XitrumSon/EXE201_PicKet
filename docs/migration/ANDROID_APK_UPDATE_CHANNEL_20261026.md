@@ -33,3 +33,9 @@ permission blocker for direct packaging; restore the Play blocker after building
 Verify direct APK manifest/native-module/JS adapter and signer before publishing.
 Only the direct APK needs this code-16 packaging repair; Internal Play code 15
 already uses its correct channel and its verified OCR/UI changes are unchanged.
+
+Superseded local code-16 packaging by published direct APK 17 after the owner
+requested additional OCR/UI repairs. See ANDROID_OCR_CODE17_PARTIAL_RECEIPTS_20261026.md.
+Production metadata and the bundled update policy verify older direct versions
+see code 17, current sees current, and Play installs route to Play. Native updater,
+permission, direct adapter and same landing signer are verified in APK 17.
