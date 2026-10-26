@@ -3,6 +3,7 @@ import {canAttachParsedReceipt} from "./receipt-eligibility";
 import {receiptTableCrop} from "./receipt-table-crop";
 import {receiptVatSummaryRows} from "./receipt-vat-summary";
 import {inferReceiptRotation,orientReceiptLines} from "./receipt-direction";
+import {receiptSummaryCrop} from "./receipt-summary-crop";
 export type OcrSample={lines:ReceiptTextLine[];width:number;height:number;durationMs?:number};
 export type OcrRegion={originX:number;originY:number;width:number;height:number};
 export type ReceiptOcrSession={
@@ -13,7 +14,7 @@ export type ReceiptOcrSession={
  crop(id:string,region:OcrRegion,timeoutMs:number):Promise<OcrSample>;
  close(id:string):Promise<void>;
 };
-export type ReceiptScanResult={draft:ReceiptDraft;durationMs:number;budgetExceeded:boolean;stats:{inspections:number;previews:number;fullReads:number;cropReads:number;nativeMs:number}};
+export type ReceiptScanResult={draft:ReceiptDraft;durationMs:number;budgetExceeded:boolean;stats:{inspections:number;previews:number;fullReads:number;cropReads:number;summaryReads:number;nativeMs:number}};
 export const RECEIPT_SCAN_BUDGET_MS=20_000;
 function verifiedUpright(sample:OcrSample,draft:ReceiptDraft){
  if(!canAttachParsedReceipt(draft)||!receiptTableCrop(sample.lines))return false;
@@ -23,7 +24,7 @@ function verifiedUpright(sample:OcrSample,draft:ReceiptDraft){
 export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now=()=>Date.now(),signal?:AbortSignal):Promise<ReceiptScanResult>{
  const ensureCurrent=()=>{if(signal?.aborted)throw new Error("OCR_CANCELLED");};ensureCurrent();
  const start=now(),deadline=start+RECEIPT_SCAN_BUDGET_MS,opened=await native.open(uri);
- const stats={inspections:0,previews:0,fullReads:0,cropReads:0,nativeMs:0};
+ const stats={inspections:0,previews:0,fullReads:0,cropReads:0,summaryReads:0,nativeMs:0};
  const remaining=()=>Math.max(0,deadline-now());let budgetExceeded=false;
  const finish=(draft:ReceiptDraft):ReceiptScanResult=>({draft:budgetExceeded?{...draft,needsReview:true,reviewReason:"Đã hết thời gian đọc chi tiết. Hãy kiểm tra kết quả hoặc chụp lại ảnh rõ hơn."}:draft,durationMs:now()-start,budgetExceeded,stats});
  try {
@@ -36,9 +37,23 @@ export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now
   stats.fullReads++;const sample=await native.inspect(opened.id,remaining());stats.nativeMs+=sample.durationMs??0;ensureCurrent();
   const rawDraft=parseReceiptLines(sample.lines);
   if(!rawDraft.rawText)return finish(rawDraft);
-  if(angle===null&&!verifiedUpright(sample,rawDraft))throw new Error("OCR_ORIENTATION_UNCERTAIN");
-  const lines=orientReceiptLines(sample.lines,sample.width,sample.height,0);
+  const fullDirection=inferReceiptRotation(sample.lines);
+  if(fullDirection!==null&&fullDirection!==0)throw new Error("OCR_ORIENTATION_UNCERTAIN");
+  if(angle===null&&fullDirection!==0&&!verifiedUpright(sample,rawDraft))throw new Error("OCR_ORIENTATION_UNCERTAIN");
+  let lines=orientReceiptLines(sample.lines,sample.width,sample.height,0);
   let draft=parseReceiptLines(lines);
+  if(remaining()<=0){budgetExceeded=true;return finish(draft);}
+  const summary=draft.amount===null?receiptSummaryCrop(lines,selectedDimensions.width,selectedDimensions.height):null;
+  if(summary){
+   try{
+    ensureCurrent();stats.summaryReads++;
+    const detail=await native.crop(opened.id,summary,remaining());stats.nativeMs+=detail.durationMs??0;ensureCurrent();
+    const outside=lines.filter(line=>{const y=(line.top!+line.bottom!)/2;return y<summary.originY||y>=summary.originY+summary.height;});
+    const merged=orientReceiptLines([...outside,...detail.lines.map(line=>({...line,top:line.top!+summary.originY,bottom:line.bottom!+summary.originY}))],selectedDimensions.width,selectedDimensions.height,0);
+    const refined=parseReceiptLines(merged);
+    if(refined.amount!==null){lines=merged;draft=refined;}
+   }catch{ensureCurrent();budgetExceeded=remaining()<=0;}
+  }
   if(remaining()<=0){budgetExceeded=true;return finish(draft);}
   const region=receiptTableCrop(lines);
   if(!region)return finish(draft);

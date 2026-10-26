@@ -1,5 +1,6 @@
 import type {ReceiptDraft} from "./receipt-parser";
 import {scanReceiptSession,type ReceiptOcrSession,type OcrSample} from "./receipt-scan-session";
+import {canAttachReceipt,canAttachParsedReceipt} from "./receipt-eligibility";
 export type ReceiptOcrResult={draft:ReceiptDraft;durationMs:number;budgetExceeded?:boolean};
 type NativeSession={
  open(uri:string):Promise<{id:string;width:number;height:number}>;
@@ -20,7 +21,9 @@ export async function recognizeReceipt(imageUri:string,signal?:AbortSignal):Prom
   const native:ReceiptOcrSession={open:uri=>module.open(uri),direction:(...args)=>module.direction(...args),inspect:(...args)=>module.inspect(...args),select:(...args)=>module.select(...args),
    crop:(id,region,timeout)=>module.crop(id,region.originX,region.originY,region.width,region.height,timeout),close:id=>module.close(id)};
   const result=await scanReceiptSession(imageUri,native,()=>Date.now(),signal);
-  console.info("PICKET_OCR_PERF",JSON.stringify({durationMs:result.durationMs,budgetExceeded:result.budgetExceeded,...result.stats}));
+  console.info("PICKET_OCR_PERF",JSON.stringify({durationMs:result.durationMs,budgetExceeded:result.budgetExceeded,...result.stats,
+   hasAmount:result.draft.amount!==null,hasMerchant:result.draft.merchant!==null,hasDate:result.draft.date!==null,itemsCount:result.draft.lineItems.length,
+   parsedEligible:canAttachParsedReceipt(result.draft),rawEligible:canAttachReceipt(result.draft)}));
   return result;
  }finally{scanning=false;}
 }

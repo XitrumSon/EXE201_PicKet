@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "android": {
       "package": "com.picket.mobile",
-      "versionCode": 14,
+      "versionCode": 15,
       "adaptiveIcon": {
         "backgroundColor": "#FFF8F0",
         "foregroundImage": "./assets/picket-logo.png"
@@ -52,7 +52,15 @@
           "ocrUseBundled": true
         }
       ],
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/picket-logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFF8F0"
+        }
+      ],
       "expo-sharing",
       "expo-iap",
       "expo-localization"
