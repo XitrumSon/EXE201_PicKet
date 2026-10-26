@@ -1,10 +1,15 @@
-import { parseReceiptText } from "./receipt-parser";
+import { parseReceiptText, type ReceiptDraft } from "./receipt-parser";
 
 /** Re-parse OCR evidence; user edits never turn an unrelated image into a receipt. */
 export function canAttachReceipt(value: { rawText: string | null; amount?: number | null; merchant?: string | null }): boolean {
   if (!value.rawText) return false;
   const draft = parseReceiptText(value.rawText);
-  const evidence = value.rawText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
+  return canAttachParsedReceipt(draft);
+}
+
+/** Internal OCR already has a parsed draft; do not parse the same evidence twice. */
+export function canAttachParsedReceipt(draft: ReceiptDraft): boolean {
+  const evidence = draft.rawText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
   const explicitVat = /\bhoa don\b/.test(evidence) && /tien hang/.test(evidence) && /tien thue/.test(evidence) &&
     /^tien thanh toan: \d+$/m.test(evidence);
   return draft.recognizedLineCount >= 3 && draft.amount !== null &&

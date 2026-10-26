@@ -6,6 +6,7 @@ import { receiptVatSummaryRows } from "./receipt-vat-summary";
 export type ReceiptTextLine = {
   text: string;
   confidence?: number;
+  angle?: number;
   top?: number;
   bottom?: number;
   left?: number;

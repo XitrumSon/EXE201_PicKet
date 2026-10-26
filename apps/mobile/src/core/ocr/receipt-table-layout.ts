@@ -38,11 +38,24 @@ export function receiptTableRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
   const body=positionedLines.filter(line=>line.top>nameHeader.bottom&&line.top<end&&!used.has(line));
   const column=(header:PositionedLine)=>{const bounds=band(header);return body.filter(line=>(line.left+line.right)/2>=bounds.left&&(line.left+line.right)/2<bounds.right);};
   const corrected=(line:PositionedLine,header:PositionedLine)=>centerY(line)-(centerY(header)-centerY(nameHeader));
+  const unitCells=column(unitHeader),quantityCells=column(quantityHeader);
   const totals=column(totalHeader).filter(line=>/^\d[\d.,\s]*(?:vnd|đ|d|₫)?$/i.test(line.text.trim()));
   const names=body.filter(line=>line.left>=nameLeft-height*0.25&&(line.left+line.right)/2<nameRight&&/[A-Za-zÀ-ỹ]/.test(line.text));
+  const partsByTotal=new Map<PositionedLine,PositionedLine[]>();
+  const rowPositions=totals.map(total=>({total,y:corrected(total,totalHeader)}));
+  for(const name of names){
+   let nearest:PositionedLine|undefined,best=Infinity,second=Infinity;
+   for(const row of rowPositions){
+    const distance=Math.abs(centerY(name)-row.y);
+    if(distance<best){second=best;best=distance;nearest=row.total;}else if(distance<second)second=distance;
+   }
+   if(nearest&&best<=Math.max(name.bottom-name.top,nearest.bottom-nearest.top)&&second-best>2){
+    const parts=partsByTotal.get(nearest)??[];parts.push(name);partsByTotal.set(nearest,parts);
+   }
+  }
   for(const total of totals){
    const rowY=corrected(total,totalHeader);
-   const cells=(header:PositionedLine)=>column(header).filter(line=>
+   const cells=(header:PositionedLine)=> (header===unitHeader?unitCells:quantityCells).filter(line=>
     Math.abs(corrected(line,header)-rowY)<=Math.max(line.bottom-line.top,total.bottom-total.top)*0.85);
    const units=cells(unitHeader),quantities=cells(quantityHeader);
    if(units.length>1||quantities.length>1)continue;
@@ -54,11 +67,7 @@ export function receiptTableRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
    if(quantity===null&&unit!==null&&unit>0){quantity=Math.round(amount/unit);inferred=true;}
    else if(unit===null&&quantity!==null&&quantity>0){unit=Math.round(amount/quantity);inferred=true;}
    if(quantity===null||unit===null||!Number.isFinite(quantity)||quantity<=0||quantity>1_000_000||Math.abs(quantity*unit-amount)>1)continue;
-   const parts=names.filter(name=>{
-    const distances=totals.map(other=>({other,distance:Math.abs(centerY(name)-corrected(other,totalHeader))})).sort((a,b)=>a.distance-b.distance);
-    return distances[0]?.other===total&&distances[0].distance<=Math.max(name.bottom-name.top,total.bottom-total.top)&&
-     (distances.length<2||distances[1].distance-distances[0].distance>2);
-   }).sort((a,b)=>a.top-b.top);
+   const parts=(partsByTotal.get(total)??[]).sort((a,b)=>a.top-b.top);
    if(parts.length===0)continue;
    const name=parts[0],text=parts.map(part=>part.text).join(" ");
    replacements.set(name,{...name,text:`${text} ${quantity} x ${unit} | ${amount}`,confidence:inferred?0.55:name.confidence,right:total.right});

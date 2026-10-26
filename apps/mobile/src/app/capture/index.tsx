@@ -1,7 +1,7 @@
 import { colors, radii } from "@picket/design-tokens";
 import * as Crypto from "expo-crypto";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
 import {
   ActivityIndicator,
@@ -45,6 +45,7 @@ export default function CaptureReceiptScreen() {
   const params = useLocalSearchParams<{ date?: string }>();
   const explicitDate = useRef(receiptCalendarDate(params.date));
   const pollingController = useRef<AbortController | null>(null);
+  const localOcrController = useRef<AbortController | null>(null);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
@@ -72,12 +73,13 @@ export default function CaptureReceiptScreen() {
   const imageGeneration = useRef(0);
   const mounted = useRef(true);
   const activeOwner = useRef(ownerId);
-  const receiptEligible = !isRecognizing && canAttachReceipt({ rawText });
+  const receiptEligible = useMemo(() => !isRecognizing && canAttachReceipt({ rawText }), [isRecognizing, rawText]);
 
   useEffect(() => {
     activeOwner.current = ownerId;
     imageGeneration.current++;
     pollingController.current?.abort();
+    localOcrController.current?.abort();
     if (!ownerId) return;
     let active = true;
     void captureJournal.load(ownerId).then(async saved => {
@@ -137,6 +139,7 @@ export default function CaptureReceiptScreen() {
     () => { mounted.current = true; return () => {
       mounted.current = false;
       pollingController.current?.abort();
+      localOcrController.current?.abort();
     }; },
     [],
   );
@@ -170,6 +173,9 @@ export default function CaptureReceiptScreen() {
   }
 
   async function runOcr(uri: string, generation: number) {
+    localOcrController.current?.abort();
+    const controller = new AbortController();
+    localOcrController.current = controller;
     setIsRecognizing(true);
     setMessage("Đang nhận diện trực tiếp trên điện thoại…");
     setOcrDurationMs(null);
@@ -183,7 +189,7 @@ export default function CaptureReceiptScreen() {
     setProvider("manual");
 
     try {
-      const result = await recognizeReceipt(uri);
+      const result = await recognizeReceipt(uri, controller.signal);
       if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       const { draft } = result;
       setOcrDurationMs(result.durationMs);
@@ -196,18 +202,23 @@ export default function CaptureReceiptScreen() {
       if (draft.merchant) setTitle(draft.merchant);
       if (draft.amount) setAmount(String(draft.amount));
       setMessage(
-        !draft.date
+        result.budgetExceeded
+          ? "Đã dừng đọc chi tiết vì quá thời gian. Hãy kiểm tra kết quả hoặc chụp lại gần hơn, đủ sáng hơn."
+          : !draft.date
           ? "Chưa đọc được ngày mua trên hóa đơn. Ngày đang hiển thị là ngày dự phòng; hãy chọn đúng ngày trên hóa đơn trước khi lưu."
           : draft.needsReview
           ? `${draft.reviewReason ?? "Kết quả cần được kiểm tra."} Hãy sửa thông tin trước khi lưu.`
           : `Đã nhận diện ${draft.recognizedLineCount} dòng. Hãy kiểm tra lại trước khi lưu.`,
       );
-    } catch {
+    } catch (error) {
       if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       setMessage(
-        "Chưa đọc được hóa đơn. Hãy thử ảnh khác hoặc nhập thông tin bên dưới.",
+        String(error).includes("OCR_BUSY")
+          ? "Lượt nhận diện trước đang kết thúc. Hãy chờ một lát rồi chụp lại."
+          : "Chưa đọc được hóa đơn trong thời gian cho phép. Hãy chụp gần hơn, đủ sáng hoặc chọn ảnh khác.",
       );
     } finally {
+      if (localOcrController.current === controller) localOcrController.current = null;
       if (mounted.current && activeOwner.current === ownerId && generation === imageGeneration.current) setIsRecognizing(false);
     }
   }

@@ -9,25 +9,26 @@ function vat():OcrSample{return {width:1000,height:1400,lines:[
  cell('Tiền hàng:',10,1000,130),cell('Tiền thuế:',10,1030,130),cell('Tiền thanh toán:',10,1060,160),cell('Tổng cộng',780,960,120),cell('50.000',820,1000),cell('4.000',820,1030),cell('54.000',820,1060),
  ]};}
 function harness(options:{strongAt?:number;slow?:boolean;throwPreview?:boolean}={}){
- let clock=0;let selected=false;const events:string[]=[];
+ let clock=0;const events:string[]=[];
  const native:ReceiptOcrSession={open:async()=>{events.push('open');return {id:'test',width:3000,height:4200};},
- inspect:async()=>{events.push('inspect');if(options.slow)clock=25000;if(options.throwPreview)throw new Error('failed');return {...vat(),lines:vat().lines.map(line=>options.strongAt===180&&!selected?{...line,left:1000-line.right!,right:1000-line.left!,top:1400-line.bottom!,bottom:1400-line.top!,angle:180,confidence:0.95}:{...line,angle:0,confidence:0.95})};},
- select:async(_id,angle)=>{events.push(`select:${angle}`);selected=true;return {width:3000,height:4200};},
+ direction:async()=>{events.push('direction');if(options.slow)clock=25000;if(options.throwPreview)throw new Error('failed');return {...vat(),lines:vat().lines.map(line=>({...line,angle:options.strongAt===180?180:0,confidence:0.95}))};},
+ inspect:async()=>{events.push('inspect');return vat();},
+ select:async(_id,angle)=>{events.push(`select:${angle}`);return {width:3000,height:4200};},
 crop:async()=>{events.push('crop');return {width:3000,height:600,lines:[]};},close:async()=>{events.push('close');}};
  return {native,events,now:()=>clock};
 }
-test('upright VAT needs one native recognition and at most one detail crop',async()=>{
+test('upright VAT reads direction thumbnail, full text and at most one detail crop',async()=>{
  const app=harness();const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
- assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='inspect').length,1);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);
- assert.equal(app.events.filter(e=>e==='full').length,0);assert.equal(app.events.filter(e=>e==='crop').length,1);assert.equal(app.events[0],'open');assert.equal(app.events.at(-1),'close');
+ assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='direction').length,1);assert.equal(app.events.filter(e=>e==='inspect').length,1);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);
+ assert.equal(result.stats.fullReads,1);assert.equal(app.events.filter(e=>e==='crop').length,1);assert.equal(app.events[0],'open');assert.equal(app.events.at(-1),'close');
 });
 test('upside-down VAT re-reads only the selected direction before trusting its text',async()=>{
  const app=harness({strongAt:180});const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
- assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='inspect').length,2);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);assert.ok(app.events.includes('select:180'));assert.equal(result.stats.fullReads,1);
+ assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='direction').length,1);assert.equal(app.events.filter(e=>e==='inspect').length,1);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);assert.ok(app.events.includes('select:180'));assert.equal(result.stats.fullReads,1);
 });
 test('no new native OCR or detail work starts after the processing budget expires',async()=>{
- const app=harness({slow:true});const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
- assert.equal(result.budgetExceeded,true);assert.deepEqual(app.events,['open','inspect','close']);
+ const app=harness({slow:true});await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,app.now),/OCR_TIMEOUT/);
+ assert.deepEqual(app.events,['open','direction','close']);
 });
 test('failed native OCR always closes the sole image session',async()=>{
  const app=harness({throwPreview:true});await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,app.now));assert.equal(app.events.at(-1),'close');
@@ -35,11 +36,19 @@ test('failed native OCR always closes the sole image session',async()=>{
 
 test('native direction and the initial full-image reading do not trigger a duplicate full pass',async()=>{
  const app=harness({strongAt:999});const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
- assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='full').length,0);
+ assert.equal(result.draft.amount,54000);assert.equal(result.stats.fullReads,1);
 });
 test('leaving the scan cancels subsequent OCR work and closes the session',async()=>{
- const app=harness(),controller=new AbortController();const original=app.native.inspect;
- app.native.inspect=async(...args)=>{const result=await original(...args);controller.abort();return result;};
+ const app=harness(),controller=new AbortController();const original=app.native.direction;
+ app.native.direction=async(...args)=>{const result=await original(...args);controller.abort();return result;};
  await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,app.now,controller.signal),/OCR_CANCELLED/);
- assert.deepEqual(app.events,['open','inspect','close']);
+ assert.deepEqual(app.events,['open','direction','close']);
+});
+
+test('a full read exhausting the budget keeps its draft and starts no crop',async()=>{
+ const app=harness();let clock=0;const inspect=app.native.inspect;
+ app.native.inspect=async(...args)=>{const sample=await inspect(...args);clock=25000;return sample;};
+ const result=await scanReceiptSession('file:///sample.jpg',app.native,()=>clock);
+ assert.equal(result.draft.amount,54000);assert.equal(result.budgetExceeded,true);assert.equal(result.draft.needsReview,true);
+ assert.deepEqual(app.events,['open','direction','select:0','inspect','close']);
 });

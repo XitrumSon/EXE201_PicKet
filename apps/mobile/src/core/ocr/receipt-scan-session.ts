@@ -1,19 +1,59 @@
 import {parseReceiptLines,type ReceiptDraft,type ReceiptTextLine} from "./receipt-parser";
+import {canAttachParsedReceipt} from "./receipt-eligibility";
+import {receiptTableCrop} from "./receipt-table-crop";
+import {receiptVatSummaryRows} from "./receipt-vat-summary";
+import {inferReceiptRotation,orientReceiptLines} from "./receipt-direction";
 export type OcrSample={lines:ReceiptTextLine[];width:number;height:number;durationMs?:number};
 export type OcrRegion={originX:number;originY:number;width:number;height:number};
 export type ReceiptOcrSession={
  open(uri:string):Promise<{id:string;width:number;height:number}>;
+ direction(id:string,timeoutMs:number):Promise<OcrSample>;
  inspect(id:string,timeoutMs:number):Promise<OcrSample>;
- preview(id:string,angle:number,edge:number,timeoutMs:number):Promise<OcrSample>;
  select(id:string,angle:number):Promise<{width:number;height:number}>;
- full(id:string,timeoutMs:number):Promise<OcrSample>;
  crop(id:string,region:OcrRegion,timeoutMs:number):Promise<OcrSample>;
  close(id:string):Promise<void>;
 };
-export type ReceiptScanResult={draft:ReceiptDraft;durationMs:number;budgetExceeded:boolean;stats:{previews:number;fullReads:number;cropReads:number}};
-export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now=()=>Date.now(), _signal?:AbortSignal):Promise<ReceiptScanResult>{
- const start=now(),opened=await native.open(uri);let draft:ReceiptDraft|undefined;
- const stats={previews:0,fullReads:0,cropReads:0};
- try {for(const angle of [0,90,180,270]){await native.preview(opened.id,angle,2048,20000);stats.previews++;await native.select(opened.id,angle);draft=parseReceiptLines((await native.full(opened.id,20000)).lines);stats.fullReads++;}
- return {draft:draft!,durationMs:now()-start,budgetExceeded:false,stats};}finally{await native.close(opened.id);}
+export type ReceiptScanResult={draft:ReceiptDraft;durationMs:number;budgetExceeded:boolean;stats:{inspections:number;previews:number;fullReads:number;cropReads:number;nativeMs:number}};
+export const RECEIPT_SCAN_BUDGET_MS=20_000;
+function verifiedUpright(sample:OcrSample,draft:ReceiptDraft){
+ if(!canAttachParsedReceipt(draft)||!receiptTableCrop(sample.lines))return false;
+ return receiptVatSummaryRows(sample.lines).some(line=>!sample.lines.includes(line)&&/^Tiền thanh toán: \d+$/.test(line.text));
+}
+/** A small direction pass precedes one full-resolution reading and at most one detail crop. */
+export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now=()=>Date.now(),signal?:AbortSignal):Promise<ReceiptScanResult>{
+ const ensureCurrent=()=>{if(signal?.aborted)throw new Error("OCR_CANCELLED");};ensureCurrent();
+ const start=now(),deadline=start+RECEIPT_SCAN_BUDGET_MS,opened=await native.open(uri);
+ const stats={inspections:0,previews:0,fullReads:0,cropReads:0,nativeMs:0};
+ const remaining=()=>Math.max(0,deadline-now());let budgetExceeded=false;
+ const finish=(draft:ReceiptDraft):ReceiptScanResult=>({draft:budgetExceeded?{...draft,needsReview:true,reviewReason:"Đã hết thời gian đọc chi tiết. Hãy kiểm tra kết quả hoặc chụp lại ảnh rõ hơn."}:draft,durationMs:now()-start,budgetExceeded,stats});
+ try {
+  ensureCurrent();if(remaining()<=0)throw new Error("OCR_TIMEOUT");
+  stats.inspections++;const direction=await native.direction(opened.id,remaining());stats.nativeMs+=direction.durationMs??0;ensureCurrent();
+  if(remaining()<=0)throw new Error("OCR_TIMEOUT");
+  const angle=inferReceiptRotation(direction.lines);
+  const selectedDimensions=await native.select(opened.id,angle??0);ensureCurrent();
+  if(remaining()<=0)throw new Error("OCR_TIMEOUT");
+  stats.fullReads++;const sample=await native.inspect(opened.id,remaining());stats.nativeMs+=sample.durationMs??0;ensureCurrent();
+  const rawDraft=parseReceiptLines(sample.lines);
+  if(!rawDraft.rawText)return finish(rawDraft);
+  if(angle===null&&!verifiedUpright(sample,rawDraft))throw new Error("OCR_ORIENTATION_UNCERTAIN");
+  const lines=orientReceiptLines(sample.lines,sample.width,sample.height,0);
+  let draft=parseReceiptLines(lines);
+  if(remaining()<=0){budgetExceeded=true;return finish(draft);}
+  const region=receiptTableCrop(lines);
+  if(!region)return finish(draft);
+  ensureCurrent();const dimensions=selectedDimensions;ensureCurrent();
+  if(remaining()<=0){budgetExceeded=true;return finish(draft);}
+  const crop={...region,originX:0,width:dimensions.width,height:Math.min(region.height,dimensions.height-region.originY)};
+  if(crop.height>0&&crop.width>0){
+   try {
+    stats.cropReads++;const detail=await native.crop(opened.id,crop,remaining());stats.nativeMs+=detail.durationMs??0;ensureCurrent();
+    const outside=lines.filter(line=>{const y=(line.top!+line.bottom!)/2;return y<crop.originY||y>=crop.originY+crop.height;});
+    const detailLines=detail.lines.map(line=>({...line,top:line.top!+crop.originY,bottom:line.bottom!+crop.originY}));
+    const refined=parseReceiptLines([...outside,...detailLines]);
+    if(refined.amount===draft.amount&&refined.lineItems.length>draft.lineItems.length)draft=refined;
+   }catch{ensureCurrent();budgetExceeded=remaining()<=0;}
+  }
+  budgetExceeded=budgetExceeded||remaining()<=0;return finish(draft);
+ }finally{await native.close(opened.id);}
 }
