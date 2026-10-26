@@ -57,3 +57,25 @@ test("extra words on a VAT label are not stripped to fabricate a recognized head
   const lines = invoice().map(line => line.text === "Tiền thuế:" ? {...line, text: "Tạm tính Tiền thuế:"} : line);
   assert.notEqual(parseReceiptLines(lines).amount, 162000);
 });
+
+test("payment-method contact numbers never outrank the checked VAT payable total", () => {
+  const lines=invoice();
+  lines.splice(2,0,{...cell("Hình thức thanh toán: CK / TM / Cấn trừ công nợ ĐT: 0901234567",20,650,850),confidence:0.95});
+  const result=parseReceiptLines(lines);
+  assert.equal(result.amount,162000);
+  assert.equal(parseReceiptText(result.rawText).amount,162000);
+});
+
+test("payment instructions without a payable amount do not turn a phone number into money", () => {
+  const result=parseReceiptText("PICKET DEMO STORE\nHÓA ĐƠN\nHình thức thanh toán: CK / TM / Cấn trừ công nợ ĐT: 0901234567");
+  assert.equal(result.amount,null);
+});
+
+test("generic VAT headings cannot become a merchant above the actual company name", () => {
+  const result=parseReceiptLines([
+    {...cell("GIÁ TRỊ GIA TĂNG",600,10,250),confidence:0.99},
+    {...cell("CÔNG TY THƯƠNG MẠI PICKET",20,15,420),confidence:0.7},
+    ...invoice().filter(line=>line.text!=="PICKET DEMO STORE"),
+  ]);
+  assert.equal(result.merchant,"CÔNG TY THƯƠNG MẠI PICKET");
+});
