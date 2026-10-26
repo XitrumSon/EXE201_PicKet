@@ -79,3 +79,18 @@ Internal `completed`, versionCode 13, 100% on 26 October 2026 at 12:52 ICT.
 Production remains empty; alpha remains draft code 6. Redmi was still code 12
 before owner update. An assisted code-13 upright scan is requested; no physical
 code-13 latency/accuracy or whole-product acceptance is claimed yet.
+
+## Physical Redmi follow-up
+
+The owner updated and completed an assisted upright scan. ADB confirms code 13.
+At 13:17:47–13:17:50 ICT on 26 October 2026, the release Expo/native bridge logged
+2,647ms total, budgetExceeded=false, one full read and one crop. Decode: 442ms;
+full-resolution recognition: 1,184ms; crop recognition: 493ms; aggregate native
+recognition: 1,843ms. This is an actual phone measurement, superseding the pending
+latency status above for this one upright scan. It is not a latency percentile
+or a directly measured comparison against code 12.
+
+Post-scan total PSS: 398,635KiB, swap PSS: 140KiB. One memory sample cannot prove
+leak-free repeated use. Accuracy confirmation and an assisted 180-degree scan
+have been requested; neither is assumed from a successful timing log. No receipt
+transaction was saved by this diagnostic.
