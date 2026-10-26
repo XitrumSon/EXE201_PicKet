@@ -19,7 +19,7 @@ import { recognizeReceipt } from "@/core/ocr/mlkit-receipt-ocr";
 import { canAttachReceipt } from "@/core/ocr/receipt-eligibility";
 import { receiptImagePickerOptions } from "@/core/ocr/image-picker-policy";
 import { captureJournal, cleanupCaptureImages, persistCaptureImage, restoreCaptureImage, pickerRecovery } from "@/core/ocr/capture-storage";
-import { restoreCaptureSnapshot, type CaptureSnapshot } from "@/core/ocr/capture-journal";
+import type { CaptureSnapshot } from "@/core/ocr/capture-journal";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { AppIcon } from "@/core/ui/app-icon";
 import { ReceiptCamera } from "@/core/ui/receipt-camera";
@@ -66,11 +66,7 @@ export default function CaptureReceiptScreen() {
   const [isContinuing, setIsContinuing] = useState(false);
   const [hydratedOwner, setHydratedOwner] = useState<string | null>(null);
   const hydrated = ownerId !== null && hydratedOwner === ownerId;
-  const [restoreError, setRestoreError] = useState(false);
-  const [restoreRevision, setRestoreRevision] = useState(0);
   const [cameraOpen, setCameraOpen] = useState(true);
-  const [restoreRequested, setRestoreRequested] = useState(false);
-  const restoringOwner = useRef<string | null>(null);
   const [hasDraft, setHasDraft] = useState(false);
   const captureRef = useRef<{ id: string; imageRef: string } | null>(null);
   const imageGeneration = useRef(0);
@@ -92,58 +88,20 @@ export default function CaptureReceiptScreen() {
     imageGeneration.current++;
     pollingController.current?.abort();
     localOcrController.current?.abort();
-    if (!ownerId) return;
-    if (!restoreRequested || restoringOwner.current !== ownerId) {
-      captureRef.current = null;
-      setCameraOpen(true); setHasDraft(false); setImageUri(null);
-      setTitle(""); setAmount(""); setRawText(null); setLineItems([]);
-      setIsRecognizing(false); setIsQueueingFallback(false); setIsContinuing(false);
-      setNeedsFallback(false); setLocalConfidence(0); setProvider("manual");
-      setFallbackStatus(null); setFallbackStoragePath(null); setMessage(null);
-      setRestoreError(false); setHydratedOwner(ownerId);
-      return;
-    }
+    captureRef.current = null;
     const generation = imageGeneration.current;
     let active = true;
-    void captureJournal.load(ownerId).then(async saved => {
-      if (!active || generation !== imageGeneration.current) return;
-      const interruptedPicker = await pickerRecovery.pending(ownerId);
-      if (!active || generation !== imageGeneration.current) return;
-      setIsRecognizing(false);
-      setIsQueueingFallback(false);
-      setIsContinuing(false);
-      setFallbackStatus(null);
-      setCameraOpen(false);
-      setRestoreError(false);
-      if (saved) {
-        const restored = await restoreCaptureSnapshot(ownerId, saved, restoreCaptureImage);
-        if (!active || generation !== imageGeneration.current) return;
-        captureRef.current = { id: saved.id, imageRef: saved.imageRef };
-        setHasDraft(true);
-        explicitDate.current = saved.explicitDate;
-        setImageUri(restored.imageUri); setTitle(saved.title); setAmount(saved.amount);
-        setPurchasedAt(saved.purchasedAt); setAttachReceipt(saved.attachReceipt);
-        setProvider(saved.provider); setLocalConfidence(saved.localConfidence);
-        setNeedsFallback(saved.needsFallback); setRawText(saved.rawText);
-        setLineItems(saved.lineItems); setFallbackStoragePath(saved.fallbackStoragePath);
-        setMessage(restored.imageUnavailable
-          ? "Không mở được ảnh bản nháp. Nội dung và ngày vẫn được giữ. Hãy chụp lại hoặc chọn ảnh khác trước khi tiếp tục."
-          : interruptedPicker
-            ? "Lần chọn ảnh trước bị gián đoạn. Bản nháp đã lưu được giữ nguyên. Hãy chọn lại ảnh nếu cần."
-            : "Đã khôi phục bản nháp trên thiết bị. Bạn có thể tiếp tục chỉnh sửa.");
-      } else {
-        setCameraOpen(true);
-        captureRef.current = null; setImageUri(null); setTitle(""); setAmount("");
-        setHasDraft(false);
-        setRawText(null); setLineItems([]); setAttachReceipt(true);
-        setFallbackStoragePath(null); setProvider("manual"); setNeedsFallback(false); setLocalConfidence(0);
-        setMessage(interruptedPicker ? "Lần chọn ảnh trước bị gián đoạn. Chưa nhận được ảnh; hãy chọn lại từ thư viện hoặc chụp ảnh mới." : "Chưa có bản nháp. Bạn có thể chụp hóa đơn mới.");
-      }
-      setHydratedOwner(ownerId);
-      void cleanupCaptureImages(ownerId).catch(() => undefined);
-    }).catch(() => { if (active) setRestoreError(true); });
+    void Promise.resolve().then(() => {
+      if (!active || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
+    setCameraOpen(true); setHasDraft(false); setImageUri(null);
+    setTitle(""); setAmount(""); setRawText(null); setLineItems([]);
+    setIsRecognizing(false); setIsQueueingFallback(false); setIsContinuing(false);
+    setNeedsFallback(false); setLocalConfidence(0); setProvider("manual");
+    setFallbackStatus(null); setFallbackStoragePath(null); setMessage(null);
+    setHydratedOwner(ownerId);
+    });
     return () => { active = false; };
-  }, [ownerId, restoreRevision, restoreRequested]);
+  }, [ownerId]);
 
   useEffect(() => {
     // Fallback requests have their own journal. Keep manual edits durable even
@@ -196,7 +154,7 @@ export default function CaptureReceiptScreen() {
     } catch {
       if (mounted.current && activeOwner.current === ownerId && generation === imageGeneration.current) {
         setHasDraft(false);
-        setMessage("Chưa lưu được ảnh bản nháp. Hãy chụp lại hoặc chọn ảnh khác; bản nháp trước vẫn có thể mở từ camera.");
+        setMessage("Chưa lưu được ảnh. Hãy thử lại.");
       }
     } finally {
       if (mounted.current && activeOwner.current === ownerId && generation === imageGeneration.current) {
@@ -211,7 +169,7 @@ export default function CaptureReceiptScreen() {
     const controller = new AbortController();
     localOcrController.current = controller;
     setIsRecognizing(true);
-    setMessage("Đang nhận diện trực tiếp trên điện thoại…");
+    setMessage(null);
     setOcrDurationMs(null);
     setTitle("");
     setAmount("");
@@ -227,7 +185,7 @@ export default function CaptureReceiptScreen() {
       if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       const { draft } = result;
       setOcrDurationMs(result.durationMs);
-      setNeedsFallback(draft.needsReview);
+      setNeedsFallback(draft.needsReview || !draft.date);
       setLocalConfidence(draft.amountConfidence ?? 0);
       setRawText(draft.rawText || null);
       setLineItems(draft.lineItems);
@@ -235,21 +193,16 @@ export default function CaptureReceiptScreen() {
       setProvider("ml-kit");
       if (draft.merchant) setTitle(draft.merchant);
       if (draft.amount) setAmount(String(draft.amount));
-      setMessage(
-        result.budgetExceeded
-          ? "Đã dừng đọc chi tiết vì quá thời gian. Hãy kiểm tra kết quả hoặc chụp lại gần hơn, đủ sáng hơn."
-          : !draft.date
-          ? "Chưa đọc được ngày mua trên hóa đơn. Ngày đang hiển thị là ngày dự phòng; hãy chọn đúng ngày trên hóa đơn trước khi lưu."
-          : draft.needsReview
-          ? `${draft.reviewReason ?? "Kết quả cần được kiểm tra."} Hãy sửa thông tin trước khi lưu.`
-          : `Đã nhận diện ${draft.recognizedLineCount} dòng. Hãy kiểm tra lại trước khi lưu.`,
-      );
+      setMessage(result.budgetExceeded ? "Chưa đọc hết ảnh. Hãy kiểm tra hoặc chụp lại."
+        : draft.amount === null ? "Chưa đọc được tổng tiền."
+        : draft.needsReview ? "Có thông tin cần kiểm tra."
+        : !draft.date ? "Chưa đọc được ngày hóa đơn." : null);
     } catch (error) {
       if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       setMessage(
         String(error).includes("OCR_BUSY")
-          ? "Lượt nhận diện trước đang kết thúc. Hãy chờ một lát rồi chụp lại."
-          : "Chưa đọc được hóa đơn trong thời gian cho phép. Hãy chụp gần hơn, đủ sáng hoặc chọn ảnh khác.",
+          ? "Lượt quét trước đang kết thúc."
+          : "Chưa đọc được ảnh. Hãy thử lại.",
       );
     } finally {
       if (localOcrController.current === controller) localOcrController.current = null;
@@ -464,20 +417,13 @@ export default function CaptureReceiptScreen() {
 
   const cameraScreen = <ReceiptCamera
     disabled={!hydrated}
-    notice={message}
-    onCancel={() => { if (imageUri && hasDraft) setCameraOpen(false); else router.back(); }}
+    onCancel={() => router.back()}
     onLibrary={() => void choose("library")}
     onManual={() => router.replace("/transactions/new")}
-    onResumeDraft={() => {
-      if (imageUri && hasDraft) { setCameraOpen(false); return; }
-      restoringOwner.current = ownerId;
-      setCameraOpen(false); setHydratedOwner(null); setRestoreRequested(true);
-      setRestoreRevision(value => value + 1);
-    }}
     onCapture={(uri) => { void acceptImage(uri); }}
   />;
   if (cameraOpen && !isRecognizing) return cameraScreen;
-  if (!hydrated) return <SafeAreaView style={styles.safe}><View style={styles.content}><TopAppBar title="Quét hóa đơn" />{restoreError ? <><Text style={styles.message}>Chưa mở được bản nháp. Dữ liệu cũ chưa bị xóa.</Text><Pressable accessibilityRole="button" onPress={() => setRestoreRevision(value => value + 1)} style={styles.secondary}><Text style={styles.secondaryText}>Thử mở lại bản nháp</Text></Pressable></> : <ActivityIndicator accessibilityLabel="Đang mở bản nháp hóa đơn" color={colors.mauve} />}</View></SafeAreaView>;
+  if (!hydrated) return <SafeAreaView style={styles.safe}><ActivityIndicator accessibilityLabel="Đang mở camera" color={colors.mauve} /></SafeAreaView>;
   if (!imageUri && !hasDraft && !isRecognizing) return cameraScreen;
 
   return (
@@ -487,9 +433,6 @@ export default function CaptureReceiptScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <TopAppBar title="Quét hóa đơn" />
-        <Text style={styles.subtitle}>
-          Chụp rõ toàn bộ hóa đơn. Picket sẽ điền thông tin để bạn kiểm tra trước khi lưu.
-        </Text>
 
         {isRecognizing && (
           <View accessibilityLiveRegion="polite" style={styles.progress}>
@@ -568,8 +511,7 @@ export default function CaptureReceiptScreen() {
         )}
         {lineItems.length > 0 && (
           <Text style={styles.metric}>
-            Đã nhận diện {lineItems.length} sản phẩm. Bạn có thể sửa từng dòng
-            sau khi lưu hóa đơn.
+            {lineItems.length} sản phẩm
           </Text>
         )}
 
@@ -608,8 +550,7 @@ export default function CaptureReceiptScreen() {
           <View style={styles.consentCopy}>
             <Text style={styles.consentTitle}>Đính kèm ảnh vào giao dịch</Text>
             <Text style={styles.consentText}>
-              Khi bật, ảnh sẽ được tải vào vùng riêng tư của tài khoản sau khi
-              bạn xác nhận giao dịch.
+              Chỉ tải ảnh khi bạn lưu giao dịch.
             </Text>
           </View>
         </Pressable>}
@@ -628,9 +569,6 @@ export default function CaptureReceiptScreen() {
           )}
         </Pressable>
         </>}
-        <Text style={styles.privacy}>
-          Nhận diện cơ bản hoạt động cả khi không có mạng. Bạn luôn có thể sửa thông tin trước khi lưu.
-        </Text>
       </ScrollView>
     </SafeAreaView>
   );

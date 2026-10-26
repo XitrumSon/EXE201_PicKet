@@ -49,9 +49,8 @@ test("malformed saved data fails visibly rather than becoming an empty replaceme
   const journal = createCaptureJournal({ read: async () => ({ version: 99 }), write: async () => undefined });
   await assert.rejects(journal.load("A"), /Invalid capture draft/);
 });
-test("camera hydrates before autosave and completed transaction only clears its capture", () => {
+test("capture autosave is owner-gated and completed transaction only clears its capture", () => {
   const capture = readFileSync(new URL("../../app/capture/index.tsx", import.meta.url), "utf8");
-  assert.match(capture, /captureJournal\.load/);
   assert.match(capture, /!hydrated \|\| !ownerId/);
   assert.match(capture, /persistCaptureImage/);
   assert.match(capture, /generation !== imageGeneration\.current/);
@@ -61,11 +60,6 @@ test("camera hydrates before autosave and completed transaction only clears its 
   assert.match(transaction, /params\.captureDraftId/);
 });
 
-test("a missing draft photo does not prevent restoring editable receipt metadata", () => {
-  const capture = readFileSync(new URL("../../app/capture/index.tsx", import.meta.url), "utf8");
-  assert.match(capture, /restoreCaptureSnapshot\(ownerId, saved, restoreCaptureImage\)/);
-  assert.match(capture, /!imageUri && !hasDraft/);
-});
 
 test("photo recovery preserves all metadata and never writes on missing, corrupt or full-disk decode", async () => {
   for (const reason of ["missing", "corrupt", "disk full"]) {

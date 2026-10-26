@@ -13,6 +13,24 @@ const moneyValue = (line: ReceiptTextLine) => {
   return Number((/[,.]\d{2}$/.test(digits) ? digits.slice(0, -3) : digits).replace(/\D/g, ""));
 };
 
+/** Independent final-row cells can verify the printed total despite a damaged base/tax cell. */
+function paymentColumnsMatch(lines:PositionedLine[],payable:PositionedLine,totalHeader:PositionedLine,rowGap:number,total:number){
+  const headers=lines.filter(line=>/^thue suat\s*\d+\s*%$/.test(normalize(line.text))&&
+    line.left>payable.right&&line.right<totalHeader.left&&Math.abs(line.top-totalHeader.top)<=rowGap*3).sort((a,b)=>a.left-b.left);
+  const sums:number[]=[];
+  for(let index=0;index<headers.length;index++){
+    const header=headers[index],previous=headers[index-1],next=headers[index+1];
+    const left=previous?(previous.right+header.left)/2:header.left-(payable.bottom-payable.top);
+    const right=((next?.left??totalHeader.left)+header.right)/2;
+    const cells=lines.filter(line=>moneyCell(line)&&(line.left+line.right)/2>=left&&(line.left+line.right)/2<right&&
+      line.top>header.bottom&&line.bottom<=payable.bottom+rowGap*2).sort((a,b)=>a.top-b.top);
+    if(cells.length!==3)continue;
+    const value=moneyValue(cells[2]);
+    if(Number.isSafeInteger(value)&&value>0)sums.push(value);
+  }
+  return sums.length>=2&&Math.abs(sums.reduce((sum,value)=>sum+value,0)-total)<=1;
+}
+
 /** Resolve a VAT summary by column order and checked arithmetic, even on a skewed photo. */
 export function receiptVatSummaryRows(lines: ReceiptTextLine[]): ReceiptTextLine[] {
   const removed = new Set<ReceiptTextLine>();
@@ -39,13 +57,15 @@ export function receiptVatSummaryRows(lines: ReceiptTextLine[]): ReceiptTextLine
     const amounts = positionedLines.filter(line => moneyCell(line) && line.left >= header.left - labelHeight &&
       line.left <= header.right + width && line.top > header.bottom &&
       line.bottom <= payable.bottom + rowGap * 2).sort((a, b) => a.top - b.top);
-    if (amounts.length !== 3) continue;
-    const [base, tax, total] = amounts.map(moneyValue);
-    if (![base, tax, total].every(Number.isSafeInteger) || total <= 0 || total > 9_000_000_000_000 ||
-      Math.abs(base + tax - total) > 1) continue;
+    if(amounts.length<1||amounts.length>3)continue;
+    const values=amounts.map(moneyValue),total=values.at(-1)!;
+    if(!values.every(Number.isSafeInteger)||total<=0||total>9_000_000_000_000)continue;
+    const componentsMatch=values.length===3&&Math.abs(values[0]+values[1]-total)<=1;
+    if(!componentsMatch&&!paymentColumnsMatch(positionedLines,payable,header,rowGap,total))continue;
     removed.delete(payable);
-    removed.add(amounts[2]);
-    replacements.set(payable, {...payable, text: `Tiền thanh toán: ${total}`});
+    removed.add(amounts.at(-1)!);
+    replacements.set(payable, {...payable, text: `Tiền thanh toán: ${total}`,
+      ...(!componentsMatch?{reviewIssue:"inconsistent-vat-components" as const,confidence:Math.min(payable.confidence??0.75,0.55)}:{})});
   }
   return lines.filter(line => !removed.has(line)).map(line => replacements.get(line) ?? line);
 }

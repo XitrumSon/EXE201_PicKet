@@ -32,12 +32,19 @@ export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now
   stats.inspections++;const direction=await native.direction(opened.id,remaining());stats.nativeMs+=direction.durationMs??0;ensureCurrent();
   if(remaining()<=0)throw new Error("OCR_TIMEOUT");
   const angle=inferReceiptRotation(direction.lines);
-  const selectedDimensions=await native.select(opened.id,angle??0);ensureCurrent();
+  let selectedDimensions=await native.select(opened.id,angle??0);ensureCurrent();
   if(remaining()<=0)throw new Error("OCR_TIMEOUT");
-  stats.fullReads++;const sample=await native.inspect(opened.id,remaining());stats.nativeMs+=sample.durationMs??0;ensureCurrent();
+  stats.fullReads++;let sample=await native.inspect(opened.id,remaining());stats.nativeMs+=sample.durationMs??0;ensureCurrent();
+  let fullDirection=inferReceiptRotation(sample.lines);
+  if(fullDirection!==null&&fullDirection!==0){
+   if(remaining()<=0)throw new Error("OCR_TIMEOUT");
+   selectedDimensions=await native.select(opened.id,fullDirection);ensureCurrent();
+   if(remaining()<=0)throw new Error("OCR_TIMEOUT");
+   stats.fullReads++;sample=await native.inspect(opened.id,remaining());stats.nativeMs+=sample.durationMs??0;ensureCurrent();
+   fullDirection=inferReceiptRotation(sample.lines);
+  }
   const rawDraft=parseReceiptLines(sample.lines);
   if(!rawDraft.rawText)return finish(rawDraft);
-  const fullDirection=inferReceiptRotation(sample.lines);
   if(fullDirection!==null&&fullDirection!==0)throw new Error("OCR_ORIENTATION_UNCERTAIN");
   if(angle===null&&fullDirection!==0&&!verifiedUpright(sample,rawDraft))throw new Error("OCR_ORIENTATION_UNCERTAIN");
   let lines=orientReceiptLines(sample.lines,sample.width,sample.height,0);

@@ -23,4 +23,22 @@ config.watchFolders = [
   ]),
 ];
 
+if (process.env.PICKET_PLAY_BUILD === "1") {
+  const playUpdates = path.join(
+    projectRoot,
+    "src/features/updates/android-app-updates.play.ts",
+  );
+  config.resolver.resolveRequest = (context, moduleName, platform) => {
+    if (
+      moduleName === "./android-app-updates" &&
+      context.originModulePath.endsWith(
+        path.join("features", "updates", "app-update-section.tsx"),
+      )
+    ) {
+      return { filePath: playUpdates, type: "sourceFile" };
+    }
+    return context.resolveRequest(context, moduleName, platform);
+  };
+}
+
 module.exports = config;

@@ -25,5 +25,9 @@ export async function recognizeReceipt(imageUri:string,signal?:AbortSignal):Prom
    hasAmount:result.draft.amount!==null,hasMerchant:result.draft.merchant!==null,hasDate:result.draft.date!==null,itemsCount:result.draft.lineItems.length,
    parsedEligible:canAttachParsedReceipt(result.draft),rawEligible:canAttachReceipt(result.draft)}));
   return result;
+ }catch(error){
+  const code=["OCR_BUSY","OCR_TIMEOUT","OCR_CANCELLED","OCR_ORIENTATION_UNCERTAIN"].find(code=>String(error).includes(code))??"OCR_FAILED";
+  console.info("PICKET_OCR_STATUS",JSON.stringify({code}));
+  throw error;
  }finally{scanning=false;}
 }

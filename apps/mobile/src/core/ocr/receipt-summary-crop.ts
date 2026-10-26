@@ -7,10 +7,11 @@ export function receiptSummaryCrop(lines: ReceiptTextLine[], width: number, heig
   if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0)return null;
   const labels=lines.filter(line=>typeof line.top==="number"&&typeof line.bottom==="number"&&Number.isFinite(line.top)&&Number.isFinite(line.bottom)&&line.bottom>line.top&&
     /^(?:tien hang|tien thue|(?:tien|tong tien) thanh toan)\s*:?$/.test(clean(line.text)));
-  if(new Set(labels.map(line=>clean(line.text).replace(/\s*:$/,""))).size<2)return null;
+  const distinct=new Set(labels.map(line=>clean(line.text).replace(/\s*:$/,""))).size;
+  if(distinct<2&&!labels.some(line=>/^(?:tien|tong tien) thanh toan\s*:?$/.test(clean(line.text))))return null;
   const top=Math.min(...labels.map(line=>line.top!)),bottom=Math.max(...labels.map(line=>line.bottom!));
   const rowHeight=Math.max(...labels.map(line=>line.bottom!-line.top!));
-  const margin=Math.max(rowHeight*3,(bottom-top)*0.8);
+  const margin=Math.max(rowHeight*(distinct<2?6:3),(bottom-top)*0.8);
   const originY=Math.max(0,Math.floor(top-margin));
   const end=Math.min(height,Math.ceil(bottom+margin));
   if(end<=originY||end-originY>height/2)return null;

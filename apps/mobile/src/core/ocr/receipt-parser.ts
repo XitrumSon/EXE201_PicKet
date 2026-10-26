@@ -7,7 +7,7 @@ export type ReceiptTextLine = {
   text: string;
   confidence?: number;
   angle?: number;
-  reviewIssue?: "inconsistent-item";
+  reviewIssue?: "inconsistent-item" | "inconsistent-vat-components";
   top?: number;
   bottom?: number;
   left?: number;
@@ -174,7 +174,7 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     const amount = numbers.length > 0 ? parseReceiptMoney(numbers.at(-1)?.[0] ?? "") : null;
     if (!source || amount === null) return;
     const nearBottom = maxBottom > 0 && (source.bottom ?? 0) / maxBottom >= 0.55;
-    const score = Math.min(1, 0.52 + confidence(source) * 0.22 + (source === line ? 0.14 : 0.08) + (nearBottom ? 0.08 : 0.0) + (strongTotalWords.test(clean) ? 0.12 : 0));
+    const score = Math.min(line.reviewIssue==="inconsistent-vat-components"?0.65:1, 0.52 + confidence(source) * 0.22 + (source === line ? 0.14 : 0.08) + (nearBottom ? 0.08 : 0.0) + (strongTotalWords.test(clean) ? 0.12 : 0));
     totals.push({ amount, score });
   });
   totals.sort((left, right) => right.score - left.score);
@@ -220,6 +220,8 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
 
   const reviewReason = rawText.length === 0
     ? "Không nhận diện được chữ trong ảnh."
+    : lines.some(line => line.reviewIssue === "inconsistent-vat-components")
+      ? "Một số ô tiền hàng hoặc thuế chưa khớp. Hãy kiểm tra tổng tiền."
     : lines.some(line => line.reviewIssue === "inconsistent-item")
       ? "Một số dòng sản phẩm có số lượng, đơn giá và thành tiền không khớp nên chưa được đưa vào danh sách. Hãy đối chiếu và bổ sung dòng thiếu."
     : lineItems.some(item => item.confidence < 0.7)

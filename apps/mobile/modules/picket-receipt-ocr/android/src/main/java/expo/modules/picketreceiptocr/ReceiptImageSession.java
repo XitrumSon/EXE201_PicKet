@@ -33,6 +33,7 @@ public final class ReceiptImageSession implements AutoCloseable {
   private TextRecognizer recognizer;
   private Task<Text> pending;
   private boolean selected;
+  private int selections;
   private boolean closing;
   private boolean closed;
 
@@ -84,10 +85,10 @@ public final class ReceiptImageSession implements AutoCloseable {
 
   public synchronized Map<String, Object> select(int angle) throws Exception {
     requireWorker(); ensureActive(); validateAngle(angle);
-    if (selected) throw new IOException("OCR_ALREADY_SELECTED");
+    if (selections >= 2) throw new IOException("OCR_ALREADY_SELECTED");
     Bitmap corrected = rotate(source, angle);
     if (corrected != source) { source.recycle(); source = corrected; }
-    selected = true; return dimensions(source);
+    selected = true; selections++; return dimensions(source);
   }
 
   public synchronized Map<String, Object> direction(int timeoutMs) throws Exception {

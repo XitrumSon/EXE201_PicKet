@@ -8,7 +8,7 @@ import { AccessiblePressable as Pressable } from "./accessible-pressable";
 import { AppIcon } from "./app-icon";
 import { IconButton } from "./picket-ui";
 
-export function ReceiptCamera({ onCapture, onLibrary, onCancel, onManual, onResumeDraft, notice, disabled = false }: { onCapture(uri: string): void; onLibrary(): void; onCancel(): void; onManual(): void; onResumeDraft?(): void; notice?: string | null; disabled?: boolean }) {
+export function ReceiptCamera({ onCapture, onLibrary, onCancel, onManual, disabled = false }: { onCapture(uri: string): void; onLibrary(): void; onCancel(): void; onManual(): void; disabled?: boolean }) {
   const camera = useRef<CameraView>(null);
   const [focused, setFocused] = useState(false);
   const [permission, requestPermission, getPermission] = useCameraPermissions();
@@ -27,14 +27,11 @@ export function ReceiptCamera({ onCapture, onLibrary, onCancel, onManual, onResu
     finally { setBusy(false); }
   }
   return <SafeAreaView style={styles.safe}><View style={styles.header}><IconButton icon="close" label="Đóng camera" onPress={onCancel} /><Text accessibilityRole="header" style={styles.title}>Quét hóa đơn</Text><IconButton icon={torch ? "flash" : "flash-off"} label={torch ? "Tắt đèn" : "Bật đèn"} onPress={() => setTorch(!torch)} disabled={!permission?.granted} /></View>
-    <Text style={styles.hint}>Đặt toàn bộ hóa đơn trong khung, giữ máy ổn định. Ảnh chụp được giữ làm bản nháp trên thiết bị.</Text>
-    {notice && <Text accessibilityLiveRegion="polite" style={styles.manual}>{notice}</Text>}
     <View style={styles.preview}>
-      {permission?.granted && focused && active && !error ? <CameraView ref={camera} style={StyleSheet.absoluteFill} facing="back" mode="picture" autofocus="on" enableTorch={torch} onCameraReady={() => setReady(true)} onMountError={() => { setReady(false); setError("Không mở được camera. Bạn có thể thử lại hoặc chọn ảnh từ thư viện."); }} /> : <View style={styles.permission}><AppIcon name="camera-outline" size={42} /><Text style={styles.permissionText}>{error ?? (permission ? "Cho phép dùng camera để chụp hóa đơn. Ảnh được giữ làm bản nháp riêng trên thiết bị; chỉ tải lên khi bạn xác nhận." : "Đang chuẩn bị camera…")}</Text>{permission && !permission.granted && <Pressable onPress={() => { if (permission.canAskAgain) void requestPermission(); else void Linking.openSettings(); }} style={styles.permissionButton}><Text style={styles.buttonText}>{permission.canAskAgain ? "Cho phép camera" : "Mở cài đặt"}</Text></Pressable>}{error && <Pressable onPress={() => { setError(null); setReady(false); }}><Text style={styles.link}>Thử lại camera</Text></Pressable>}</View>}
+      {permission?.granted && focused && active && !error ? <CameraView ref={camera} style={StyleSheet.absoluteFill} facing="back" mode="picture" autofocus="on" enableTorch={torch} onCameraReady={() => setReady(true)} onMountError={() => { setReady(false); setError("Không mở được camera. Bạn có thể thử lại hoặc chọn ảnh từ thư viện."); }} /> : <View style={styles.permission}><AppIcon name="camera-outline" size={42} /><Text style={styles.permissionText}>{error ?? (permission ? "Cho phép camera để chụp hóa đơn." : "Đang chuẩn bị camera…")}</Text>{permission && !permission.granted && <Pressable onPress={() => { if (permission.canAskAgain) void requestPermission(); else void Linking.openSettings(); }} style={styles.permissionButton}><Text style={styles.buttonText}>{permission.canAskAgain ? "Cho phép camera" : "Mở cài đặt"}</Text></Pressable>}{error && <Pressable onPress={() => { setError(null); setReady(false); }}><Text style={styles.link}>Thử lại camera</Text></Pressable>}</View>}
       {permission?.granted && !error && <View pointerEvents="none" style={styles.frame}>{[styles.tl, styles.tr, styles.bl, styles.br].map((corner, i) => <View key={i} style={[styles.corner, corner]} />)}</View>}
     </View>
     <View style={styles.controls}><IconButton icon="image-outline" label="Chọn ảnh từ thư viện" onPress={onLibrary} disabled={busy || disabled} /><Pressable accessibilityLabel="Chụp hóa đơn" accessibilityState={{ disabled: !ready || busy || disabled, busy }} disabled={!ready || busy || disabled} onPress={() => void shoot()} style={[styles.shutter, (!ready || busy || disabled) && { opacity: 0.5 }]}>{busy ? <ActivityIndicator accessibilityLabel="Đang chụp hóa đơn" color={colors.mauve} /> : <View style={styles.shutterInner} />}</Pressable><View style={{ width: 48 }} /></View>
-    {onResumeDraft && <Pressable accessibilityRole="button" disabled={busy || disabled} onPress={onResumeDraft}><Text style={styles.manual}>Mở bản nháp</Text></Pressable>}
     <Pressable onPress={onManual} disabled={busy || disabled}><Text style={styles.manual}>Nhập thông tin thủ công</Text></Pressable>
   </SafeAreaView>;
 }
