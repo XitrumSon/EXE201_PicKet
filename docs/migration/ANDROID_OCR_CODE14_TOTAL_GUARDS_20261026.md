@@ -37,3 +37,16 @@ No GitHub push was performed.
 Signed release build, artifact and Internal rollout evidence will be appended
 when verified. Redmi code-14 acceptance remains pending; do not infer it from
 recorded-data checks. No receipt transaction is created by these diagnostics.
+
+Release verification: signed ARM64 AAB build PASS in 1m39s; jarsigner verifies
+the archive. Final manifest is 1.0.4 (14), with native module present and no
+REQUEST_INSTALL_PACKAGES/SYSTEM_ALERT_WINDOW permission. Release sourcemap
+contains the final payment/contact guard and inconsistent-item review handling.
+AAB: 48,153,921 bytes, SHA-256
+`509295591489b17f0ab137d8d4412d0b16da36a0a968803aa461ae714d922bf3`.
+Ignored release backup/manifest updated; emulator closed and P: mapping removed.
+Upload is serialized; no other Play Edit is opened while it is in flight.
+
+After update the owner must select the upside-down image again for a fresh scan.
+A restored draft may contain code-13 values, including a manually edited value;
+this release does not overwrite existing drafts or create financial records.
