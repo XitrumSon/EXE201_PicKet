@@ -76,3 +76,20 @@ test('a missing thumbnail direction can use verified upright full-text direction
  const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
  assert.equal(result.draft.amount,54000);assert.equal(result.stats.fullReads,1);
 });
+
+test('a wrong thumbnail rotation is corrected once from full-text direction before trusting values',async()=>{
+ const app=harness({strongAt:180});let reads=0;
+ app.native.inspect=async()=>{app.events.push('inspect');reads++;return {...vat(),lines:vat().lines.map(line=>({...line,angle:reads===1?180:0,confidence:0.95}))};};
+ const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
+ assert.equal(result.draft.amount,54000);assert.equal(result.stats.fullReads,2);
+ assert.equal(app.events.filter(event=>event==='select:180').length,2);
+ assert.equal(app.events.filter(event=>event==='inspect').length,2);
+ assert.equal(app.events.at(-1),'close');
+});
+
+test('wrong full-text direction never becomes an accepted draft when the budget is exhausted',async()=>{
+ const app=harness();let clock=0;
+ app.native.inspect=async()=>{app.events.push('inspect');clock=25000;return {...vat(),lines:vat().lines.map(line=>({...line,angle:180,confidence:0.95}))};};
+ await assert.rejects(()=>scanReceiptSession('file:///sample.jpg',app.native,()=>clock),/OCR_TIMEOUT/);
+ assert.equal(app.events.filter(event=>event==='inspect').length,1);assert.equal(app.events.at(-1),'close');
+});

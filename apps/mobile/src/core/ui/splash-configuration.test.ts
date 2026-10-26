@@ -8,5 +8,6 @@ test("Android splash explicitly uses the Picket artwork at a bounded centered si
   assert.ok(plugin);
   assert.equal(plugin[1].image,"./assets/picket-logo.png");
   assert.equal(plugin[1].resizeMode,"contain");
-  assert.ok(plugin[1].imageWidth>0&&plugin[1].imageWidth<=240);
+  // A square artwork must fit inside Android's 192dp circular mask.
+  assert.ok(plugin[1].imageWidth>0&&plugin[1].imageWidth<=128);
 });

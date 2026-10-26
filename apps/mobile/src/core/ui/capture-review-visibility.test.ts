@@ -44,3 +44,9 @@ test("review displays each recognized product quantity unit price and total befo
  const result=render(true,false,[{name:"Sản phẩm demo",quantity:2,unitPrice:25000,total:50000,confidence:0.9}]);
  assert.match(result.text,/Sản phẩm demo/);assert.match(result.text,/Số lượng:/);assert.match(result.text,/25000 VND/);assert.match(result.text,/50000 VND/);
 });
+
+test("uncertain products keep prices visible without repeated advisory paragraphs",()=>{
+ const result=render(true,false,[{name:"Sản phẩm demo",quantity:2,unitPrice:25000,total:50000,confidence:0.55}]);
+ assert.match(result.text,/25000 VND/);assert.match(result.text,/50000 VND/);
+ assert.doesNotMatch(result.text,/Giá trị được tính lại từ các ô đọc được|Chụp rõ toàn bộ hóa đơn|Bạn có thể sửa từng dòng|Nhận diện cơ bản hoạt động/);
+});

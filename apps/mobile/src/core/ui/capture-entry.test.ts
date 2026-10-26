@@ -58,14 +58,7 @@ test("entering capture opens camera without reading or decrypting the old draft"
   const app=harness();let tree=app.render();await app.flush();tree=app.render();
   assert.equal(tree.type,"ReceiptCamera");
   assert.deepEqual(app.calls,{load:0,imageRestore:0,recognize:0,persist:0});
-  assert.equal(typeof tree.props.onResumeDraft,"function");
-});
-
-test("old draft is restored only after explicitly choosing resume",async()=>{
-  const app=harness();app.render();await app.flush();const camera=app.render();
-  (camera.props.onResumeDraft as ()=>void)();app.render();await app.flush();const tree=app.render();
-  assert.equal(app.calls.load,1);assert.equal(app.calls.imageRestore,1);
-  assert.notEqual(tree.type,"ReceiptCamera");
+  assert.equal(tree.props.onResumeDraft,undefined);
 });
 
 test("a new capture starts recognition and displays processing before photo persistence completes",async()=>{

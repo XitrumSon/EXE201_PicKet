@@ -19,3 +19,8 @@ test("a skewed VAT summary crop includes labels, total heading and three amount 
 test("payment-method/contact text alone never authorizes a summary crop", () => {
   assert.equal(receiptSummaryCrop([{text:"Hình thức thanh toán: CK / TM ĐT: 0901234567",left:10,right:900,top:100,bottom:120}],1000,1400),null);
 });
+
+test("a single explicit payable label can recover the rest of an unreadable summary",()=>{
+ const region=receiptSummaryCrop([{text:"Tiền thanh toán:",left:10,right:200,top:1000,bottom:1020}],1000,1400);
+ assert.ok(region);assert.ok(region.originY<=900);assert.ok(region.originY+region.height>=1120);
+});
