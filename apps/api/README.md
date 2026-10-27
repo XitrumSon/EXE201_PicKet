@@ -1,8 +1,11 @@
 # Picket API
 
+<!-- current-project-status -->
+Trạng thái triển khai và nghiệm thu cập nhật 27/10/2026: [PROJECT_STATUS](../../docs/PROJECT_STATUS.md). Dùng trạng thái này để đối chiếu các ví dụ và checkpoint bên dưới.
+
 Dart Frog REST façade for the Next.js and Expo clients. It keeps Supabase Auth,
 RLS and Storage while the finance compatibility contract is persisted in the
-15 normalized domain tables.
+normalized domain tables. Supabase production migration history was synchronized on 27 October 2026 (49 migrations).
 
 ## Local development
 
@@ -151,3 +154,15 @@ and weekly practice. Review events award no additional XP. Practice completion
 is monotonic and awards 10 XP once per week; skipping cannot remove completion.
 Publication remains independently gated by the reviewed curriculum manifest and
 server-owned answer keys.
+
+## Learning and cashflow endpoints
+
+- `POST /v1/lesson-attempts`, `GET /v1/learning-progress`
+- `GET/PUT /v1/learning/activity`
+- `GET/PUT /v1/learning-ai/consent`
+- `POST/DELETE /v1/learning-ai/jobs`, `GET /v1/learning-ai/jobs/{id}`
+- `GET /v1/cashflow-ledger`
+- `GET /v1/cashflow-schedules`, `PUT/DELETE /v1/cashflow-schedules/{id}`
+- `GET/PUT /v1/cashflow-settlements`
+
+AI generation stays disabled in production. Consent revocation remains available. Cloud lessons remain unpublished until independent content review. Production synthetic-owner acceptance on 27/10 passed schedule/settlement replay, revision conflicts and owner isolation; this does not enable mobile preview flags automatically. See the current project status for release gates.
