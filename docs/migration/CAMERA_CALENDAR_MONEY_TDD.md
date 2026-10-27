@@ -1,5 +1,9 @@
 # Camera, receipt calendar, money entry and logo refresh
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Scope
 
 Expo Android only. Keep existing transaction validation, OCR, private receipt upload and backend endpoints. Camera preview uses Expo Camera SDK 57 (`~57.0.6`), with permission explanation, settings recovery, readiness/busy gating, and unmount on blur/background. Library selection remains explicit; cancel returns to the scanner. Capturing feeds the existing OCR review and pending-receipt pipeline. Manual entry opens the existing transaction form.
