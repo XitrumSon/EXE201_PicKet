@@ -1,5 +1,9 @@
 # Keepsake media retry — 2026-10-19
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Latest acceptance (2026-10-20): [KEEPSAKE_CONTROLLED_LOSS_ANDROID.md](KEEPSAKE_CONTROLLED_LOSS_ANDROID.md) supersedes the historical missing-case notes below for metadata PATCH response loss, exact queue/object audit and one pending cached-photo A–B–A case only. Durable create-before-network and new/replacement-photo fault cases remain open.
 
 Source: [APP_COMPLETION_PLAN.md](APP_COMPLETION_PLAN.md), media/offline acceptance. Scope: Expo only; no API, migration, Storage policy, production data or public APK changes. User explicitly requested **no commit/push**, overriding skill checkpoint guidance.
