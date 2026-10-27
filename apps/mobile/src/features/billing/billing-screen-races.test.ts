@@ -12,6 +12,7 @@ function harness(){
  const pending=new Promise<unknown[]>(done=>{release=done;});
  let entitlementRead:()=>Promise<unknown>=async()=>null;
  let displayPrice="test price";
+ let productStatusAndroid:string|undefined;
  let catalogueRequest:()=>Promise<void>=async()=>{};
  const fetchProducts=async()=>{catalogReads++;await catalogueRequest();};
  const state=(initial:unknown)=>{const index=cursor++;if(!(index in slots))slots[index]=typeof initial==="function"?initial():initial;return [slots[index],(value:unknown)=>{slots[index]=typeof value==="function"?value(slots[index]):value;}];};
@@ -27,7 +28,7 @@ function harness(){
   "@/core/theme/use-mobile-styles":{useMobileStyles:()=>({colors:{},styles:{}})},"@/core/ui/mobile-palette":{radii:{}},"@/core/ui/accessible-pressable":{AccessiblePressable:"Pressable"},"react-i18next":{useTranslation:()=>({t:(key:string,params?:{tier?:string})=>key==="current"?`current:${params?.tier}`:key})},
   "@picket/domain":{PICKET_SUBSCRIPTION_IDS:["picket_plus_monthly"]},"@/core/api/client":{picketApi:api},"@/core/navigation/routes":{routes:{}},
   "expo-crypto":{CryptoDigestAlgorithm:{SHA256:"SHA256"},digestStringAsync:async()=>"synthetic-account-hash"},
-  "@/features/billing/play-billing-provider":{usePlayBilling:()=>({connected:true,subscriptions:[{id:"picket_plus_monthly",platform:"android",subscriptionOffers:[{offerTokenAndroid:"synthetic-offer",displayPrice}]}],fetchProducts,finishTransaction:async()=>{},requestPurchase:async()=>{purchaseRequests++;},revision:0})},
+  "@/features/billing/play-billing-provider":{usePlayBilling:()=>({connected:true,subscriptions:[{id:"picket_plus_monthly",platform:"android",productStatusAndroid,subscriptionOffers:[{offerTokenAndroid:"synthetic-offer",displayPrice}]}],fetchProducts,finishTransaction:async()=>{},requestPurchase:async()=>{purchaseRequests++;},revision:0})},
   "expo-iap":{getAvailablePurchases:()=>{reads++;return pending;},deepLinkToSubscriptions:async()=>{}},
   "@/features/billing/billing-policy":{canStartPlayPurchase:()=>true,isPicketSubscriptionId:()=>true,verifyAndFinishPurchase:async(purchase:unknown,verify:(p:unknown)=>unknown)=>verify(purchase)},
   "@/features/billing/restore-results":{verifyRestoredPurchases:async(purchases:unknown[],verify:(p:unknown)=>Promise<boolean>)=>{let count=0;for(const purchase of purchases)if(await verify(purchase))count++;return {verified:count,failed:purchases.length-count};}},
@@ -38,7 +39,7 @@ function harness(){
  const restore=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="restore");assert.ok(button);return button.props.onPress as ()=>void;};
  const buy=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose");assert.ok(button);return button.props.onPress as ()=>void;};
  const reloadPrices=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="reloadPrices");assert.ok(button);(button.props.onPress as ()=>void)();render();};
- return {restore,buy,reloadPrices,setCatalogueRequest:(request:()=>Promise<void>)=>{catalogueRequest=request;},catalogReads:()=>catalogReads,setPrice:(value:string)=>{displayPrice=value;},buyDisabled:()=>nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose")?.props.disabled,viewText:()=>text(render()),setEntitlementRead:(read:()=>Promise<unknown>)=>{entitlementRead=read;},purchases:()=>purchaseRequests,refreshToken:()=>{accessToken="new-test-token";render();},reads:()=>reads,verified:()=>verified,release:()=>release([{productId:"picket_plus_monthly",purchaseToken:"synthetic-token"}]),stop:()=>{for(const slot of slots)(slot as {cleanup?:()=>void})?.cleanup?.();}};
+ return {restore,buy,reloadPrices,setProductStatus:(value:string)=>{productStatusAndroid=value;},setCatalogueRequest:(request:()=>Promise<void>)=>{catalogueRequest=request;},catalogReads:()=>catalogReads,setPrice:(value:string)=>{displayPrice=value;},buyDisabled:()=>nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose")?.props.disabled,viewText:()=>text(render()),setEntitlementRead:(read:()=>Promise<unknown>)=>{entitlementRead=read;},purchases:()=>purchaseRequests,refreshToken:()=>{accessToken="new-test-token";render();},reads:()=>reads,verified:()=>verified,release:()=>release([{productId:"picket_plus_monthly",purchaseToken:"synthetic-token"}]),stop:()=>{for(const slot of slots)(slot as {cleanup?:()=>void})?.cleanup?.();}};
 }
 async function settle(){for(let index=0;index<5;index++)await new Promise(done=>setImmediate(done));}
 test("rapid restore taps query Google Play only once",async()=>{const app=harness();const press=app.restore();press();press();assert.equal(app.reads(),1);app.release();await settle();});
@@ -60,3 +61,7 @@ test("a plan with no visible Play offer price cannot dispatch a purchase",async(
 });
 test("the Play price catalogue can be reloaded without leaving billing",async()=>{const app=harness();app.buy();await settle();assert.equal(app.catalogReads(),1);app.reloadPrices();await settle();assert.equal(app.catalogReads(),2);});
 test("a rejected catalogue load remains retryable",async()=>{const app=harness();app.setCatalogueRequest(async()=>{throw Error("Store unavailable");});app.buy();await settle();assert.ok(app.viewText().includes("connectionError"));app.setCatalogueRequest(async()=>{});app.reloadPrices();await settle();assert.equal(app.catalogReads(),2);assert.ok(!app.viewText().includes("connectionError"));});
+
+for(const status of ["not-found","no-offers-available","unknown"])test(`unfetched Play product ${status} shows retry instead of an inert purchase card`,async()=>{
+ const app=harness();app.setProductStatus(status);app.viewText();await settle();assert.ok(app.viewText().includes("pricesUnavailable"));assert.ok(!app.viewText().includes("choose"));app.reloadPrices();await settle();assert.equal(app.catalogReads(),2);assert.equal(app.purchases(),0);
+});
