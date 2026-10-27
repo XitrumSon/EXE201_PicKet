@@ -1,11 +1,15 @@
+import { paperControl , paperShape } from "@/core/theme/paper-foundations";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { useTranslation } from "react-i18next";
 import { formatCalendarDate, formatMoney, localeFor, normalizeLanguage } from "@/core/i18n/formatters";
-import { colors } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import type { AdminUserActionRequest } from "@picket/domain";
-import { Redirect, router } from "expo-router";
+import { Redirect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { Alert, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, StyleSheet, Switch, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -24,6 +28,7 @@ const emptyAd = { id: null as string | null, title: "", body: "", url: "", activ
 export default function AdminScreen() {
   const {t,i18n}=useTranslation("admin");
   const language=normalizeLanguage(i18n.resolvedLanguage??i18n.language);
+  const { styles } = useMobileStyles(createStyles);
   const { session } = useAuth();
   const [allowed, setAllowed] = useState<boolean | null>(null);
   const [overview, setOverview] = useState<StaffOverview | null>(null);
@@ -137,4 +142,4 @@ export default function AdminScreen() {
   </PicketScreen>;
 }
 
-const styles = StyleSheet.create({ heading:{color:colors.ink,fontSize:29,fontWeight:"800",marginVertical:14},tabs:{flexDirection:"row",flexWrap:"wrap",gap:8,marginBottom:14},title:{color:colors.ink,fontSize:15,fontWeight:"800"},muted:{color:colors.muted,fontSize:13,lineHeight:20,marginTop:4},message:{color:colors.expense,fontSize:13,marginBottom:12},link:{color:colors.mauve,fontSize:14,fontWeight:"800",marginVertical:12},input:{backgroundColor:colors.white,borderColor:colors.peach,borderRadius:12,borderWidth:1,color:colors.ink,fontSize:15,minHeight:50,marginVertical:8,paddingHorizontal:14},row:{alignItems:"center",flexDirection:"row",justifyContent:"space-between",gap:12,minHeight:52},flex:{flex:1},actions:{flexDirection:"row",flexWrap:"wrap",gap:8,marginTop:12} });
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({ heading:{color:colors.ink,fontSize:26,fontWeight:"800",marginVertical:14},tabs:{flexDirection:"row",flexWrap:"wrap",gap:8,marginBottom:14},title:{color:colors.ink,fontSize:15,fontWeight:"700"},muted:{color:colors.muted,fontSize:13,lineHeight:20,marginTop:4},message:{color:colors.expense,fontSize:13,marginBottom:12},link:{color:colors.link,fontSize:14,fontWeight:"700",marginVertical:12},input:{backgroundColor:colors.white,borderColor:colors.controlBorder,borderRadius:paperShape.input,borderWidth:1,color:colors.ink,fontSize:15,minHeight:paperControl.height,marginVertical:8,paddingHorizontal:14},row:{alignItems:"center",flexDirection:"row",justifyContent:"space-between",gap:12,minHeight:52},flex:{flex:1},actions:{flexDirection:"row",flexWrap:"wrap",gap:8,marginTop:12} });
