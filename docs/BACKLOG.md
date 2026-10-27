@@ -39,8 +39,10 @@ Cập nhật 27/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế du
 
 ## Không còn pending
 
-- APK và AAB 1.0.7/code 20 đã phát hành landing/Play Internal; alpha vẫn draft, beta/production chưa mở.
+- Landing giữ APK 1.0.7/code 20; Play Internal hiện 1.0.8/code 21 ARM64+x86_64. Alpha vẫn draft, beta/production chưa mở.
 - Paper mobile, asset, sign-out/updater/guest splits; landing motion/footer/CTA và điều hướng sạch URL đã triển khai theo phản hồi.
 - SMTP đã đổi sang Picket Production `<picketfinance@gmail.com>`, email recovery tới inbox thật đạt.
 - Supabase đã xác minh 49 migration; không cần chạy lại migration chỉ để đồng bộ tài liệu.
 - Dọn output build và hợp nhất design thuộc lượt repository sync hiện tại, theo [báo cáo](migration/REPOSITORY_SYNC_20261027.md).
+
+Checkpoint Billing code 21: máy ảo đã tải giá/mua test Plus tháng/restore cấp PLUS 30, cold restart và server readback đạt. Còn callback tự động sau onboarding Google, ack API độc lập và lifecycle/các SKU khác; xem [báo cáo](migration/PLAY_BILLING_EMULATOR_20261027.md).
