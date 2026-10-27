@@ -1,5 +1,9 @@
 # Phương án chấm tình huống qua cloud
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Ngày đối chiếu: 24/10/2026. Trạng thái: nghiên cứu, chưa bật billing, chưa gửi đáp án thật, chưa chọn model sản xuất. Người dùng đã chọn nghiên cứu cloud; lựa chọn đó không thay thế đồng ý trả phí hoặc consent của người dùng cuối.
 
 ## Kết luận
