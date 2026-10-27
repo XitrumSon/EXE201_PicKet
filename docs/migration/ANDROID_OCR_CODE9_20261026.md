@@ -1,5 +1,9 @@
 # VAT OCR regression — Android 1.0.4 / code 9
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Built 26 October 2026 from the current working tree after `c1627de5`.
 Unrelated existing local changes remain; this is not a clean-HEAD build.
 
