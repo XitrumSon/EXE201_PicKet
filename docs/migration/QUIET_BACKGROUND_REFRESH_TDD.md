@@ -1,5 +1,9 @@
 # Quiet Planning and receipt calendar updates — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Scope: Expo Android, existing API contracts. User requested stable layouts during planning-method changes and balance visibility changes, no calendar header reload button, then continuation of completion groups 1/2. No commit/push or public release.
 
 ## Cause and change
