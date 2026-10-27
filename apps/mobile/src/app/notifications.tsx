@@ -1,10 +1,12 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
 import { useReminderCalendar } from "@/features/notifications/use-reminder-calendar";
 import { useTranslation } from "react-i18next";
 import { useAppTheme } from "@/features/settings/appearance-provider";
-import { colors } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect, useFocusEffect } from "expo-router";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, Switch, Text, View } from "react-native";
+import { StyleSheet, Switch, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { guestOwnerId } from "@/core/local/guest-finance";
@@ -26,6 +28,7 @@ import { useReminderPeriods } from "@/features/notifications/use-reminder-period
 export default function NotificationsScreen() {
   const {t:tx}=useTranslation("notifications");
   const {language}=useAppTheme();
+  const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const ownerId = session?.user.id ?? (localMode ? guestOwnerId : null);
   const deliveryScope = useRef({ ownerId, language, active: true, busy: false });
@@ -77,7 +80,7 @@ export default function NotificationsScreen() {
   }, [localMode, ownerId, session?.access_token, language]));
   if (!ownerId) return <Redirect href={routes.login} />;
   async function toggle(value: boolean) {
-    if (!isCurrentOwner() || deliveryScope.current.busy || settingsLoading) return;
+    if(!isCurrentOwner() || deliveryScope.current.busy || settingsLoading)return;
     const operation=deliveryScope.current;operation.busy=true;
     const current=()=>isCurrentOwner() && deliveryScope.current===operation;
     setBusy(true); setMessage(null);
@@ -109,7 +112,7 @@ export default function NotificationsScreen() {
   return <PicketScreen>
     <TopAppBar title={tx("Thông báo")} />
     <Text style={styles.subtitle}>{tx("Các hạn thanh toán, món đồ và ngân sách cần chú ý.")}</Text>
-    <Surface><View style={styles.setting}><View style={styles.copy}><Text style={styles.title}>{tx("Nhắc trên điện thoại")}</Text><Text style={styles.hint}>{tx("Thông báo không hiển thị chi tiết tài chính khi màn hình khóa.")}</Text></View><Switch accessibilityLabel={tx("Nhắc trên điện thoại")} disabled={busy || settingsLoading} hitSlop={12} onValueChange={(value) => void toggle(value)} value={enabled} /></View></Surface>
+    <Surface><View style={styles.setting}><View style={styles.copy}><Text style={styles.title}>{tx("Nhắc trên điện thoại")}</Text><Text style={styles.hint}>{tx("Thông báo không hiển thị chi tiết tài chính khi màn hình khóa.")}</Text></View><Switch thumbColor={enabled ? colors.onPrimary : colors.muted} trackColor={{ false: colors.border, true: colors.primary }} accessibilityLabel={tx("Nhắc trên điện thoại")} disabled={busy || settingsLoading} hitSlop={12} onValueChange={(value) => void toggle(value)} value={enabled} /></View></Surface>
     {enabled && <Pressable accessibilityRole="button" disabled={busy} onPress={() => void reschedule()} style={styles.linkButton}><Text style={styles.link}>{tx("Cập nhật lịch nhắc")}</Text></Pressable>}
     {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{tx(message)}</Text>}
     {dueSoon.length === 0 ? <EmptyState title={tx("Chưa có thông báo mới")} description={tx("Picket sẽ nhắc khi có hạn thanh toán hoặc ngân sách cần chú ý.")} /> :
@@ -117,4 +120,4 @@ export default function NotificationsScreen() {
   </PicketScreen>;
 }
 
-const styles = StyleSheet.create({ back:{color:colors.mauve,fontSize:15,fontWeight:"800",marginBottom:18},heading:{color:colors.ink,fontSize:29,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginBottom:20,marginTop:7},setting:{alignItems:"center",flexDirection:"row",gap:12},copy:{flex:1},title:{color:colors.ink,fontSize:15,fontWeight:"800"},hint:{color:colors.muted,fontSize:12,lineHeight:18,marginTop:5},linkButton:{alignSelf:"flex-start",marginVertical:15},link:{color:colors.mauve,fontWeight:"800"},message:{color:colors.expense,fontSize:13,marginBottom:12},list:{gap:10,marginTop:18} });
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({ back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginBottom:20,marginTop:7},setting:{alignItems:"center",flexDirection:"row",gap:12},copy:{flex:1},title:{color:colors.ink,fontSize:15,fontWeight:"700"},hint:{color:colors.muted,fontSize:12,lineHeight:18,marginTop:5},linkButton:{alignSelf:"flex-start",marginVertical:15},link:{color:colors.link,fontWeight:"700"},message:{color:colors.expense,fontSize:13,marginBottom:12},list:{gap:10,marginTop:18} });
