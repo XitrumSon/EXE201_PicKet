@@ -1,5 +1,8 @@
 # Google Play: hoàn tất xác minh, sandbox và production
 
+<!-- project-status-link -->
+> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+
 Ngày đối chiếu tài liệu chính thức: **22/10/2026**. Theo ảnh người dùng cung cấp, **đã đăng ký Play Console cá nhân, đang chờ Google xét duyệt danh tính**. Ảnh Google Payments có dòng phí đăng ký 25 USD; không phải bằng chứng app được duyệt phát hành. Console yêu cầu hoàn tất xác minh danh tính trước khi xác minh số điện thoại. Thẻ xác minh website đã triển khai và commit `2c73b44`, nhưng chưa nhận bằng chứng Google xác minh thành công. Tài liệu này **không xác nhận Billing sandbox đã chạy hoặc thanh toán production đã bật**. Chưa có thao tác mua thật hay đăng ký dịch vụ trả phí được thực hiện thay người dùng.
 
 Các bước đăng ký dưới đây được giữ làm hướng dẫn tham khảo, không yêu cầu đăng ký hoặc trả phí lần nữa. Việc tiếp theo là theo dõi email xét duyệt, hoàn thành xác minh còn lại và chuẩn bị app/track/sandbox. Điện thoại thật chưa được ADB nhận theo kết quả gần nhất; các ca trong checklist thiết bị thật vẫn chưa nghiệm thu. Không bật Cloud Billing hoặc nạp 250.000đ chỉ để xóa cảnh báo: ảnh Billing hiện có cho thấy các tài khoản Closed và project Billing disabled; ảnh tài khoản đã mở có số dư 0đ/No balance due, không chứng minh số dư của mọi tài khoản.
