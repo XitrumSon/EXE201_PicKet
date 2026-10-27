@@ -1,5 +1,9 @@
 # Android launch page and repository handoff — 2026-10-18
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Scope
 
 Requested by the owner: clean generated artifacts, commit each changed file separately using English Conventional Commits, push the current branch, then provide an independent landing page for the latest real-phone production APK. Do not redesign the current Next app or change mobile business logic.
