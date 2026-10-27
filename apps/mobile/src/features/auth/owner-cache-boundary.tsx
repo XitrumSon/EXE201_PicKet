@@ -1,5 +1,8 @@
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { paperShape, paperSpace } from "@/core/theme/paper-foundations";
 import { createContext, useContext, useCallback, useEffect, useRef, useState, type PropsWithChildren } from "react";
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { bootstrapIntentGate } from "@/core/navigation/bootstrap-intent";
@@ -78,7 +81,7 @@ function SignedInOwnerCacheBoundary({ owner, children }: PropsWithChildren<{ own
   if (phase === "ready") return <OwnerRecoveryContext.Provider value={requestOwnerRecovery}>{children}</OwnerRecoveryContext.Provider>;
   return <SafeAreaView style={[styles.root, { backgroundColor: colors.canvas }]}>
     <ScrollView contentContainerStyle={styles.content}>
-      {phase === "checking" ? <ActivityIndicator accessibilityLabel={t("checkingAccount")} color={colors.primary} /> : <>
+      {phase === "checking" ? <ActivityIndicator accessibilityLabel={t("checkingAccount")} color={colors.link} /> : <>
         <Text accessibilityRole="header" style={[styles.title, { color: colors.text }]}>{t(phase==="deleted"?"deletedTitle":"recoveryTitle")}</Text>
         <Text style={[styles.description, { color: colors.muted }]}>{t(phase==="deleted"?"deletedSignOut":phase === "error" ? "recoveryStorageFailed" : "recoveryDescription")}</Text>
         {message && <Text accessibilityLiveRegion="polite" style={[styles.description, { color: colors.expense }]}>{t(message)}</Text>}
@@ -86,7 +89,7 @@ function SignedInOwnerCacheBoundary({ owner, children }: PropsWithChildren<{ own
           {busyAction==="verify" ? <ActivityIndicator accessibilityLabel={t("checkingAccount")} color={colors.onPrimary} /> : <Text style={[styles.buttonText, { color: colors.onPrimary }]}>{t("verifyAccount")}</Text>}
         </AccessiblePressable>}
         <AccessiblePressable disabled={busy} onPress={() => void leave()} style={styles.button}>
-          {busyAction==="signout"?<ActivityIndicator accessibilityLabel={t("signingOut")} color={colors.primary}/>:<Text style={[styles.buttonText, { color: colors.primary }]}>{t("finishSignOut")}</Text>}
+          {busyAction==="signout"?<ActivityIndicator accessibilityLabel={t("signingOut")} color={colors.link}/>:<Text style={[styles.buttonText, { color: colors.link }]}>{t("finishSignOut")}</Text>}
         </AccessiblePressable>
       </>}
       <View style={styles.spacer} />
@@ -95,8 +98,8 @@ function SignedInOwnerCacheBoundary({ owner, children }: PropsWithChildren<{ own
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 }, content: { flexGrow: 1, justifyContent: "center", padding: 28, gap: 20 },
+  root: { flex: 1 }, content: { maxWidth: 720, width: "100%", alignSelf: "center", flexGrow: 1, justifyContent: "center", padding: paperSpace.screen, gap: 20 },
   title: { fontSize: 28, fontWeight: "700" }, description: { fontSize: 16, lineHeight: 25 },
-  button: { alignItems: "center", justifyContent: "center", padding: 14, borderRadius: 12 },
-  buttonText: { fontSize: 16, fontWeight: "700", textAlign: "center" }, spacer: { height: 8 },
+  button: { alignItems: "center", justifyContent: "center", padding: 14, borderRadius: paperShape.button },
+  buttonText: { fontSize: 15, fontWeight: "700", textAlign: "center" }, spacer: { height: 8 },
 });
