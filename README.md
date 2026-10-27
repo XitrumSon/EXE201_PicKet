@@ -1,8 +1,6 @@
 # Picket
 
-Trạng thái phát hành/nghiệm thu: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md). Landing đang phục vụ Android **1.0.4 (5)**; báo cáo theo ngày là lịch sử checkpoint, không chứng nhận toàn bộ roadmap hoàn tất.
-
-Checklist phần 1 trên máy ảo đã đạt theo [nghiệm thu 22/10/2026](docs/migration/PART1_ACCEPTANCE_20261022.md); follow-up đã có trong [release 1.0.4](docs/migration/ANDROID_RELEASE_1_0_4_20261022.md). Xem [checklist Android thật](docs/ANDROID_REAL_DEVICE_CHECKLIST.md), [Play sandbox → production](docs/GOOGLE_PLAY_SANDBOX_TO_PRODUCTION.md) và [staff acceptance/giới hạn](docs/migration/STAFF_ADMIN_ACCEPTANCE_20261022.md).
+Trạng thái chung: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md); [mục lục tài liệu](docs/README.md). Ngày 27/10: landing và Play Internal **1.0.7/code 20** đã phát hành; Play đọc lại completed, rollout 100%. Supabase đã đồng bộ **49 migration**. Thiết bị thật do chủ dự án tự nghiệm thu sau; closed test giữ draft.
 
 Picket dùng một kiến trúc thống nhất: Next.js cho web, Expo/React Native cho
 Android và Dart Frog cho toàn bộ backend nghiệp vụ.
@@ -13,9 +11,11 @@ Next.js web ────┐
 Expo Android ───┘
 ```
 
+Thiết kế chuẩn duy nhất: [PICKET-DESIGN.md](PICKET-DESIGN.md). Việc còn mở: [BACKLOG](docs/BACKLOG.md).
+
 ## Cấu trúc chính
 
-- `apps/api`: API Dart Frog; xác thực Supabase JWT, giữ nguyên RLS và cung cấp profile/onboarding/preferences cùng finance contract trên 15 bảng chuẩn hóa.
+- `apps/api`: API Dart Frog; xác thực Supabase JWT, giữ nguyên RLS và cung cấp profile/onboarding/preferences cùng finance contract trên các bảng chuẩn hóa.
 - `apps/mobile`: Expo SDK 57 / React Native; ứng dụng Android chính thức.
 - `apps/landing`: landing static tải APK, dùng chung manifest phiên bản với chức năng cập nhật trong app.
 - `web`: Next.js 16; web client và admin portal.
@@ -53,3 +53,11 @@ Android Emulator truy cập máy host qua `http://10.0.2.2:8080`. Điện thoạ
 Stack Caddy + Next.js + Dart Frog + OCR worker + PP-OCR CPU nằm trong
 `compose.production.yml`. Hướng dẫn DNS, secret, build, smoke test và rollback:
 [deploy/VPS_DEPLOYMENT.md](deploy/VPS_DEPLOYMENT.md).
+
+Kiểm tra SQL/migration local: `npm ci --prefix supabase/tests` rồi `npm run test:db`. Lệnh `npm test` đã bao gồm kiểm tra này cùng landing/mobile/web/API; backend CI cũng thực thi nó. Chi tiết: [Supabase](supabase/README.md).
+
+## Kiểm tra và dọn output
+
+Chạy `npm test`, `npm run lint`, `npm run typecheck` trước bàn giao. Xem `npm run cleanup:generated` trước khi xóa; sao lưu mọi APK/AAB khác nhau vào `.artifacts/releases/`, rồi chạy `npm run cleanup:generated:apply`. Không commit `.env`, keystore, APK/AAB hoặc cache. Artifact phát hành giữ local, không nằm trong Git.
+
+Landing: [build/deploy/rollback](apps/landing/README.md). Git push chạy CI, chưa tự deploy VPS hoặc Google Play.
