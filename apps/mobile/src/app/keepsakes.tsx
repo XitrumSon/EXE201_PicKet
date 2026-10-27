@@ -1,15 +1,19 @@
-import { colors } from "@picket/design-tokens";
+import { paperControl , paperShape } from "@/core/theme/paper-foundations";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import * as Crypto from "expo-crypto";
 import { formatVnd } from "@picket/domain";
 import { ApiError } from "@picket/api-client";
 import { Redirect, router, useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { ChoiceChip, EmptyState, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
+import { ChoiceChip, EmptyState, PicketScreen, PrimaryAction, Surface, TopAppBar } from "@/core/ui/picket-ui";
 import { useAuth } from "@/features/auth/auth-context";
 import { archiveCloudKeepsake, loadKeepsakeCollection, saveCloudKeepsake, type DisplayKeepsake } from "@/features/keepsakes/cloud-keepsakes";
 import { keepsakeDeleteMessage } from "@/features/keepsakes/delete-copy";
@@ -23,6 +27,7 @@ const itemCategories = ["Khác", "Công nghệ", "Trang phục", "Đồ dùng", 
 const blank = { title: "", amount: "0", note: "", category: "Khác", warrantyUntil: "", returnUntil: "" };
 
 export default function KeepsakesScreen() {
+  const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const [items, setItems] = useState<DisplayKeepsake[]>([]);
   const [query, setQuery] = useState("");
@@ -115,8 +120,7 @@ export default function KeepsakesScreen() {
   const visible = items.filter((item) => `${item.title} ${item.category} ${item.note}`.toLocaleLowerCase("vi-VN").includes(query.toLocaleLowerCase("vi-VN")));
   const collectionState = keepsakeCollectionState(loading, loadFailed, visible.length, query);
   return <PicketScreen>
-    <Pressable accessibilityRole="button" onPress={() => editing ? setEditing(null) : router.back()}><Text style={styles.back}>‹ {editing ? "Bộ sưu tập" : "Quay lại"}</Text></Pressable>
-    <Text accessibilityRole="header" style={styles.heading}>{editing ? editing === "new" ? "Một món đồ mới" : "Chỉnh sửa món đồ" : "Bộ sưu tập"}</Text>
+    <TopAppBar title={editing ? editing === "new" ? "Một món đồ mới" : "Chỉnh sửa món đồ" : "Bộ sưu tập"} onBack={() => editing ? setEditing(null) : router.back()} backDisabled={busy} />
     <Text style={styles.subtitle}>Một món đồ. Một câu chuyện. Chỉ riêng bạn.</Text>
     <Text style={styles.local}>{localMode ? "Món đồ và ảnh chỉ lưu trên điện thoại này; chưa có bản sao trên cloud." : "Món đồ mới được đồng bộ với tài khoản. Món đồ cũ trên thiết bị sẽ được chuyển lên khi có kết nối."}</Text>
     {message && <Text accessibilityLiveRegion="polite" style={styles.error}>{message}</Text>}
@@ -134,15 +138,15 @@ export default function KeepsakesScreen() {
     </View> : <>
       <TextInput accessibilityLabel="Tìm món đồ" onChangeText={setQuery} placeholder="Tìm món đồ" style={styles.input} value={query} />
       <PrimaryAction label="+ Thêm món đồ" onPress={() => open("new")} />
-      {collectionState === "loading" && <ActivityIndicator accessibilityLabel="Đang tải bộ sưu tập" color={colors.mauve} />}
+      {collectionState === "loading" && <ActivityIndicator accessibilityLabel="Đang tải bộ sưu tập" color={colors.link} />}
       {collectionState === "error" && <><Text accessibilityLiveRegion="polite" style={styles.error}>Chưa tải được bộ sưu tập.</Text><PrimaryAction label="Thử tải lại" onPress={() => void reload()} /></>}
-      {collectionState === "empty" && <EmptyState title="Góc kỷ niệm còn trống" description="Thêm món đồ hoặc câu chuyện đầu tiên." />}
-      {collectionState === "no-results" && <EmptyState title="Không tìm thấy món đồ" description="Thử tên, ghi chú hoặc danh mục khác." />}
+      {collectionState === "empty" && <EmptyState illustration="gift" title="Góc kỷ niệm còn trống" description="Thêm món đồ hoặc câu chuyện đầu tiên." />}
+      {collectionState === "no-results" && <EmptyState illustration="shopping" title="Không tìm thấy món đồ" description="Thử tên, ghi chú hoặc danh mục khác." />}
       {collectionState === "items" && <View style={styles.list}>{visible.map((item) => <Pressable accessibilityRole="button" key={item.id} onPress={() => open(item)}><Surface>{item.photoUri && <KeepsakePhoto owner={item.userId} accessibilityLabel={`Ảnh ${item.title}`} uri={item.photoUri} style={styles.photo} />}<Text style={styles.itemTitle}>{item.title}</Text><Text style={styles.meta}>{formatVnd(item.amount)} · {new Date(item.date).toLocaleDateString("vi-VN")} · {item.category}</Text>{item.warrantyUntil && <Text style={styles.meta}>Bảo hành đến {item.warrantyUntil}</Text>}{item.returnUntil && <Text style={styles.meta}>Đổi trả đến {item.returnUntil}</Text>}</Surface></Pressable>)}</View>}
     </>}
   </PicketScreen>;
 }
 
-const styles = StyleSheet.create({
-  back:{color:colors.mauve,fontSize:15,fontWeight:"800",marginBottom:18},heading:{color:colors.ink,fontSize:29,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,marginTop:7},local:{color:colors.expense,fontSize:12,lineHeight:18,marginBottom:18,marginTop:8},error:{color:colors.expense,fontSize:14,marginBottom:10},input:{backgroundColor:colors.white,borderColor:colors.peach,borderRadius:12,borderWidth:1,color:colors.ink,fontSize:16,minHeight:50,paddingHorizontal:14},form:{gap:8},label:{color:colors.ink,fontSize:14,fontWeight:"800",marginTop:8},chips:{flexDirection:"row",flexWrap:"wrap",gap:8},photo:{borderRadius:14,height:220,marginVertical:8,width:"100%"},photoButton:{alignItems:"center",borderColor:colors.mauve,borderRadius:12,borderWidth:1,justifyContent:"center",minHeight:48},link:{color:colors.mauve,fontWeight:"800"},delete:{color:colors.expense,fontWeight:"800"},multiline:{minHeight:90,textAlignVertical:"top"},list:{gap:14,marginTop:18},itemTitle:{color:colors.ink,fontSize:20,fontWeight:"800"},meta:{color:colors.muted,fontSize:13,marginTop:7},
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
+  back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,marginTop:7},local:{color:colors.expense,fontSize:12,lineHeight:18,marginBottom:18,marginTop:8},error:{color:colors.danger,fontSize:14,marginBottom:10},input:{backgroundColor:colors.white,borderColor:colors.controlBorder,borderRadius:paperShape.input,borderWidth:1,color:colors.ink,fontSize:16,minHeight:paperControl.height,paddingHorizontal:14},form:{gap:8},label:{color:colors.ink,fontSize:14,fontWeight:"700",marginTop:8},chips:{flexDirection:"row",flexWrap:"wrap",gap:8},photo:{borderRadius:14,height:220,marginVertical:8,width:"100%"},photoButton:{alignItems:"center",borderColor:colors.primaryOutline,borderRadius:paperShape.button,borderWidth:1,justifyContent:"center",minHeight:52},link:{color:colors.link,fontWeight:"700"},delete:{color:colors.danger,fontWeight:"700"},multiline:{minHeight:90,textAlignVertical:"top"},list:{gap:14,marginTop:18},itemTitle:{color:colors.ink,fontSize:20,fontWeight:"700"},meta:{color:colors.muted,fontSize:13,marginTop:7},
 });
