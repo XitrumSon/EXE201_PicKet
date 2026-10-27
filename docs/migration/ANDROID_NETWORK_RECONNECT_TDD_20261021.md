@@ -1,5 +1,9 @@
 # Android network-pool recovery — 2026-10-21
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Reproducer and cause evidence
 
 Generated QA owners A/B on Android 35 only. Full sequence: authenticate A, cache own photo, go offline, ban A on the real auth server, create an offline transaction, restart, reconnect to server 401, log out offline, reconnect, immediately authenticate B, restart B offline, log out and return to unbanned A. No real-account password, finance or session changes.
