@@ -1,3 +1,4 @@
+import { paperShape, paperSpace } from "../../core/theme/paper-foundations";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
@@ -18,6 +19,9 @@ function harness(){
  const effect=(callback:()=>unknown,deps:unknown[])=>{const index=cursor++;const old=slots[index] as {deps:unknown[];cleanup?:()=>void}|undefined;if(!old||deps.some((value,position)=>!Object.is(value,old.deps[position]))){old?.cleanup?.();slots[index]={deps,cleanup:callback()};}};
  const api={billingAvailability:async()=>({newPurchasesEnabled:true}),currentEntitlements:()=>entitlementRead(),verifyPlayPurchase:async()=>{verified++;return {active:true,tier:"plus"};}};
  const adapters:Record<string,unknown>={
+    "@/core/ui/picket-text": { PicketText: "Text" },
+    "@/core/ui/picket-scroll-view": { PicketScrollView: "ScrollView" },
+    "@/core/theme/paper-foundations": { paperShape, paperSpace },
   react:{useState:state,useRef:ref,useEffect:effect},"react/jsx-runtime":{jsx:(type:unknown,props:unknown)=>({type,props}),jsxs:(type:unknown,props:unknown)=>({type,props})},
   "react-native":{ActivityIndicator:"ActivityIndicator",Platform:{OS:"android"},ScrollView:"ScrollView",Text:"Text",View:"View",StyleSheet:{create:(value:unknown)=>value}},"react-native-safe-area-context":{SafeAreaView:"SafeAreaView"},
   "@/core/theme/use-mobile-styles":{useMobileStyles:()=>({colors:{},styles:{}})},"@/core/ui/mobile-palette":{radii:{}},"@/core/ui/accessible-pressable":{AccessiblePressable:"Pressable"},"react-i18next":{useTranslation:()=>({t:(key:string,params?:{tier?:string})=>key==="current"?`current:${params?.tier}`:key})},
