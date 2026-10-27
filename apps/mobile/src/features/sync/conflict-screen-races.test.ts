@@ -40,7 +40,11 @@ function harness(merge = false) {
   const transaction = { id: "entity-a", version: 2, deletedAt: null, title: "Server title", amount: 12000, accountId: "wallet-a", categoryId: null, occurredAt: "2026-10-26T12:00:00Z", note: "" };
   const mergeConflict = { ...conflict, kind: "transaction.update", payload: { id: "entity-a", request: { expectedVersion: 1, title: "Local title" } } };
   const adapters: Record<string, unknown> = {
-    "react": { useState: state, useRef: ref, useEffect: effect, useCallback: (fn: unknown) => { cursor++; return fn; } },
+    "react": { useState: state, useRef: ref, useEffect: effect, useLayoutEffect: effect, useCallback: (fn: unknown, deps: unknown[]) => {
+      const index = cursor++, old = slots[index] as { deps: unknown[]; value: unknown } | undefined;
+      if (!old || deps.some((v, i) => !Object.is(v, old.deps[i]))) slots[index] = { deps, value: fn };
+      return (slots[index] as { value: unknown }).value;
+    } },
     "react/jsx-runtime": { jsx: (type: unknown, props: Record<string, unknown>, key: unknown) => ({ type, props, key }), jsxs: (type: unknown, props: Record<string, unknown>, key: unknown) => ({ type, props, key }) },
     "react-native": { View: "View", ActivityIndicator: "ActivityIndicator", StyleSheet: { create: (v: unknown) => v }, Alert: { alert: (_title: string, _body: string, buttons: {onPress?: () => void}[]) => { confirm = buttons.at(-1)?.onPress; } } },
     "react-native-safe-area-context": { SafeAreaView: "SafeAreaView" },
@@ -73,10 +77,18 @@ function harness(merge = false) {
   const exports: {default?: () => Element; TransactionMergeEditor?: (props: object) => Element} = {};
   const file = merge ? "src/features/sync/transaction-merge-editor.tsx" : "src/app/sync-conflicts.tsx";
   vm.runInNewContext(ts.transpileModule(readFileSync(file, "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText,
-    { exports, require: (id: string) => adapters[id] ?? {}, AbortController, Intl, Date });
+    { exports, require: (id: string) => {
+      if (id === "@/features/sync/conflict-screen") {
+        const child = {};
+        vm.runInNewContext(ts.transpileModule(readFileSync("src/features/sync/conflict-screen.tsx", "utf8"), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText, { exports: child, require: (key: string) => adapters[key] ?? {}, AbortController, Intl, Date });
+        return child;
+      }
+      return adapters[id] ?? {};
+    }, AbortController, Intl, Date });
   const render = (): Element => {
     cursor = 0;
     let value = merge ? exports.TransactionMergeEditor!({ conflict: mergeConflict, onQueued: () => { notified++; } }) : exports.default!();
+    if (!value) return { type: "Empty", props: {} };
     while (typeof value.type === "function") {
       if (rootKey !== undefined && rootKey !== value.key) { cleanup(); slots = []; cursor = 0; }
       rootKey = value.key;
@@ -115,7 +127,7 @@ test("captured conflict actions do not dispatch after unmount or owner replaceme
   assert.equal(app.removed(), 0); assert.ok(!app.view().includes("account:source-A")); app.stop();
 });
 test("a stale conflict read cannot resurrect a successfully dismissed row", async () => {
-  const app = harness(); await settle(); const hold = deferred(); const old = app.initialRows(); app.setRead(() => hold.promise.then(() => old)); app.signal();
+  const app = harness(); await settle(); const hold = deferred(); const old = app.initialRows(); app.setRead(() => hold.promise.then(() => old)); app.signal(); app.setRead(async () => []);
   app.press(...dismissLabels)(); await settle(); hold.resolve(); await settle();
   assert.ok(!app.view().includes("account:source-A")); app.stop();
 });
@@ -142,4 +154,20 @@ test("an already-dispatched merge does not notify a retired parent", async () =>
 });
 test("a merge confirmation cannot dispatch after the authenticated owner changes", async () => {
   const app = harness(true); await settle(); app.press(...localLabels)(); app.press(...submitLabels)(); const confirm = app.confirm(); app.changeOwner(); confirm(); assert.equal(app.queued(), 0); app.stop();
+});
+
+test("a dismissed-conflict storage failure is handled without losing the pending row", async () => {
+  const app = harness(); await settle(); app.setRemove(async () => { throw Error("PRIVATE_DISK_ERROR"); });
+  app.press(...dismissLabels)(); await settle();
+  assert.ok(app.view().includes("could not be saved")); assert.ok(app.view().includes("account:source-A")); assert.ok(!app.view().includes("PRIVATE_DISK_ERROR")); app.stop();
+});
+test("a changed field selection invalidates an already-open merge confirmation", async () => {
+  const app = harness(true); await settle(); app.press(...localLabels)(); app.press(...submitLabels)(); const old = app.confirm();
+  app.press("Transaction title: keep server version")(); app.render(); old();
+  assert.equal(app.queued(), 0); assert.ok(app.view().includes("comparison has changed")); app.stop();
+});
+test("controlled conflict failure messages rerender in the newly selected language", async () => {
+  const app = harness(); await settle(); app.press(...editLabels)(); app.setRetry(async () => { throw Error("PRIVATE_FAILURE"); });
+  app.press(...retryLabels)(); await settle(); assert.ok(app.view().includes("Changes could not be queued"));
+  await app.i18n.changeLanguage("vi"); assert.ok(app.view().includes("Chưa đưa thay đổi vào hàng đợi")); app.stop();
 });
