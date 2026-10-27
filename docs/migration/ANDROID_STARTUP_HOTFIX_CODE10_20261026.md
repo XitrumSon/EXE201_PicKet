@@ -1,5 +1,9 @@
 # Guest startup crash hotfix — Android code 10
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 26 October 2026. Redmi updated through Play to code 9; ADB crash buffer records
 `TypeError: Cannot read property 'items' of null` in `ReminderCoordinator` at
 00:49 ICT. Both optional-chain owner values were undefined on a guest cold start,
