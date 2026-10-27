@@ -63,6 +63,12 @@ bên dưới. AAB nằm ở `android/app/build/outputs/bundle/release/app-releas
 Kiểm tra manifest cuối không có `REQUEST_INSTALL_PACKAGES` hoặc
 `SYSTEM_ALERT_WINDOW` trước khi upload. Mỗi lần upload mới phải tăng versionCode.
 
+Để cùng bản Internal hỗ trợ máy thật ARM64 và máy ảo CH Play x86_64, truyền
+`-PreactNativeArchitectures=arm64-v8a,x86_64` cho Gradle. Kiểm tra AAB có
+`libreactnative.so` ở cả hai ABI. Việc máy ảo công bố hỗ trợ dịch ARM64 không
+đảm bảo React Native ARM64 chạy được trên máy ảo đó; không dùng cài thành công
+làm bằng chứng ứng dụng đã khởi động. APK landing ARM64 vẫn là artifact riêng.
+
 ## Google Play Billing
 
 Màn Hồ sơ mở màn `Gói Picket và thanh toán`, tải bốn subscription từ Google
