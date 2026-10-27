@@ -1,5 +1,9 @@
 # Kỷ vật: giữ ảnh khi chỉ sửa metadata — 2026-10-18
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Nguồn: [APP_COMPLETION_PLAN.md](APP_COMPLETION_PLAN.md), mục 2/4; lỗi tìm thấy trong [KEEPSAKE_CACHE_FAILURE_TDD.md](KEEPSAKE_CACHE_FAILURE_TDD.md). Phạm vi là Expo Android, không đổi BE/API/Storage policy.
 
 ## Hành vi và TDD
