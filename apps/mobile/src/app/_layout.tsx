@@ -1,3 +1,5 @@
+import { useFonts } from "expo-font";
+import { paperFonts } from "@/core/theme/paper-assets";
 import { useTranslation } from "react-i18next";
 import "@/core/export/native-backup-key";
 import { Stack } from "expo-router";
@@ -56,6 +58,8 @@ function ReadySessionProviders({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts(paperFonts);
+  if (!fontsLoaded && !fontError) return null;
   return (
     <SafeAreaProvider>
       <AppAppearanceProvider><AuthProvider>
@@ -70,13 +74,13 @@ function SessionReadyTree() {
   const { t } = useTranslation("common");
   const { loading } = useAuth();
   if (!canMountSessionRoutes(loading)) return <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.canvas }}>
-    <ActivityIndicator accessibilityLabel={t("Đang khôi phục phiên Picket")} color={colors.primary} />
+    <ActivityIndicator accessibilityLabel={t("Đang khôi phục phiên Picket")} color={colors.link} />
   </View>;
   return (
         <DeviceLockProvider>
           <SessionProviders>
             <StatusBar style={theme === "dark" ? "light" : "dark"} />
-            <Stack screenOptions={{ headerShown: false }} />
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }} />
             <NavigationShell />
           </SessionProviders>
         </DeviceLockProvider>
