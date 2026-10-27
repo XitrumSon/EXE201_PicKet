@@ -1,8 +1,10 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
 import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
-import { colors } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect } from "expo-router";
 import { useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -13,6 +15,7 @@ import { runBulkAction } from "@/features/transactions/bulk-action";
 
 export default function BulkTransactionsScreen() {
   const {tx,money:formatVnd,locale}=useTransactionCopy();
+  const { styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const { archive, categories, transactions, update } = useTransactions();
   const [selected, setSelected] = useState<string[]>([]);
@@ -67,6 +70,6 @@ export default function BulkTransactionsScreen() {
   </PicketScreen>;
 }
 
-const styles = StyleSheet.create({
-  back:{color:colors.mauve,fontSize:15,fontWeight:"800",marginBottom:18},heading:{color:colors.ink,fontSize:29,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginBottom:16,marginTop:7},warning:{color:colors.expense,fontSize:13,lineHeight:20,marginBottom:14},message:{color:colors.ink,fontSize:14,lineHeight:21,marginBottom:10},label:{color:colors.ink,fontSize:15,fontWeight:"800",marginBottom:10,marginTop:20},actions:{flexDirection:"row",gap:24,marginBottom:12},link:{color:colors.mauve,fontWeight:"800"},list:{paddingVertical:4},row:{alignItems:"center",borderBottomColor:colors.line,borderBottomWidth:1,flexDirection:"row",minHeight:68},check:{color:colors.mauve,fontSize:24,width:38},copy:{flex:1},title:{color:colors.ink,fontSize:15,fontWeight:"700"},meta:{color:colors.muted,fontSize:12,marginTop:3},amount:{color:colors.ink,fontSize:13,fontWeight:"800"},chips:{flexDirection:"row",flexWrap:"wrap",gap:8},archive:{alignItems:"center",borderColor:colors.expense,borderRadius:12,borderWidth:1,justifyContent:"center",marginTop:14,minHeight:50},archiveText:{color:colors.expense,fontWeight:"800"},
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
+  back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginBottom:16,marginTop:7},warning:{color:colors.expense,fontSize:13,lineHeight:20,marginBottom:14},message:{color:colors.ink,fontSize:14,lineHeight:21,marginBottom:10},label:{color:colors.ink,fontSize:15,fontWeight:"700",marginBottom:10,marginTop:20},actions:{flexDirection:"row",gap:24,marginBottom:12},link:{color:colors.link,fontWeight:"700"},list:{paddingVertical:4},row:{alignItems:"center",borderBottomColor:colors.line,borderBottomWidth:1,flexDirection:"row",minHeight:68},check:{color:colors.link,fontSize:24,width:38},copy:{flex:1},title:{color:colors.ink,fontSize:15,fontWeight:"700"},meta:{color:colors.muted,fontSize:12,marginTop:3},amount:{color:colors.ink,fontSize:13,fontWeight:"800"},chips:{flexDirection:"row",flexWrap:"wrap",gap:8},archive:{alignItems:"center",borderColor:colors.expense,borderRadius:12,borderWidth:1,justifyContent:"center",marginTop:14,minHeight:50},archiveText:{color:colors.expense,fontWeight:"700"},
 });
