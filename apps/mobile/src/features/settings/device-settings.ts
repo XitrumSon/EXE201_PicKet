@@ -1,5 +1,6 @@
 import { normalizeLanguage } from "../../core/i18n/formatters";
 import type { AppLanguage } from "../../core/i18n/languages";
+import { resolveColorScheme } from "../../core/theme/color-schemes";
 export type ThemeMode = "system" | "light" | "dark";
 export type LanguageMode = "system" | AppLanguage;
 export type DeviceSettings = { version: 1; themeMode?: ThemeMode; languageMode?: string; colorSchemeId?: string };
@@ -22,10 +23,21 @@ export function resolveAppearance(device: DeviceSettings, account: AppearanceDef
     language: languageMode === "system" ? normalizeLanguage(system.locale) : normalizeLanguage(languageMode ?? account.locale ?? system.locale),
   };
 }
-export function createSettingsStore(storage: { read(): Promise<string | null>; write(value: string): Promise<void> }) {
+export function resolveSettingsScheme(device: DeviceSettings, account: AppearanceDefaults) {
+  return resolveColorScheme(device.colorSchemeId ?? account.colorSchemeId ?? "paper");
+}
+export function createSettingsStore(storage: { read(): Promise<string | null>; write(value: string): Promise<void>; isExistingInstall?(): Promise<boolean> }) {
   let pending: Promise<void> = Promise.resolve();
   return {
-    async load() { await pending.catch(() => undefined); return parseDeviceSettings(await storage.read()); },
+    async load() {
+      await pending.catch(() => undefined);
+      const raw = await storage.read();
+      if (raw !== null || !storage.isExistingInstall) return parseDeviceSettings(raw);
+      const value: DeviceSettings = await storage.isExistingInstall()
+        ? { version: 1 } : { version: 1, colorSchemeId: "paper", themeMode: "system" };
+      await storage.write(JSON.stringify(value));
+      return value;
+    },
     save(value: DeviceSettings) {
       const serialized = JSON.stringify(parseDeviceSettings(JSON.stringify(value)));
       const operation = pending.catch(() => undefined).then(() => storage.write(serialized));
