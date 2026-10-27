@@ -6,11 +6,12 @@ import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
 import { I18nextProvider } from "react-i18next";
 import { createAppI18n } from "@/core/i18n/instance";
-import { colorSchemes, resolveColorScheme } from "@/core/theme/color-schemes";
-import { createSettingsStore, resolveAppearance, type AppearanceDefaults, type DeviceSettings } from "./device-settings";
+import { colorSchemes } from "@/core/theme/color-schemes";
+import { createSettingsStore, resolveAppearance, resolveSettingsScheme, type AppearanceDefaults, type DeviceSettings } from "./device-settings";
+import { isExistingInstall } from "./installation-history";
 
 const settingsKey = "picket_device_appearance_v1";
-const store = createSettingsStore({ read: () => SecureStore.getItemAsync(settingsKey), write: value => SecureStore.setItemAsync(settingsKey, value) });
+const store = createSettingsStore({ read: () => SecureStore.getItemAsync(settingsKey), write: value => SecureStore.setItemAsync(settingsKey, value), isExistingInstall });
 function useAppearanceState() {
   const scheme = useColorScheme();
   const [locale, setLocale] = useState(() => Localization.getLocales()[0]?.languageTag ?? "vi");
@@ -36,7 +37,9 @@ function useAppearanceState() {
     return () => listener.remove();
   }, []);
   const appearance = resolveAppearance(settings, accountDefaults, { theme: scheme === "dark" ? "dark" : "light", locale });
-  const colors = colorSchemes[resolveColorScheme(settings.colorSchemeId ?? accountDefaults.colorSchemeId ?? undefined)][appearance.theme];
+  const colorSchemeId = resolveSettingsScheme(settings, accountDefaults);
+  const themeMode = settings.themeMode ?? accountDefaults.themeMode ?? accountDefaults.theme ?? "system";
+  const colors = colorSchemes[colorSchemeId][appearance.theme];
   useEffect(() => {
     void i18n.changeLanguage(appearance.language);
   }, [appearance.language, i18n]);
@@ -54,7 +57,7 @@ function useAppearanceState() {
     pending.current = operation;
     try { await operation; } finally { if (alive.current && pending.current === operation) setSaving(false); }
   }
-  return { settings, ready, error, saving, update, setAccountDefaults,
+  return { settings, ready, error, saving, update, setAccountDefaults, colorSchemeId, themeMode,
     retry: () => setRevision(value => value + 1), ...appearance, colors, i18n };
 }
 type AppearanceValue = ReturnType<typeof useAppearanceState>;
