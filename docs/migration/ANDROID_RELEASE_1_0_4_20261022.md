@@ -1,5 +1,9 @@
 # Android production 1.0.4 — 22 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Published artifact
 
 - Landing: https://picket.51-79-207-154.sslip.io/
