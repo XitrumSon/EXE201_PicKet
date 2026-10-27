@@ -32,7 +32,7 @@ Chỉ dùng Google test instruments, không thẻ thật. Mọi mutation qua Pub
 ## Giới hạn còn mở
 
 - Live replay RTDN bị automatic approval review từ chối “blocked by policy”; không đổi đường gửi để vượt block. Offline handler test không thay bằng chứng live replay.
-- Pending: Play chỉ hiện always approves/always declines/approves then chargeback, chưa có slow test instrument. Source test xác nhận PENDING/PENDING_PURCHASE_CANCELED không cấp/ack, chưa giả PASS pending purchase thật.
+- Pending native: **không áp dụng cho bốn base plan auto-renew hiện hành**. Google chỉ hỗ trợ pending subscription cho prepaid plans; Picket chưa bán prepaid. UI test chỉ có ba test instrument phù hợp. Source vẫn kiểm PENDING/PENDING_PURCHASE_CANCELED không cấp/ack. Không tạo thêm sản phẩm prepaid chỉ để đóng checklist. [Giới hạn pending chính thức](https://developer.android.com/google/play/billing/subscriptions#pending).
 - Renewal failure/grace/hold đã được kiểm chứng thực tế. Không coi test source là bằng chứng pending native hoặc live replay.
 - APKPure còn chờ review nền tảng. Play production và closed-test rollout không thực hiện.
 
