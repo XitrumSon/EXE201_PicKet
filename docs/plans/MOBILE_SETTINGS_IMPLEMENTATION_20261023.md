@@ -1,5 +1,9 @@
 # Settings foundation implementation — 23 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Source: [approved implementation plan](MOBILE_SETTINGS_LEARNING_AI_PLAN_20261022.md).
 This is the first SET-01..03 increment specified at the end of the plan, not a
 completion claim for P1–P5. Existing Android bug fixes remain separate work.
