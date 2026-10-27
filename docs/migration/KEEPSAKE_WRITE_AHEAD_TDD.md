@@ -1,5 +1,9 @@
 # Write-ahead keepsakes and completion slices — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Source: [APP_COMPLETION_PLAN.md](APP_COMPLETION_PLAN.md), user requested groups 1 and 2 first. Expo Android only. No commit/push, public APK update, BE deployment, remote migration or RLS change. Product delivery/TDD sequence used; user prohibition overrides checkpoint commits.
 
 ## Implemented behavior and RED → GREEN
