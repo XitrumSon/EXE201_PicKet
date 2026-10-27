@@ -1,5 +1,9 @@
 # Expo profile sign-out — 2026-10-15
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Journey: an authenticated Android user can cancel sign-out, or confirm it and return to the auth gate without deleting local drafts or queued mutations. The same Google account can sign in again.
 
 | Check | Evidence |
