@@ -6,9 +6,9 @@ Cập nhật **27/10/2026, Asia/Saigon**. Đây là nguồn trạng thái chung 
 
 | Thành phần | Trạng thái đã xác minh |
 | --- | --- |
-| Mobile source/release | 1.0.7 / code 20; Paper UI thống nhất, sign-out/updater/guest splits đã sửa; native QA trước build bằng package riêng |
+| Mobile source/release | 1.0.9 / code 22; màn gói Paper và foreground purchase recovery; bản APK landing vẫn code 20 |
 | Landing public | Paper có chuyển động, tương tác và footer; APK 1.0.7/code 20 ARM64, tải toàn bộ và kiểm SHA-256 PASS |
-| Google Play Internal | AAB 1.0.8/code 21 ARM64+x86_64, đọc lại completed; alpha draft không đổi. Landing vẫn APK code 20 |
+| Google Play Internal | AAB 1.0.9/code 22 ARM64+x86_64, đọc lại completed; alpha draft không đổi. Landing vẫn APK code 20 |
 | Google Play alpha | Code 6 draft; chưa phải thử nghiệm kín đang chạy |
 | Google Play production/beta | Chưa có release |
 | Domain landing | https://picketfinance.com |
@@ -102,3 +102,7 @@ Các mục phụ thuộc thiết bị, người dùng, Google review hoặc th�
 ## Billing trên Play Store máy ảo — checkpoint code 21
 
 Đã cài/cập nhật code 21 từ CH Play, OAuth, tải bốn giá, mua test Plus tháng và restore cấp PLUS/30; cold restart và server readback đúng quyền. Callback sau màn onboarding Google chưa tự cập nhật đúng; ack API/lifecycle/các SKU khác còn kiểm thử. Xem [báo cáo máy ảo](migration/PLAY_BILLING_EMULATOR_20261027.md).
+
+## Gói Paper và quota OCR — checkpoint code 22
+
+[Kiểm thử hoàn tất trong phạm vi](migration/BILLING_COMPLETION_20261027.md): 1.0.9/code 22 đã lên Internal và cập nhật bằng CH Play; bốn SKU có server verification và BillingClient acknowledgement. Pro tháng/năm tự khôi phục quyền khi về foreground, cold restart PRO 100. Màn gói Paper có tháng/năm, icon, quota và hai mode; chữ 150% đã kiểm tra. 29 Billing/922 mobile tests, lint/typecheck và SQL suites PASS. API thật nhận đủ 3/30/100 OCR, request kế tiếp 429, retry không thêm lượt; đã đợi hết hàng đợi và xóa ba fixture user/ảnh. Paid fixture OCR không phải bằng chứng mua Play. Lifecycle cancel/refund/grace/hold/decline/pending/RTDN còn mở; không đánh đồng native acknowledgement với Publisher ack API.
