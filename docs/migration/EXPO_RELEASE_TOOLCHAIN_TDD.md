@@ -1,5 +1,9 @@
 # Expo release toolchain follow-up — 2026-10-18
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 The landing release exposed existing Expo CI problems after the previously uncommitted snapshot was pushed. This follow-up changes release/dependency declarations, not mobile screens or business behavior.
 
 ## RED
