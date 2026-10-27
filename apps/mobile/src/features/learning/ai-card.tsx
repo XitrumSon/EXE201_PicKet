@@ -1,5 +1,7 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { paperShape } from "@/core/theme/paper-foundations";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { AppState, Text, View } from "react-native";
+import { AppState, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { picketApi } from "@/core/api/client";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -40,9 +42,9 @@ function AiSession({api,token}:{api:LearningAiApi;token:string}){
     return()=>{clearInterval(timer);listener.remove();};
   },[machine,pending,completed]);
   function button(label:string,action:()=>void,disabled=false){
-    return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={action} style={{minHeight:48,padding:14,borderRadius:12,borderColor:c.border,borderWidth:1,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.primary,fontWeight:"600"}}>{label}</Text></Pressable>;
+    return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={action} style={{minHeight:48,padding:14,borderRadius:paperShape.button,borderColor:c.border,borderWidth:1,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.primary,fontWeight:"600"}}>{label}</Text></Pressable>;
   }
-  return <View style={{gap:12,padding:16,borderWidth:1,borderColor:c.border,borderRadius:16,backgroundColor:c.surface}}>
+  return <View style={{gap:12,padding:16,borderWidth:1,borderColor:c.border,borderRadius:paperShape.card,backgroundColor:c.surface}}>
     <Text accessibilityRole="header" style={{fontSize:22,fontWeight:"700",color:c.text}}>{t("title")}</Text>
     <Text style={{color:c.text,lineHeight:24}}>{t("case")}</Text>
     <Text style={{color:c.muted,lineHeight:22}}>{t("consent")}</Text>
