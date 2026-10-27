@@ -1,5 +1,9 @@
 # Backup Flutter, admin và cập nhật Console — 22/10/2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Trạng thái và ranh giới
 
 Yêu cầu: xử lý backup lịch sử, ba đầu việc admin và đồng bộ tài liệu. **Chưa đóng toàn yêu cầu**: còn toàn luồng settings Android/API staging. Cleanup production đã được người dùng chạy SQL thành công và agent xác minh độc lập qua SELECT staff, còn 0 fixture. Không đổi local SQL thành PASS cho staging E2E. Không commit/push hoặc triển khai APK trong lượt này. Người dùng xác nhận không có file Flutter và chỉ tập trung Expo Android; bỏ nghiệm thu file Flutter lịch sử khỏi phạm vi MVP, không xóa codec tương thích cũ.
