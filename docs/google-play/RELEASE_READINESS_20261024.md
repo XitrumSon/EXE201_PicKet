@@ -90,6 +90,18 @@ Landing cũng đã phát hành APK code 19 và được tải lại kiểm check
 
 ### Cập nhật danh mục thanh toán 27/10/2026
 
+#### Kết quả kiểm thử Billing sau kích hoạt
+
+- Mobile Billing: 21/21 tests đạt (purchase validation, readiness, verify-before-finish, restore/refresh, locale, race/unmount/account scope).
+- Dart Billing/entitlements: 7/7 tests đạt (request/response contract, authenticated forwarding, malformed verifier response).
+- Ma trận quyền gói PGlite cô lập: 22 assertions đạt cho 4 product ID, Free/Plus/Pro OCR cloud 3/30/100 mỗi cửa sổ 24 giờ, owner isolation, expiry/revoked/stale verification, strongest tier, client write denied, token hash hidden, replacement replay fence và cross-owner claim rejection. Đây là dữ liệu mô phỏng trong database cô lập, không phải purchase Google thật.
+- Production: tạo một user tổng hợp dùng riêng, xác minh Free quota 3, auth required, product lạ/token rỗng bị từ chối, token Google giả trả 502 và không nâng quyền, authenticated client không gọi được record_play_purchase. Đã xóa user tạm trong finally; không ghi giao dịch hoặc cấp quyền trả phí trên production.
+- `GET /v1/billing/availability` xác nhận `newPurchasesEnabled=false`. Không tự mở mua cho mọi người khi chưa có license tester/giao dịch thử. Bốn base plan đọc lại vẫn ACTIVE tại VN.
+- Chưa thể nghiệm thu S01–S14 bằng Play: chưa xác minh Gmail license tester, browser inventory rỗng, Pixel 5 không chạy và cấu hình Pixel 5 hiện không có Play Store. Redmi 7 kết nối nhưng chưa có xác nhận tài khoản test; không thao tác mua bằng phương thức thật. API connector không có chức năng quản lý license testers hay tạo purchase token thử.
+- Còn cần: tài khoản license tester trên thiết bị có Play Store; kết nối Console để cấu hình/kiểm tra tester và RTDN; môi trường cho phép mua thử trước khi test purchase/ack/restore/renewal/cancel/refund. ACTIVE và các tests trên chưa chứng minh thanh toán đầu cuối.
+
+Evidence local: `.artifacts/billing-acceptance-20261027/` gồm mobile-tests.log, api-tests.log, entitlement-matrix.log và production-probe.log; không chứa token hoặc credential người dùng. Hướng dẫn đối chiếu: https://developer.android.com/google/play/billing/test?hl=en.
+
 Theo yêu cầu chủ dự án, bốn base plan đã được kích hoạt và đọc lại độc lập bằng Android Publisher API: Plus tháng 19.000đ, Plus năm 199.000đ, Pro tháng 49.000đ, Pro năm 499.000đ. Tất cả ACTIVE, auto-renew, chỉ VN; giữ nguyên ID monthly/yearly và không thêm trial/offer. Trạng thái này thay thế DRAFT trong các checkpoint trước. Không thay release track hoặc bật runtime Billing trong lượt cấu hình danh mục. License tester, S01–S14 và RTDN vẫn cần nghiệm thu; ACTIVE không phải bằng chứng mua/verify/ack thành công.
 
 Play Internal đã đọc lại completed với code 20; alpha vẫn code 6 draft, beta/production chưa có release. APK trên landing cùng version/code, AAB Play không có quyền cài APK. Các gate Console, Billing, thiết bị thật và nội dung cloud không tự đóng bởi upload thành công. Xem [báo cáo code 20](../migration/ANDROID_RELEASE_1_0_7_20261027.md) và [backlog hiện hành](../BACKLOG.md).
