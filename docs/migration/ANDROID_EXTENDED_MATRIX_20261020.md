@@ -1,5 +1,9 @@
 # Extended Android acceptance matrix — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Follow-up to [GROUP123_ANDROID_INCREMENT_20261020.md](GROUP123_ANDROID_INCREMENT_20261020.md). Tests use the isolated QA package and generated cloud owners, not mutations to the user's Google ledger. No backend/migration, commit/push or public APK replacement.
 
 ## Observed acceptance
