@@ -1,5 +1,7 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { paperShape } from "@/core/theme/paper-foundations";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, AppState, Text, View } from "react-native";
+import { Alert, AppState, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { formatMoney } from "@/core/i18n/formatters";
 import { PrimaryAction, DangerAction } from "@/core/ui/picket-ui";
@@ -75,7 +77,7 @@ export function AssessmentDraftCard({ owner }: { owner: string }) {
 
   const money = (amount: number) => formatMoney(amount, language, assessmentCase.currency);
   const disabled = status === "loading" || status === "clearing";
-  return <View style={{ gap: 12, padding: 16, borderWidth: 1, borderColor: c.border, borderRadius: 16, backgroundColor: c.surface }}>
+  return <View style={{ gap: 12, padding: 16, borderWidth: 1, borderColor: c.border, borderRadius: paperShape.card, backgroundColor: c.surface }}>
     <Text accessibilityRole="header" style={{ color: c.text, fontSize: 22, fontWeight: "700" }}>{t("title")}</Text>
     <Text style={{ color: c.muted, lineHeight: 22 }}>{t("underReview")}</Text>
     <Text style={{ color: c.text, lineHeight: 24 }}>{t("scenario", { available: money(assessmentCase.available), rent: money(assessmentCase.rent), utilities: money(assessmentCase.utilities), reserve: money(assessmentCase.reserve), purchase: money(assessmentCase.purchase), days: assessmentCase.nextIncomeDays })}</Text>
