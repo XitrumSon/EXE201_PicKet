@@ -1,17 +1,17 @@
-import { colors, radii } from "@picket/design-tokens";
+import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { TopAppBar } from "@/core/ui/picket-ui";
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
+import { radii } from "@/core/ui/mobile-palette";
 import { formatVnd, MAX_MONEY, type ReceiptRecord } from "@picket/domain";
 import { ApiError } from "@picket/api-client";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import {
-  ActivityIndicator,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Image, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { picketApi } from "@/core/api/client";
@@ -40,6 +40,7 @@ function dateInput(value: string | null) {
 }
 
 export default function ReceiptDetailScreen() {
+  const { colors, styles } = useMobileStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
   const [receipt, setReceipt] = useState<ReceiptRecord | null>(null);
@@ -211,11 +212,8 @@ export default function ReceiptDetailScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Quay lại màn hình trước" onPress={() => router.canGoBack() ? router.back() : router.replace(routes.transactions)}>
-          <Text style={styles.back}>‹ Quay lại</Text>
-        </Pressable>
-        <Text accessibilityRole="header" style={styles.title}>Chi tiết hóa đơn</Text>
-        {loading && <ActivityIndicator accessibilityLabel="Đang tải hóa đơn" color={colors.mauve} style={styles.loader} />}
+        <TopAppBar title="Chi tiết hóa đơn" illustration="receipt" onBack={() => router.canGoBack() ? router.back() : router.replace(routes.transactions)} />
+        {loading && <ActivityIndicator accessibilityLabel="Đang tải hóa đơn" color={colors.link} style={styles.loader} />}
         {message && <Text accessibilityLiveRegion="polite" role="alert" style={styles.error}>{message}</Text>}
         {receipt && (
           <>
@@ -298,7 +296,7 @@ export default function ReceiptDetailScreen() {
             {editing ? (
               <View style={styles.editorActions}>
                 <Pressable disabled={saving} onPress={() => void saveReview()} style={styles.primaryButton}>
-                  {saving ? <ActivityIndicator accessibilityLabel="Đang lưu kết quả kiểm tra hóa đơn" color={colors.white} /> : <Text style={styles.primaryText}>Lưu kết quả kiểm tra</Text>}
+                  {saving ? <ActivityIndicator accessibilityLabel="Đang lưu kết quả kiểm tra hóa đơn" color={colors.onPrimary} /> : <Text style={styles.primaryText}>Lưu kết quả kiểm tra</Text>}
                 </Pressable>
                 <Pressable disabled={saving} onPress={() => { setEditing(false); setMessage(null); }} style={styles.outlineButton}>
                   <Text style={styles.outlineText}>Hủy chỉnh sửa</Text>
@@ -324,15 +322,15 @@ export default function ReceiptDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   safe: { backgroundColor: colors.cream, flex: 1 },
-  content: { gap: 14, padding: 22, paddingBottom: 48 },
-  back: { color: colors.mauve, fontWeight: "700" },
-  title: { color: colors.ink, fontSize: 30, fontWeight: "700" },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 14, padding: paperSpace.screen, paddingBottom: 48 },
+  back: { color: colors.link, fontWeight: "700" },
+  title: { color: colors.ink, fontSize: 26, fontWeight: "700" },
   loader: { marginTop: 32 },
   image: { backgroundColor: colors.white, borderRadius: radii.large, height: 360, width: "100%" },
   imagePlaceholder: { alignItems: "center", justifyContent: "center" },
-  card: { backgroundColor: colors.white, borderRadius: radii.medium, gap: 6, padding: 18 },
+  card: { backgroundColor: colors.white, borderRadius: paperShape.card, gap: 6, padding: 18 },
   merchant: { color: colors.ink, fontSize: 20, fontWeight: "700" },
   amount: { color: colors.expense, fontSize: 24, fontWeight: "900" },
   meta: { color: colors.muted, fontSize: 13, lineHeight: 19 },
@@ -343,19 +341,19 @@ const styles = StyleSheet.create({
   lineTotal: { color: colors.ink, fontWeight: "700" },
   hint: { color: colors.muted, fontSize: 12, lineHeight: 18 },
   rawText: { color: colors.ink, fontFamily: "monospace", fontSize: 12, lineHeight: 18 },
-  error: { color: colors.expense, fontWeight: "700" },
+  error: { color: colors.danger, fontWeight: "700" },
   fieldLabel: { color: colors.ink, fontSize: 13, fontWeight: "700", marginTop: 3 },
-  input: { backgroundColor: colors.cream, borderColor: colors.peach, borderRadius: radii.small, borderWidth: 1, color: colors.ink, minHeight: 48, paddingHorizontal: 13 },
+  input: { backgroundColor: colors.cream, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, minHeight: 48, paddingHorizontal: 13 },
   inputRow: { flexDirection: "row", gap: 10 },
   flexInput: { flex: 1 },
   editLine: { backgroundColor: colors.white, borderRadius: radii.small, gap: 9, padding: 14 },
   lineHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
   remove: { color: colors.expense, fontSize: 13, fontWeight: "700" },
-  warning: { backgroundColor: "#FFF4DD", borderRadius: radii.small, color: colors.ink, fontSize: 12, lineHeight: 18, padding: 12 },
+  warning: { backgroundColor: colors.warningSurface, borderRadius: radii.small, color: colors.ink, fontSize: 12, lineHeight: 18, padding: 12 },
   editorActions: { gap: 10, marginTop: 4 },
-  primaryButton: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", minHeight: 50, paddingHorizontal: 14 },
-  primaryText: { color: colors.white, fontSize: 15, fontWeight: "700" },
-  outlineButton: { alignItems: "center", borderColor: colors.mauve, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 48, paddingHorizontal: 14 },
-  outlineText: { color: colors.mauve, fontSize: 14, fontWeight: "700" },
+  primaryButton: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", minHeight: paperControl.height, paddingHorizontal: 14 },
+  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
+  outlineButton: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height, paddingHorizontal: 14 },
+  outlineText: { color: colors.link, fontSize: 14, fontWeight: "700" },
   disabled: { opacity: 0.55 },
 });
