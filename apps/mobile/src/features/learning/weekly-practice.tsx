@@ -1,5 +1,7 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { paperShape } from "@/core/theme/paper-foundations";
 import { useEffect, useState } from "react";
-import { AppState, Text, View } from "react-native";
+import { AppState, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { formatCalendarDate } from "@/core/i18n/formatters";
@@ -38,14 +40,14 @@ export function WeeklyPractice({owner}:{owner:string}) {
     try{setEvents(await weeklyPractice.record(owner,week,skipped));}catch{setError(true);}finally{setBusy(false);}
   }
   const disabled=events===null||error||busy||current?.skipped===false;
-  return <View style={{backgroundColor:c.surface,borderRadius:14,padding:18,gap:12}}>
+  return <View style={{backgroundColor:c.surface,borderRadius:paperShape.card,padding:18,gap:12}}>
     <Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("weeklyTitle")}</Text>
     <Text style={{color:c.muted}}>{t("weekOf",{date:formatCalendarDate(week,language)})}</Text>
     <Text style={{color:c.text}}>{t("weeklyTask")}</Text>
     <Text style={{color:c.muted}}>{t("optionalPractice")}</Text>
     <Text accessibilityLiveRegion="polite" style={{color:error?c.expense:c.text}}>{error?t("storageError"):current ? current.skipped ? t("weeklySkipped") : t("weeklyComplete") : ""}</Text>
-    {error && <Pressable onPress={()=>setRevision(value=>value+1)}><Text style={{color:c.primary}}>{t("Thử lại",{ns:"common"})}</Text></Pressable>}
-    <Pressable disabled={disabled} accessibilityState={{disabled}} onPress={()=>void record(false)} style={{padding:14,backgroundColor:c.elevated,borderRadius:12}}><Text style={{color:c.text}}>{t("weeklySave")}</Text></Pressable>
-    <Pressable disabled={disabled} accessibilityState={{disabled}} onPress={()=>void record(true)}><Text style={{color:c.primary}}>{t("weeklySkip")}</Text></Pressable>
+    {error && <Pressable onPress={()=>setRevision(value=>value+1)}><Text style={{color:c.link}}>{t("Thử lại",{ns:"common"})}</Text></Pressable>}
+    <Pressable disabled={disabled} accessibilityState={{disabled}} onPress={()=>void record(false)} style={{padding:14,backgroundColor:c.elevated,borderRadius:paperShape.button}}><Text style={{color:c.text}}>{t("weeklySave")}</Text></Pressable>
+    <Pressable disabled={disabled} accessibilityState={{disabled}} onPress={()=>void record(true)}><Text style={{color:c.link}}>{t("weeklySkip")}</Text></Pressable>
   </View>;
 }
