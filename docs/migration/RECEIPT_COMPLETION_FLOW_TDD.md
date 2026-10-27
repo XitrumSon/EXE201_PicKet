@@ -1,5 +1,9 @@
 # Receipt capture completion and calendar date — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Scope: Expo Android UI/flow and existing Dart API; no backend/schema changes, commit/push or public APK update. User journeys: calendar day → scan → review → create transaction → home/view receipt; icon scan → same completion; same-owner cached photo after restart.
 
 ## Findings and implementation
