@@ -88,4 +88,8 @@ Landing cũng đã phát hành APK code 19 và được tải lại kiểm check
 
 ## Hiện trạng sau phát hành 1.0.7/code 20
 
+### Cập nhật danh mục thanh toán 27/10/2026
+
+Theo yêu cầu chủ dự án, bốn base plan đã được kích hoạt và đọc lại độc lập bằng Android Publisher API: Plus tháng 19.000đ, Plus năm 199.000đ, Pro tháng 49.000đ, Pro năm 499.000đ. Tất cả ACTIVE, auto-renew, chỉ VN; giữ nguyên ID monthly/yearly và không thêm trial/offer. Trạng thái này thay thế DRAFT trong các checkpoint trước. Không thay release track hoặc bật runtime Billing trong lượt cấu hình danh mục. License tester, S01–S14 và RTDN vẫn cần nghiệm thu; ACTIVE không phải bằng chứng mua/verify/ack thành công.
+
 Play Internal đã đọc lại completed với code 20; alpha vẫn code 6 draft, beta/production chưa có release. APK trên landing cùng version/code, AAB Play không có quyền cài APK. Các gate Console, Billing, thiết bị thật và nội dung cloud không tự đóng bởi upload thành công. Xem [báo cáo code 20](../migration/ANDROID_RELEASE_1_0_7_20261027.md) và [backlog hiện hành](../BACKLOG.md).
