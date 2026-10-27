@@ -1,6 +1,7 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
 import {useAuth} from "@/features/auth/auth-context";
 import {useEffect,useRef,useState} from "react";
-import {AppState,Text,View} from "react-native";
+import { AppState, View } from "react-native";
 import {router} from "expo-router";
 import {useTranslation} from "react-i18next";
 import {AccessiblePressable as Pressable} from "@/core/ui/accessible-pressable";
@@ -26,8 +27,8 @@ export function ForecastCaptureCard({owner,input,disabled=false}:{owner:string;i
  return <View style={{gap:10,padding:12,borderWidth:1,borderColor:c.border,borderRadius:12}}>
   <Text accessibilityRole="header" style={{color:c.text,fontWeight:"700"}}>{t("captureTitle")}</Text>
   <Text style={{color:c.muted,lineHeight:22}}>{t("captureNotice")}</Text>
-  <Pressable accessibilityRole="button" accessibilityState={{disabled:busy||disabled,busy}} disabled={busy||disabled} onPress={()=>void capture()} style={{minHeight:48,padding:12}}><Text style={{color:c.primary}}>{t("capture")}</Text></Pressable>
-  <Pressable accessibilityRole="button" onPress={()=>router.push("/forecast-observations-preview")} style={{minHeight:48,padding:12}}><Text style={{color:c.primary}}>{t("open")}</Text></Pressable>
+  <Pressable accessibilityRole="button" accessibilityState={{disabled:busy||disabled,busy}} disabled={busy||disabled} onPress={()=>void capture()} style={{minHeight:48,padding:12}}><Text style={{color:c.link}}>{t("capture")}</Text></Pressable>
+  <Pressable accessibilityRole="button" onPress={()=>router.push("/forecast-observations-preview")} style={{minHeight:48,padding:12}}><Text style={{color:c.link}}>{t("open")}</Text></Pressable>
   {failed&&<Text accessibilityRole="alert" style={{color:c.expense}}>{t("error")}</Text>}
   {saved&&<Text accessibilityLiveRegion="polite" style={{color:c.text}}>{t("captured")}</Text>}
  </View>;
