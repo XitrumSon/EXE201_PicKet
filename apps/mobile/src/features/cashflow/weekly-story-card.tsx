@@ -1,5 +1,6 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
 import { useEffect,useState } from "react";
-import { AppState,Text,View } from "react-native";
+import { AppState, View } from "react-native";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -16,7 +17,7 @@ export function WeeklyStoryCard({snapshot,accounts,currency}:{snapshot:LedgerSna
  if(!story)return <Text accessibilityRole="alert" style={{color:c.expense}}>{t("ledgerError")}</Text>;
  const format=new Intl.NumberFormat(localeFor(language),{style:"currency",currency});
  const money=(amount:number)=>format.format(amount/10**(format.resolvedOptions().maximumFractionDigits??2));
- const button=(label:string,onPress:()=>void,disabled=false)=><Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={onPress} style={{padding:12,minHeight:48,backgroundColor:c.surface}}><Text style={{color:c.primary}}>{label}</Text></Pressable>;
+ const button=(label:string,onPress:()=>void,disabled=false)=><Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={onPress} style={{padding:12,minHeight:48,backgroundColor:c.surface}}><Text style={{color:c.link}}>{label}</Text></Pressable>;
  return <View style={{gap:12}}>
   <Text accessibilityRole="header" style={{color:c.text,fontWeight:"700"}}>{t("storyTitle")}</Text>
   <Text style={{color:c.muted,lineHeight:22}}>{t("storyNotice")}</Text>
