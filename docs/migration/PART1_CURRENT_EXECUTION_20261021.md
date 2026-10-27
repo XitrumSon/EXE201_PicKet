@@ -1,5 +1,9 @@
 # Part 1 — current execution, 21 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 This supplements the [acceptance matrix](PART12_ACCEPTANCE_MATRIX_20261021.md). **22 October:** requested emulator follow-up cases now PASS; [final acceptance and limits](PART1_ACCEPTANCE_20261022.md). Current index: [project status](../PROJECT_STATUS.md). Historical observations below are checkpoint evidence, not an unresolved current backlog.
 
 ## Source verification
