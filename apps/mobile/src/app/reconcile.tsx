@@ -1,13 +1,16 @@
+import { paperControl , paperShape } from "@/core/theme/paper-foundations";
+import { PicketText as Text } from "@/core/ui/picket-text";
 import { useTranslation } from "react-i18next";
 import { useAppTheme } from "@/features/settings/appearance-provider";
 import { formatMoney,localeFor } from "@/core/i18n/formatters";
 import { reconciliationNoticeCopy,type ReconciliationNotice } from "@/features/transactions/reconciliation-copy";
-import { colors } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import type { Transaction } from "@picket/domain";
 import { Redirect } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { picketApi } from "@/core/api/client";
 import { useGuestFinance } from "@/core/local/guest-finance-context";
@@ -36,6 +39,7 @@ export default function ReconcileScreen() {
   const {t:tx}=useTranslation("reconciliation");
   const {language}=useAppTheme();
   const money=(value:number)=>formatMoney(value,language,"VND");
+  const { styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const owner = localMode ? guestOwnerId : session?.user.id ?? "";
   const guest = useGuestFinance();
@@ -153,4 +157,4 @@ export default function ReconcileScreen() {
   </PicketScreen>;
 }
 
-const styles = StyleSheet.create({back:{color:colors.mauve,fontSize:15,fontWeight:"800",marginBottom:18},heading:{color:colors.ink,fontSize:29,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginBottom:16,marginTop:7},error:{color:colors.expense,fontSize:13,marginBottom:10},message:{color:colors.ink,fontSize:14,marginVertical:12},hint:{color:colors.muted,fontSize:12,lineHeight:18,marginTop:5},chips:{flexDirection:"row",flexWrap:"wrap",gap:8,marginBottom:12},label:{color:colors.ink,fontSize:14,fontWeight:"800",marginBottom:8,marginTop:14},input:{backgroundColor:colors.white,borderColor:colors.peach,borderRadius:12,borderWidth:1,color:colors.ink,fontSize:16,minHeight:50,paddingHorizontal:14,marginBottom:14},title:{color:colors.ink,fontSize:15,fontWeight:"800"},actions:{flexDirection:"row",gap:20,marginBottom:12},link:{color:colors.mauve,fontWeight:"800"},row:{alignItems:"center",borderBottomColor:colors.line,borderBottomWidth:1,flexDirection:"row",minHeight:65},check:{color:colors.mauve,fontSize:23,width:38},copy:{flex:1},value:{color:colors.ink,fontSize:13,fontWeight:"800"}});
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginBottom:16,marginTop:7},error:{color:colors.danger,fontSize:13,marginBottom:10},message:{color:colors.ink,fontSize:14,marginVertical:12},hint:{color:colors.muted,fontSize:12,lineHeight:18,marginTop:5},chips:{flexDirection:"row",flexWrap:"wrap",gap:8,marginBottom:12},label:{color:colors.ink,fontSize:14,fontWeight:"700",marginBottom:8,marginTop:14},input:{backgroundColor:colors.white,borderColor:colors.controlBorder,borderRadius:paperShape.input,borderWidth:1,color:colors.ink,fontSize:16,minHeight:paperControl.height,paddingHorizontal:14,marginBottom:14},title:{color:colors.ink,fontSize:15,fontWeight:"700"},actions:{flexDirection:"row",gap:20,marginBottom:12},link:{color:colors.link,fontWeight:"700"},row:{alignItems:"center",borderBottomColor:colors.line,borderBottomWidth:1,flexDirection:"row",minHeight:65},check:{color:colors.link,fontSize:23,width:38},copy:{flex:1},value:{color:colors.ink,fontSize:13,fontWeight:"700"}});
