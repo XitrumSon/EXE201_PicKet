@@ -1,5 +1,9 @@
 # In-app Android updates and installed version — 21 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Public release update 22 October: [1.0.4/code5 ARM64](ANDROID_RELEASE_1_0_4_20261022.md) is now live; manifest/complete HTTPS download/checksum/Range verified. Production-config x86 in-place 1.0.3→1.0.4 retained the guest keepsake and shows installed footer. Physical phone/in-app upgrade acceptance remains in the phone checklist. Earlier QA candidate and 1.0.3 checkpoints below retain their original scope.
 
 Current follow-up: [Part 1 execution](PART1_CURRENT_EXECUTION_20261021.md). A controlled QA candidate has completed actual download/native verification, unknown-source permission, Play Protect scan, Android install confirmation, restart/version footer and retained guest data. It is not a new public release. Updater effect reactivation fix is recorded separately as RED `9692d06` / GREEN `32c5577`; historical release gates below retain their original scope.
