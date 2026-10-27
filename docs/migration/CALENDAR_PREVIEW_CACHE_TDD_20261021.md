@@ -1,5 +1,9 @@
 # Compact calendar previews — 21 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Reproduction
 
 The prior thumbnail renderer bounded cell image dimensions but gallery hydration still loaded/decrypted the full encrypted receipt-image cache at startup (over 27 million ciphertext characters in the generated-owner fixture). Small cells did not eliminate that large bridge/cache read. Earlier emulator benchmarks and jank failures remain valid failures, not retrospectively relabelled.
