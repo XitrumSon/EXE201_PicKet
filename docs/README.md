@@ -67,6 +67,7 @@ Cập nhật 27/10/2026. Bắt đầu bằng các nguồn hiện hành dưới �
 - [Backup Flutter, admin và cập nhật Console — 22/10/2026](migration/BACKUP_ADMIN_EXTERNAL_ACCEPTANCE_20261022.md)
 - [Backup media durability follow-up — 2026-10-20](migration/BACKUP_MEDIA_DURABILITY_TDD.md)
 - [Gói Picket và giới hạn OCR — 27/10/2026](migration/BILLING_COMPLETION_20261027.md)
+- [Billing lifecycle, ảnh Google Play và APK 1.0.9 — 28/10/2026](migration/BILLING_RELEASE_ACCEPTANCE_20261028.md)
 - [Billing/restore TDD evidence](migration/BILLING_TDD.md)
 - [Bills offline refresh — 2026-10-17](migration/BILLS_OFFLINE_REFRESH_TDD.md)
 - [Expo Android — ngân sách theo kỳ và hoàn tiền guest (2026-10-17)](migration/BUDGET_PARITY_TDD.md)
