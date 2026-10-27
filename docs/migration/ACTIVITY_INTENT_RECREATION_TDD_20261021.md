@@ -1,5 +1,9 @@
 # Android Activity intent retention — 2026-10-21
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Native reproduction
 
 While running the large-font route matrix, a VIEW request for Bulk intermittently ended on Dashboard. This was not accepted as a font-screen PASS. A focused read-only QA reproduction then established:
