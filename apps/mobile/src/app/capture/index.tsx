@@ -1,17 +1,15 @@
-import { colors, radii } from "@picket/design-tokens";
+import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
+import { radii } from "@/core/ui/mobile-palette";
 import * as Crypto from "expo-crypto";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Image, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { prepareCapture } from "@/core/ocr/capture-work";
@@ -41,6 +39,7 @@ const serverFallbackEnabled =
   process.env.EXPO_PUBLIC_OCR_FALLBACK_ENABLED === "true";
 
 export default function CaptureReceiptScreen() {
+  const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const ownerId = session?.user.id ?? (localMode ? guestOwnerId : null);
   const params = useLocalSearchParams<{ date?: string }>();
@@ -93,12 +92,12 @@ export default function CaptureReceiptScreen() {
     let active = true;
     void Promise.resolve().then(() => {
       if (!active || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
-    setCameraOpen(true); setHasDraft(false); setImageUri(null);
-    setTitle(""); setAmount(""); setRawText(null); setLineItems([]);
-    setIsRecognizing(false); setIsQueueingFallback(false); setIsContinuing(false);
-    setNeedsFallback(false); setLocalConfidence(0); setProvider("manual");
-    setFallbackStatus(null); setFallbackStoragePath(null); setMessage(null);
-    setHydratedOwner(ownerId);
+      setCameraOpen(true); setHasDraft(false); setImageUri(null);
+      setTitle(""); setAmount(""); setRawText(null); setLineItems([]);
+      setIsRecognizing(false); setIsQueueingFallback(false); setIsContinuing(false);
+      setNeedsFallback(false); setLocalConfidence(0); setProvider("manual");
+      setFallbackStatus(null); setFallbackStoragePath(null); setMessage(null);
+      setHydratedOwner(ownerId);
     });
     return () => { active = false; };
   }, [ownerId]);
@@ -184,6 +183,12 @@ export default function CaptureReceiptScreen() {
       const result = await recognizeReceipt(uri, controller.signal);
       if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
       const { draft } = result;
+      if (!canAttachReceipt(draft)) {
+        setRawText(draft.rawText || null);
+        setAttachReceipt(false);
+        setMessage("Không đọc được hóa đơn. Chụp lại hoặc chọn ảnh khác.");
+        return;
+      }
       setOcrDurationMs(result.durationMs);
       setNeedsFallback(draft.needsReview || !draft.date);
       setLocalConfidence(draft.amountConfidence ?? 0);
@@ -218,18 +223,15 @@ export default function CaptureReceiptScreen() {
       // Keep the native picker lazy so a stale development-client rebuild never
       // prevents login, finance, or offline data from starting.
       const ImagePicker = await import("expo-image-picker");
-      const permission =
-        source === "camera"
-          ? await ImagePicker.requestCameraPermissionsAsync()
-          : await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
-      if (!permission.granted) {
-        setMessage(
-          source === "camera"
-            ? "Cần quyền camera để chụp hóa đơn."
-            : "Cần quyền thư viện để chọn ảnh.",
-        );
-        return;
+      // The system photo picker grants access to the selected URI. Broad
+      // media-library permission is neither required nor declared by the APK.
+      if (source === "camera") {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
+        if (!permission.granted) {
+          Alert.alert("Quyền camera", "Cần quyền camera để chụp hóa đơn.");
+          return;
+        }
       }
 
       const picker =
@@ -252,9 +254,9 @@ export default function CaptureReceiptScreen() {
       await acceptImage(uri);
     } catch {
       if (activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
-      setMessage(
-        "Chưa mở được camera. Bạn có thể chọn ảnh từ thư viện hoặc thử lại.",
-      );
+      const errorMessage = source === "library" ? "Chưa mở được thư viện ảnh. Hãy thử lại." : "Chưa mở được camera. Bạn có thể chọn ảnh từ thư viện hoặc thử lại.";
+      setMessage(errorMessage);
+      Alert.alert("Quét hóa đơn", errorMessage);
     } finally {
       if (ownerId && pickerOperation) await pickerRecovery.complete(ownerId, pickerOperation).catch(() => undefined);
     }
@@ -262,6 +264,7 @@ export default function CaptureReceiptScreen() {
 
   function confirmServerFallback() {
     if (isContinuing || isRecognizing || isQueueingFallback) return;
+    if (!receiptEligible) return;
     const capture = captureRef.current;
     if (!imageUri || !session || !capture) {
       setMessage("Bạn cần đăng nhập và chọn ảnh trước khi dùng OCR nâng cao.");
@@ -357,6 +360,7 @@ export default function CaptureReceiptScreen() {
 
   async function continueToTransaction() {
     if (isContinuing || isRecognizing || isQueueingFallback) return;
+    if (!receiptEligible) { setMessage("Ảnh chưa được nhận diện là hóa đơn. Hãy chụp lại hoặc chọn ảnh khác."); return; }
     const generation = imageGeneration.current;
     if (!imageUri) {
       setMessage("Hãy chụp hoặc chọn ảnh hóa đơn trước.");
@@ -423,7 +427,7 @@ export default function CaptureReceiptScreen() {
     onCapture={(uri) => { void acceptImage(uri); }}
   />;
   if (cameraOpen && !isRecognizing) return cameraScreen;
-  if (!hydrated) return <SafeAreaView style={styles.safe}><ActivityIndicator accessibilityLabel="Đang mở camera" color={colors.mauve} /></SafeAreaView>;
+  if (!hydrated) return <SafeAreaView style={styles.safe}><ActivityIndicator accessibilityLabel="Đang mở camera" color={colors.link} /></SafeAreaView>;
   if (!imageUri && !hasDraft && !isRecognizing) return cameraScreen;
 
   return (
@@ -436,7 +440,7 @@ export default function CaptureReceiptScreen() {
 
         {isRecognizing && (
           <View accessibilityLiveRegion="polite" style={styles.progress}>
-            <ActivityIndicator accessibilityLabel="Đang nhận diện hóa đơn" color={colors.mauve} />
+            <ActivityIndicator accessibilityLabel="Đang nhận diện hóa đơn" color={colors.link} />
             <Text style={styles.progressText}>Đang đọc hóa đơn…</Text>
           </View>
         )}
@@ -468,7 +472,7 @@ export default function CaptureReceiptScreen() {
             onPress={() => { pollingController.current?.abort(); setCameraOpen(true); }}
             style={[styles.primary, (isRecognizing || isContinuing || isQueueingFallback) && styles.disabled]}
           >
-            <AppIcon name="camera-outline" color={colors.white} /><Text style={styles.primaryText}>Chụp lại</Text>
+            <AppIcon name="camera-outline" color={colors.onPrimary} /><Text style={styles.primaryText}>Chụp lại</Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -489,6 +493,7 @@ export default function CaptureReceiptScreen() {
         <Text style={styles.label}>Tên cửa hàng / nội dung</Text>
         <TextInput
           accessibilityLabel="Tên cửa hàng hoặc nội dung hóa đơn"
+          editable={receiptEligible}
           value={title}
           onChangeText={setTitle}
           placeholder="Ví dụ: Cà phê sáng"
@@ -498,6 +503,7 @@ export default function CaptureReceiptScreen() {
         <Text style={styles.label}>Tổng tiền</Text>
         <TextInput money
           accessibilityLabel="Tổng tiền hóa đơn"
+          editable={receiptEligible}
           value={amount}
           onChangeText={setAmount}
           keyboardType="number-pad"
@@ -515,7 +521,16 @@ export default function CaptureReceiptScreen() {
           </Text>
         )}
 
-        {serverFallbackEnabled && !localMode && needsFallback && !["completed", "failed", "cancelled", "expired"].includes(fallbackStatus ?? "") && (
+        {lineItems.map((item, index) => (
+          <View key={`${index}-${item.name}`}>
+            <Text style={styles.label}>{item.name}</Text>
+            <Text style={styles.metric}>Số lượng: {item.quantity} · Đơn giá: {formatMoney(item.unitPrice, "vi", "VND")} · Thành tiền: {formatMoney(item.total, "vi", "VND")}</Text>
+            {item.confidence < 0.7 && <Text style={styles.message}>Cần kiểm tra giá</Text>}
+          </View>
+        ))}
+        {lineItems.length === 0 && <Text style={styles.metric}>Chưa đọc được chi tiết sản phẩm.</Text>}
+
+        {serverFallbackEnabled && receiptEligible && !localMode && needsFallback && !["completed", "failed", "cancelled", "expired"].includes(fallbackStatus ?? "") && (
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ busy: isQueueingFallback, disabled: isRecognizing || isQueueingFallback }}
@@ -529,7 +544,7 @@ export default function CaptureReceiptScreen() {
             <Text style={styles.secondaryText}>
               {isQueueingFallback
                 ? "Đang tạo yêu cầu…"
-                : "Nhận diện nâng cao"}
+                : "Nhận diện nâng cao (cần mạng)"}
             </Text>
           </Pressable>
         )}
@@ -540,6 +555,7 @@ export default function CaptureReceiptScreen() {
         {!localMode && <Pressable
           accessibilityLabel="Đính kèm ảnh hóa đơn vào giao dịch"
           accessibilityRole="checkbox"
+          disabled={!receiptEligible}
           accessibilityState={{ checked: attachReceipt }}
           onPress={() => setAttachReceipt((current) => !current)}
           style={styles.consent}
@@ -557,13 +573,13 @@ export default function CaptureReceiptScreen() {
 
         <Pressable
           accessibilityRole="button"
-          accessibilityState={{ busy: isContinuing, disabled: isRecognizing || isContinuing || isQueueingFallback }}
-          disabled={isRecognizing || isContinuing || isQueueingFallback}
+          accessibilityState={{ busy: isContinuing, disabled: !receiptEligible || isContinuing || isQueueingFallback }}
+          disabled={!receiptEligible || isContinuing || isQueueingFallback}
           onPress={() => void continueToTransaction()}
           style={[styles.primary, (isRecognizing || isContinuing || isQueueingFallback) && styles.disabled]}
         >
           {isContinuing ? (
-            <ActivityIndicator accessibilityLabel="Đang chuẩn bị giao dịch từ hóa đơn" color={colors.white} />
+            <ActivityIndicator accessibilityLabel="Đang chuẩn bị giao dịch từ hóa đơn" color={colors.onPrimary} />
           ) : (
             <Text style={styles.primaryText}>Kiểm tra và tạo giao dịch</Text>
           )}
@@ -574,23 +590,23 @@ export default function CaptureReceiptScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.cream },
-  content: { padding: 22, gap: 14, paddingBottom: 48 },
-  back: { color: colors.mauve, fontWeight: "700" },
-  title: { color: colors.ink, fontSize: 30, fontWeight: "700" },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", padding: paperSpace.screen, gap: 14, paddingBottom: 48 },
+  back: { color: colors.link, fontWeight: "700" },
+  title: { color: colors.ink, fontSize: 26, fontWeight: "700" },
   subtitle: { color: colors.muted, lineHeight: 21 },
   placeholder: {
     height: 300,
     backgroundColor: colors.peach,
     borderColor: colors.peach,
     borderWidth: 1,
-    borderRadius: radii.large,
+    borderRadius: paperShape.card,
     alignItems: "center",
     justifyContent: "center",
     padding: 28,
   },
-  placeholderIcon: { fontSize: 50, color: colors.mauve },
+  placeholderIcon: { fontSize: 50, color: colors.link },
   placeholderTitle: {
     color: colors.ink,
     fontWeight: "700",
@@ -605,12 +621,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     backgroundColor: colors.mauve,
-    borderRadius: 28,
+    borderRadius: paperShape.button,
     justifyContent: "center",
-    minHeight: 52,
+    minHeight: paperControl.height,
     paddingHorizontal: 14,
   },
-  primaryText: { color: colors.white, fontWeight: "700", fontSize: 16 },
+  primaryText: { color: colors.onPrimary, fontWeight: "700", fontSize: 15 },
   secondary: {
     alignItems: "center",
     flexDirection: "row",
@@ -618,22 +634,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderColor: colors.peach,
     borderWidth: 1,
-    borderRadius: radii.small,
+    borderRadius: paperShape.button,
     justifyContent: "center",
-    minHeight: 52,
+    minHeight: paperControl.height,
     paddingHorizontal: 14,
   },
-  secondaryText: { color: colors.mauve, fontWeight: "700", fontSize: 16 },
+  secondaryText: { color: colors.link, fontWeight: "700", fontSize: 15 },
   disabled: { opacity: 0.55 },
   progress: { flexDirection: "row", alignItems: "center", gap: 10 },
   progressText: { color: colors.muted, fontWeight: "700" },
   label: { color: colors.ink, fontWeight: "700", marginTop: 4 },
   input: {
     backgroundColor: colors.white,
-    borderColor: colors.peach,
+    borderColor: colors.controlBorder,
     borderWidth: 1,
-    borderRadius: radii.small,
-    minHeight: 52,
+    borderRadius: paperShape.input,
+    minHeight: paperControl.height,
     paddingHorizontal: 16,
     color: colors.ink,
   },
@@ -651,7 +667,7 @@ const styles = StyleSheet.create({
   },
   checkbox: {
     alignItems: "center",
-    borderColor: colors.mauve,
+    borderColor: colors.primaryOutline,
     borderRadius: 5,
     borderWidth: 2,
     height: 22,
@@ -660,7 +676,7 @@ const styles = StyleSheet.create({
     width: 22,
   },
   checkboxSelected: { backgroundColor: colors.mauve },
-  checkmark: { color: colors.white, fontSize: 14, fontWeight: "900" },
+  checkmark: { color: colors.onPrimary, fontSize: 14, fontWeight: "900" },
   consentCopy: { flex: 1 },
   consentTitle: { color: colors.ink, fontWeight: "700" },
   consentText: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 4 },
