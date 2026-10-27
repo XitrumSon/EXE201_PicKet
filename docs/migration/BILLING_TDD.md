@@ -1,5 +1,9 @@
 # Billing/restore TDD evidence
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Phạm vi
 
 Luồng Android dùng `expo-iap` trên Expo, Dart API làm façade xác thực và
