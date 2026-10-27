@@ -1,5 +1,9 @@
 # Android production release 1.0.2 — 21 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Publication is explicitly authorized by the user. It is not a certificate that all remaining roadmap acceptance cases are complete.
 
 ## Verified artifact
