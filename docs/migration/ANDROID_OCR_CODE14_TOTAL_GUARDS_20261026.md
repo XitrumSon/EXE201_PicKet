@@ -1,5 +1,9 @@
 # Receipt total guards — Android code 14
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 The code-13 upright Redmi scan completed in 2,647ms, and the owner confirmed
 correct total with product details. A distinct 180-degree camera capture then
 completed in 2,711ms but selected a contact phone number as the payable total,
