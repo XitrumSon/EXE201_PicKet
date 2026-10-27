@@ -1,6 +1,8 @@
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { PicketText as Text } from "@/core/ui/picket-text";
 import { Redirect,router } from "expo-router";
 import { useState } from "react";
-import { ScrollView,Text,TextInput } from "react-native";
+import { TextInput } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -13,7 +15,7 @@ export default function WeeklyStoryPreview(){
  const [currency,setCurrency]=useState("VND");
  if(!__DEV__||!session||localMode||process.env.EXPO_PUBLIC_CASHFLOW_CLOUD_ENABLED!=="true")return <Redirect href="/learning-preview"/>;
  return <SafeAreaView style={{flex:1,backgroundColor:c.canvas}}><ScrollView contentContainerStyle={{padding:20,gap:16,paddingBottom:60}}>
-  <Pressable accessibilityRole="button" onPress={()=>router.back()} style={{padding:12,minHeight:48}}><Text style={{color:c.primary}}>{t("back")}</Text></Pressable>
+  <Pressable accessibilityRole="button" onPress={()=>router.back()} style={{padding:12,minHeight:48}}><Text style={{color:c.link}}>{t("back")}</Text></Pressable>
   <Text accessibilityRole="header" style={{color:c.text,fontSize:26,fontWeight:"700"}}>{t("storyTitle")}</Text>
   <Text style={{color:c.muted,lineHeight:22}}>{t("storyNotice")}</Text>
   <Text style={{color:c.text}}>{t("currency")}</Text>
