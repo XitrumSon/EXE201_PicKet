@@ -1,5 +1,9 @@
 # Google OAuth cho Picket (Next.js và Expo Android)
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Ứng dụng dùng **Supabase Auth làm trung gian**. Google trả người dùng về
 Supabase; Supabase mới chuyển về Next.js hoặc Expo. Google Client Secret chỉ
 được lưu trong Supabase Dashboard, không đặt trong `.env` của web, Expo,
