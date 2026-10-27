@@ -8,7 +8,7 @@ Cập nhật **27/10/2026, Asia/Saigon**. Đây là nguồn trạng thái chung 
 | --- | --- |
 | Mobile source/release | 1.0.7 / code 20; Paper UI thống nhất, sign-out/updater/guest splits đã sửa; native QA trước build bằng package riêng |
 | Landing public | Paper có chuyển động, tương tác và footer; APK 1.0.7/code 20 ARM64, tải toàn bộ và kiểm SHA-256 PASS |
-| Google Play Internal | AAB 1.0.7/code 20 đã upload 27/10; đọc lại completed, alpha draft không đổi |
+| Google Play Internal | AAB 1.0.8/code 21 ARM64+x86_64, đọc lại completed; alpha draft không đổi. Landing vẫn APK code 20 |
 | Google Play alpha | Code 6 draft; chưa phải thử nghiệm kín đang chạy |
 | Google Play production/beta | Chưa có release |
 | Domain landing | https://picketfinance.com |
@@ -98,3 +98,7 @@ Các mục phụ thuộc thiết bị, người dùng, Google review hoặc th�
 ## Kiểm tra toàn repository sau đồng bộ 27/10/2026
 
 914 mobile, 54 web, 13 landing, 140 Dart tests và 13 bộ SQL PGlite đạt. Lint, typecheck, build web/landing và kiểm tra liên kết tài liệu đạt. Chi tiết cleanup, bản phát hành được giữ và quy trình Git tại [báo cáo đồng bộ](migration/REPOSITORY_SYNC_20261027.md). Các checkpoint cũ ở trên là bằng chứng lịch sử, không thay thế backlog hiện hành.
+
+## Billing trên Play Store máy ảo — checkpoint code 21
+
+Đã cài/cập nhật code 21 từ CH Play, OAuth, tải bốn giá, mua test Plus tháng và restore cấp PLUS/30; cold restart và server readback đúng quyền. Callback sau màn onboarding Google chưa tự cập nhật đúng; ack API/lifecycle/các SKU khác còn kiểm thử. Xem [báo cáo máy ảo](migration/PLAY_BILLING_EMULATOR_20261027.md).
