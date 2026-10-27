@@ -77,6 +77,12 @@ Dock năm đích: **Nhà / Chi tiêu / Chụp / Dự định / Picket**. Chụp 
 | Bộ sưu tập | Ảnh, giá mua, ngày, hạn đổi trả/bảo hành; hai hạn nhập thủ công. Không quảng cáo tự liên kết hóa đơn khi vẫn là hai mục riêng |
 | Trạng thái | Màn auth/onboarding/form/list/detail có loading, empty, error, retry, busy và confirmation phù hợp. Không báo thành công giả khi còn pending |
 
+### Gói và hạn mức OCR
+
+Màn gói dùng nền Paper, font chung, thẻ bo 22dp/padding 16dp và nút chạm 48dp. Thẻ đầu hiển thị cấp gói, số lượt cloud còn lại và thanh tỷ lệ; không dùng hình ảnh thay số liệu server. Biểu tượng mầm cây cho Free, ngôi sao cho Plus và vương miện cho Pro dùng bộ icon hiện có, nền pocket blue/mint/lilac, hỗ trợ sáng/tối.
+
+Chuyển tháng/năm bằng segmented tabs; mỗi lần so sánh hai thẻ Plus/Pro thay vì xếp bốn nút mua nối tiếp. Giá và offer luôn lấy từ Google Play. Nhãn cùng cấp gói hiện tại chỉ mô tả tier, không khẳng định chu kỳ đang đăng ký. Hạn mức cloud Free/Plus/Pro là 3/30/100 trong cửa sổ 24 giờ; quét trên máy không trừ lượt cloud. Khi hết lượt phải giữ hướng dẫn quét local/nhập tay. Khôi phục/tải lại bảng giá/quản lý gói nằm sau phần so sánh; không che lỗi hoặc giả kích hoạt khi server chưa xác minh.
+
 ## 5. Asset và mở rộng
 
 Nguồn: [paper-assets.ts](apps/mobile/src/core/theme/paper-assets.ts), [category-art.ts](apps/mobile/src/core/theme/category-art.ts), [PaperArt](apps/mobile/src/core/ui/paper-art.tsx).
