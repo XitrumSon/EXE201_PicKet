@@ -92,6 +92,17 @@ Landing cũng đã phát hành APK code 19 và được tải lại kiểm check
 
 #### Kết quả kiểm thử Billing sau kích hoạt
 
+#### Chẩn đoán trực tiếp Redmi 7 — 27/10/2026
+
+- Máy `Redmi 7`, Android 10: Picket 1.0.7/code 20, installer `com.android.vending`, BILLING permission granted. Play Store hiện trang Internal ứng dụng với nút Mở; không gỡ ứng dụng hoặc xóa dữ liệu người dùng.
+- Chủ dự án xác nhận đúng Gmail tester và Play country Việt Nam. Native `initConnection=true`, request type `subs` và bốn ID đúng source. Native `fetchProducts` trả cả bốn `productStatusAndroid=not-found`, `subscriptionOffers=[]`, displayPrice rỗng. Đây là placeholder cho sản phẩm không tìm thấy, không phải bốn gói đã tải thành công.
+- Android Publisher đọc lại bốn subscription HTTP 200: listing vi tồn tại, base plan ACTIVE, VN/newSubscriberAvailability=true và đúng giá. Đã restart riêng Picket và Play Store; chưa có purchase token/order được tạo. Chưa xác định được nguyên nhân phía Store; không khẳng định chắc chắn do propagation hoặc merchant chỉ từ not-found. Không đổi ID/giá/quốc gia hay dùng thẻ thật để ép thử.
+- MIUI chặn SDK input bằng INJECT_EVENTS; dùng scrcpy UHID đã được thiết bị nhận bàn phím/chuột, nhưng native Windows control connector vẫn không hoạt động, nên thao tác chạm do chủ dự án thực hiện. Không thay bảo mật MIUI. Tạm bật native ExpoIap debug để đọc catalogue đã che token; đã khôi phục setting log ban đầu.
+- Sửa source: bỏ các placeholder có status not-found/no-offers-available/unknown khỏi danh sách gói mua; hiện thông báo không tải được giá và nút retry. Nút mua vô hiệu được làm mờ. TDD có RED trước sửa; GREEN 24 Billing tests, toàn bộ 917 mobile tests, mobile typecheck/lint đạt. Chưa build/upload/cài bản sửa này; Redmi vẫn code 20.
+- Giao dịch S01–S14 vẫn BLOCKED ở bước lấy catalogue từ Store. Bước tiếp theo: xóa riêng cache Play Store qua giao diện Android (không Clear data và không gỡ Picket), mở lại Store/Picket; nếu vẫn not-found, lưu các bằng chứng catalogue/activation để đối chiếu Play support thay vì tiếp tục thử mua.
+
+Evidence riêng tư: `.artifacts/redmi-billing-20261027/` (native catalogue đã che giá trị nhạy cảm, Publisher metadata, RED/GREEN/full-test logs). Hướng dẫn lỗi khả dụng/propagation: https://developer.android.com/google/play/billing/errors.
+
 #### Cấu hình cho chủ dự án test máy thật — 27/10/2026
 
 - Đã thêm mapping `GOOGLE_PLAY_BILLING_ENABLED` vào API Compose (mặc định false); production env đặt true theo yêu cầu chủ dự án. Recreate riêng API bằng image đang chạy `picket-api:completion-20261027`, không rebuild source cũ. Web/Caddy/OCR giữ nguyên container/start time. Backup: `/opt/picket/deploy/backups/billing-enabled-20261027T152053Z`.
