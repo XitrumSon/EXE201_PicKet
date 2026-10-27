@@ -1,15 +1,13 @@
+import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { PaperArt } from "@/core/ui/paper-art";
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { radii } from "@/core/ui/mobile-palette";
 import type { PropsWithChildren, ReactNode } from "react";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  type TextInputProps,
-  View,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, type TextInputProps, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -28,7 +26,7 @@ export function AuthScreen({
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <BrandLogo size={112} />
+        <View style={styles.brandRow}><BrandLogo size={76} /><PaperArt id="bloom" style={{ width: 116, height: 116 }} /></View>
         <Text accessibilityRole="header" style={styles.title}>{t(title)}</Text>
         <Text style={styles.subtitle}>{t(subtitle)}</Text>
         <View style={styles.form}>{children}</View>
@@ -86,18 +84,19 @@ export function AuthMessage({ children }: { children: ReactNode }) {
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.cream },
-  content: { flexGrow: 1, justifyContent: "center", padding: 24 },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", flexGrow: 1, justifyContent: "center", padding: paperSpace.screen },
+  brandRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 20 },
   brandMark: { alignItems: "center", alignSelf: "center", backgroundColor: colors.mauve, borderRadius: radii.small, borderBottomLeftRadius: 5, height: 52, justifyContent: "center", width: 52 },
   brandLetter: { color: colors.onPrimary, fontSize: 26, fontWeight: "700" },
   brand: { color: colors.ink, fontSize: 24, fontWeight: "700", marginTop: 10, textAlign: "center" },
-  title: { color: colors.ink, fontSize: 30, fontWeight: "700", marginTop: 36 },
+  title: { color: colors.ink, fontSize: 26, fontWeight: "700", marginTop: 24 },
   subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginTop: 8 },
   form: { gap: 14, marginTop: 26 },
-  input: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.small, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 52, paddingHorizontal: 16 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, flexDirection: "row", gap: 12, borderRadius: 28, justifyContent: "center", minHeight: 52, paddingHorizontal: 18 },
+  input: { backgroundColor: colors.white, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 16 },
+  primary: { alignItems: "center", backgroundColor: colors.mauve, flexDirection: "row", gap: 12, borderRadius: paperShape.button, justifyContent: "center", minHeight: paperControl.height, paddingHorizontal: 18 },
   google: { backgroundColor: colors.white, borderColor: colors.line, borderWidth: 1 },
-  primaryText: { color: colors.onPrimary, fontSize: 16, fontWeight: "700" },
+  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
   disabled: { opacity: 0.6 },
-  link: { color: colors.mauve, fontSize: 14, fontWeight: "700", paddingVertical: 6, textAlign: "center" },
+  link: { color: colors.link, fontSize: 14, fontWeight: "700", paddingVertical: 6, textAlign: "center" },
   message: { color: colors.expense, fontSize: 14, lineHeight: 20, textAlign: "center" },
 });
