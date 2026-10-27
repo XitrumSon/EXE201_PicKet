@@ -1,12 +1,15 @@
-import { colors } from "@picket/design-tokens";
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import type { Transaction } from "@picket/domain";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { loadCloudReceiptGallery, type GalleryEntry } from "@/core/receipts/cloud-receipt-gallery";
 import { listGuestReceipts } from "@/core/receipts/guest-receipt-store";
 import { createReceiptThumbnail } from "@/core/receipts/receipt-thumbnail";
 import { ReceiptGalleryPhoto } from "@/core/receipts/receipt-gallery-photo";
+import { useBills } from "@/features/bills/bills-context";
 import { useAuth } from "@/features/auth/auth-context";
 import { routes } from "@/core/navigation/routes";
 import { MonthCalendar } from "./month-calendar";
@@ -20,7 +23,11 @@ export function HomeReceiptCalendar({ month, transactions }: { month: string; tr
 }
 
 function ReceiptCalendarScope({ month, transactions }: { month: string; transactions: Transaction[] }) {
+  const { styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
+  const { bills } = useBills();
+  const dueBills = bills.filter(bill => !bill.deletedAt && (bill.status === "pending" || bill.status === "overdue") && calendarReceiptDay({ purchasedAt: bill.dueAt })?.startsWith(month));
+  const warningDays = new Set(dueBills.map(bill => Number(calendarReceiptDay({ purchasedAt: bill.dueAt })!.slice(-2))));
   const owner = localMode ? "guest" : session?.user.id;
   const token = session?.access_token;
   // Only receipt date associations affect the gallery, not balances, amounts or
@@ -115,8 +122,8 @@ function ReceiptCalendarScope({ month, transactions }: { month: string; transact
     if (value === null || !hasSnapshot) return;
     setSelected(value);
     const found = monthly.some((r) => Number(r.day.slice(-2)) === value);
-    if (found) setOpen(true); else router.push(routes.captureOnDate(`${month}-${String(value).padStart(2, "0")}`));
+    if (found || warningDays.has(value)) setOpen(true); else router.push(routes.captureOnDate(`${month}-${String(value).padStart(2, "0")}`));
   }
-  return <View accessibilityState={{ busy: loading && !hasSnapshot }}><SectionTitle title="Lịch hóa đơn" /><Text style={styles.hint}>Chạm ngày để xem ảnh đã lưu. Ngày trống sẽ mở camera quét.</Text>{stale && <Text accessibilityLiveRegion="polite" style={styles.hint}>Đang xem hóa đơn đã lưu trên máy. Ảnh chưa tải trước đó cần kết nối mạng.</Text>}{error && <><Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text><PrimaryAction label="Tải lại hóa đơn" onPress={() => setRetry((n) => n + 1)} /></>}<MonthCalendar month={month} selected={selected} activeDays={new Set(monthly.map((r) => Number(r.day.slice(-2))))} thumbnails={thumbnails} receiptMode disabled={!hasSnapshot} onSelect={select} /><ActionSheet title={`Hóa đơn ngày ${selected ?? ""}/${Number(month.slice(-2))}`} visible={open} onClose={() => setOpen(false)}>{dayRows.map((entry) => <View key={entry.id} style={styles.receipt}>{open && <ReceiptGalleryPhoto key={`${owner}:${entry.id}`} owner={localMode ? undefined : owner} entry={entry} />}<MenuRow icon="receipt-text-outline" title={entry.title} description="Mở chi tiết hóa đơn" onPress={() => { setOpen(false); router.push(localMode && entry.transactionId ? routes.transaction(entry.transactionId) : routes.receipt(entry.id)); }} /></View>)}<PrimaryAction label="Quét thêm hóa đơn" onPress={() => { setOpen(false); router.push(routes.capture); }} /></ActionSheet></View>;
+  return <View accessibilityState={{ busy: loading && !hasSnapshot }}><SectionTitle title="Lịch hóa đơn" /><Text style={styles.hint}>Chạm ngày để xem hóa đơn. Dấu !: có khoản đến hạn.</Text>{stale && <Text accessibilityLiveRegion="polite" style={styles.hint}>Đang xem hóa đơn đã lưu trên máy. Ảnh chưa tải trước đó cần kết nối mạng.</Text>}{error && <><Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text><PrimaryAction label="Tải lại hóa đơn" onPress={() => setRetry((n) => n + 1)} /></>}<MonthCalendar warningDays={warningDays} month={month} selected={selected} activeDays={new Set(monthly.map((r) => Number(r.day.slice(-2))))} thumbnails={thumbnails} receiptMode disabled={!hasSnapshot} onSelect={select} /><ActionSheet title={`Hóa đơn ngày ${selected ?? ""}/${Number(month.slice(-2))}`} visible={open} onClose={() => setOpen(false)}>{dueBills.filter(bill => Number(calendarReceiptDay({ purchasedAt: bill.dueAt })!.slice(-2)) === selected).map(bill => <MenuRow key={bill.id} icon="alert-circle-outline" title={bill.title} description="Hóa đơn cần thanh toán" onPress={() => { setOpen(false); router.push(routes.bill(bill.id)); }} />)}{dayRows.map((entry) => <View key={entry.id} style={styles.receipt}>{open && <ReceiptGalleryPhoto key={`${owner}:${entry.id}`} owner={localMode ? undefined : owner} entry={entry} />}<MenuRow icon="receipt-text-outline" title={entry.title} description="Mở chi tiết hóa đơn" onPress={() => { setOpen(false); router.push(localMode && entry.transactionId ? routes.transaction(entry.transactionId) : routes.receipt(entry.id)); }} /></View>)}<PrimaryAction label="Quét thêm hóa đơn" onPress={() => { setOpen(false); router.push(routes.capture); }} /></ActionSheet></View>;
 }
-const styles = StyleSheet.create({ hint: { color: colors.muted, fontSize: 13, lineHeight: 20, marginBottom: 12 }, error: { color: colors.expense, lineHeight: 20 }, receipt: { marginBottom: 20 }, image: { height: 320, width: "100%", borderRadius: 16, backgroundColor: colors.cream } });
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({ hint: { color: colors.muted, fontSize: 13, lineHeight: 20, marginBottom: 12 }, error: { color: colors.danger, lineHeight: 20 }, receipt: { marginBottom: 20 }, image: { height: 320, width: "100%", borderRadius: 16, backgroundColor: colors.cream } });
