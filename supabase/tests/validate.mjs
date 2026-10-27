@@ -1,3 +1,4 @@
+import { validateBillingOcrQuota } from "./billing-ocr-quota.mjs";
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
@@ -691,6 +692,7 @@ await validateOcrRetention(db);
 await validatePartnerEffectivePeriod(db);
 await validateTransactionAttemptRecovery(db);
 await validateCurrentMigrations(db);
+await validateBillingOcrQuota(db);
 await db.close();
 console.log(
   "SQL validation passed: migrations, ownership, media isolation, OCR worker permissions, conflicts, invalid payloads, staff permissions, maintenance, cascade deletion.",
