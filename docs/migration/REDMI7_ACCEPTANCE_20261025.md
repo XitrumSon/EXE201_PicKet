@@ -1,5 +1,9 @@
 # Redmi 7 acceptance — 25 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Device: Redmi 7, Android 10 / SDK 29. Installed Picket: `com.picket.mobile`,
 1.0.4 / versionCode 7, installer `com.android.vending`. These results apply to
 the installed artifact; later source commits require a new artifact and regression.
