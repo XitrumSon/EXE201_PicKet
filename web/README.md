@@ -1,8 +1,11 @@
 # Picket Next.js web
 
+<!-- current-project-status -->
+Trạng thái triển khai và nghiệm thu cập nhật 27/10/2026: [PROJECT_STATUS](../docs/PROJECT_STATUS.md). Dùng trạng thái này để đối chiếu các ví dụ và checkpoint bên dưới.
+
 Phát hành/nghiệm thu toàn dự án: [PROJECT_STATUS.md](../docs/PROJECT_STATUS.md). Landing tải APK là `apps/landing`, không phải giao diện Next.js được thiết kế lại. Các route web/auth hiện có vẫn được giữ.
 
-Web client dùng Next.js 16, Supabase Auth cookie SSR và Dart Frog API dùng
+Web client dùng Next.js 16.4.3 (bản vá đã triển khai ngày 27/10), Supabase Auth cookie SSR và Dart Frog API dùng
 chung với ứng dụng Expo.
 
 ## Cấu hình
