@@ -1,5 +1,9 @@
 # Cache kỷ vật và offline edit — 2026-10-18
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Nguồn: `APP_COMPLETION_PLAN.md`, mục 2/4. Increment này sửa cache policy; không sửa upload protocol hoặc backend.
 
 ## Lỗi đã sửa theo TDD
