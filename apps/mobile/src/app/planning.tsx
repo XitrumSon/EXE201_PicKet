@@ -1,13 +1,17 @@
+import { paperControl , paperShape } from "@/core/theme/paper-foundations";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { withLocalOwnerAccess } from "@/core/sync/offline-cache";
 import { useTranslation } from "react-i18next";
 import { formatMoney, localeFor, normalizeLanguage } from "@/core/i18n/formatters";
 import { parsePaymentAmount } from "@/core/forms/payment-form";
-import { colors } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { type BudgetMethod, type PlanningResponse } from "@picket/domain";
 import { Redirect } from "expo-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { Alert, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, StyleSheet, Switch, View } from "react-native";
 
 import { picketApi } from "@/core/api/client";
 import { useGuestFinance } from "@/core/local/guest-finance-context";
@@ -30,6 +34,7 @@ export default function PlanningScreen() {
   const {t,i18n}=useTranslation("planning");
   const language=normalizeLanguage(i18n.resolvedLanguage??i18n.language);
   const money=(amount:number)=>formatMoney(amount,language,"VND");
+  const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const guest = useGuestFinance();
   const { budgets, update: updateBudget } = useBudgets();
@@ -130,7 +135,7 @@ export default function PlanningScreen() {
     finally { operationBusy.current=false;if(isCurrent())setBusy(false); }
   }
   return <PicketScreen>
-    <TopAppBar title={t("title")} backDisabled={busy} />
+    <TopAppBar title={t("title")} back={false} />
     <Text style={styles.subtitle}>{localMode ? t("deviceSubtitle") : t("cloudSubtitle")}</Text>
     {message && <Text accessibilityLiveRegion="polite" style={styles.message}>{t(message)}</Text>}
     <SectionTitle title={t("method")} />
@@ -155,8 +160,8 @@ export default function PlanningScreen() {
       <PrimaryAction busy={busy} disabled={guest.loading && localMode || Boolean(planning?.close) || !planning} label={t("transfer")} onPress={() => void transfer()} />
     </Surface>}
     <SectionTitle title={t("closeSection")} />
-    <Surface>{checked && !reviewMatches ? <Text accessibilityLiveRegion="polite" style={styles.message}>{t("reviewChanged")}</Text> : null}<View style={styles.monthRow}><Text style={styles.title}>{t("reviewed")}</Text><Switch accessibilityLabel={t("reviewed")} hitSlop={12} disabled={busy} onValueChange={value => { setChecked(value); setReviewedFor(value ? {scope,transactions,allocations:splits,budgets,limits} : null); }} value={checked && reviewMatches} /></View><View style={styles.monthRow}><Text style={styles.title}>{t("rollover")}</Text><Switch accessibilityLabel={t("rollover")} hitSlop={12} disabled={busy} onValueChange={setRollover} value={rollover} /></View><Text style={styles.label}>{t("note")}</Text><TextInput accessibilityLabel={t("note")} editable={!busy} onChangeText={setNote} style={styles.input} value={note} /><PrimaryAction busy={busy} disabled={!planning || Boolean(planning.close) || selectedMonth >= monthKey(new Date()) || !checked || !reviewMatches || historyLoading || Boolean(historyError) || splitLoading || Boolean(splitError)} label={t("close")} onPress={confirmClose} /></Surface>
+    <Surface>{checked && !reviewMatches ? <Text accessibilityLiveRegion="polite" style={styles.message}>{t("reviewChanged")}</Text> : null}<View style={styles.monthRow}><Text style={styles.title}>{t("reviewed")}</Text><Switch thumbColor={checked && reviewMatches ? colors.onPrimary : colors.muted} trackColor={{ false: colors.border, true: colors.primary }} accessibilityLabel={t("reviewed")} hitSlop={12} disabled={busy} onValueChange={value => { setChecked(value); setReviewedFor(value ? {scope,transactions,allocations:splits,budgets,limits} : null); }} value={checked && reviewMatches} /></View><View style={styles.monthRow}><Text style={styles.title}>{t("rollover")}</Text><Switch thumbColor={rollover ? colors.onPrimary : colors.muted} trackColor={{ false: colors.border, true: colors.primary }} accessibilityLabel={t("rollover")} hitSlop={12} disabled={busy} onValueChange={setRollover} value={rollover} /></View><Text style={styles.label}>{t("note")}</Text><TextInput accessibilityLabel={t("note")} editable={!busy} onChangeText={setNote} style={styles.input} value={note} /><PrimaryAction busy={busy} disabled={!planning || Boolean(planning.close) || selectedMonth >= monthKey(new Date()) || !checked || !reviewMatches || historyLoading || Boolean(historyError) || splitLoading || Boolean(splitError)} label={t("close")} onPress={confirmClose} /></Surface>
   </PicketScreen>;
 }
 
-const styles = StyleSheet.create({back:{color:colors.mauve,fontSize:15,fontWeight:"800",marginBottom:18},heading:{color:colors.ink,fontSize:29,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginTop:7},message:{color:colors.expense,fontSize:13,marginTop:15},chips:{flexDirection:"row",flexWrap:"wrap",gap:8,marginVertical:8},hint:{color:colors.muted,fontSize:13,lineHeight:19,marginTop:8},monthRow:{alignItems:"center",flexDirection:"row",justifyContent:"space-between"},arrow:{color:colors.mauve,fontSize:30},month:{color:colors.ink,fontSize:16,fontWeight:"800"},title:{color:colors.ink,fontSize:15,fontWeight:"800"},label:{color:colors.ink,fontSize:13,fontWeight:"800",marginTop:12},input:{backgroundColor:colors.cream,borderColor:colors.peach,borderRadius:12,borderWidth:1,color:colors.ink,fontSize:16,marginVertical:10,minHeight:50,paddingHorizontal:14}});
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginTop:7},message:{color:colors.expense,fontSize:13,marginTop:15},chips:{flexDirection:"row",flexWrap:"wrap",gap:8,marginVertical:8},hint:{color:colors.muted,fontSize:13,lineHeight:19,marginTop:8},monthRow:{alignItems:"center",flexDirection:"row",justifyContent:"space-between",gap:8},arrow:{color:colors.link,fontSize:30},month:{color:colors.ink,fontSize:16,fontWeight:"700",flex:1,textAlign:"center"},title:{color:colors.ink,fontSize:15,fontWeight:"700",flexShrink:1},label:{color:colors.ink,fontSize:13,fontWeight:"700",marginTop:12},input:{backgroundColor:colors.cream,borderColor:colors.controlBorder,borderRadius:paperShape.input,borderWidth:1,color:colors.ink,fontSize:16,marginVertical:10,minHeight:paperControl.height,paddingHorizontal:14}});
