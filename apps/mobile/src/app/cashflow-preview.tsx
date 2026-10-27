@@ -1,7 +1,10 @@
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { paperShape } from "@/core/theme/paper-foundations";
 import { Redirect, router } from "expo-router";
 import * as Crypto from "expo-crypto";
 import { useCallback,useEffect, useRef, useState } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
+import { TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -83,7 +86,7 @@ function Scenario({owner}:{owner:string}){
     const formatter=new Intl.NumberFormat(localeFor(language),{style:"currency",currency:code});
     return formatter.format(value/10**(formatter.resolvedOptions().maximumFractionDigits??2));
   };
-  const button=(label:string,onPress:()=>void,disabled=false)=><Pressable accessibilityRole="button" accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={{minHeight:48,padding:14,borderRadius:12,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.primary}}>{label}</Text></Pressable>;
+  const button=(label:string,onPress:()=>void,disabled=false)=><Pressable accessibilityRole="button" accessibilityState={{disabled}} disabled={disabled} onPress={onPress} style={{minHeight:48,padding:14,borderRadius:paperShape.button,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.primary}}>{label}</Text></Pressable>;
   const field=(label:string,value:string,onChange:(value:string)=>void)=><View style={{gap:6}}><Text style={{color:c.text}}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChange} autoCapitalize="none" autoCorrect={false} keyboardAppearance={theme} selectionColor={c.primary} style={{minHeight:48,color:c.text,borderColor:c.border,borderWidth:1,borderRadius:12,padding:12}}/></View>;
   const [mutate]=useState(()=>{
     let inFlight=false;
@@ -121,7 +124,7 @@ function Scenario({owner}:{owner:string}){
     <Text style={{color:c.muted}}>{t("units")}</Text>
     <Text accessibilityLiveRegion="polite" style={{color:failed?c.expense:c.muted}}>{failed?t("error"):saved?t("saved"):!doc?t("loading"):""}</Text>
     {failed&&button(t("reload"),()=>setRevision(value=>value+1),busy)}
-    {cloudEnabled&&<View style={{gap:10}}><Text accessibilityLiveRegion="polite" style={{color:syncFailed?c.expense:c.muted}}>{syncFailed?t("syncError"):syncStatus.pending?t("syncPending",{count:syncStatus.pending}):syncStatus.linked?t("syncReady"):""}</Text><Pressable accessibilityRole="button" accessibilityState={{disabled:busy||syncBusy}} disabled={busy||syncBusy} onPress={startSync} style={{minHeight:48,padding:14,borderRadius:12,backgroundColor:c.surface}}><Text style={{color:c.primary}}>{t("sync")}</Text></Pressable></View>}
+    {cloudEnabled&&<View style={{gap:10}}><Text accessibilityLiveRegion="polite" style={{color:syncFailed?c.expense:c.muted}}>{syncFailed?t("syncError"):syncStatus.pending?t("syncPending",{count:syncStatus.pending}):syncStatus.linked?t("syncReady"):""}</Text><Pressable accessibilityRole="button" accessibilityState={{disabled:busy||syncBusy}} disabled={busy||syncBusy} onPress={startSync} style={{minHeight:48,padding:14,borderRadius:paperShape.button,backgroundColor:c.surface}}><Text style={{color:c.link}}>{t("sync")}</Text></Pressable></View>}
     {field(t("currency"),currency,value=>{invalidateLedger();setCurrency(value.toUpperCase());setWalletId(undefined);})}
     {cloudEnabled&&<ScheduleConflictCard owner={owner}/>}
     {cloudEnabled&&button(observationCopy("open"),()=>router.push("/forecast-observations-preview"))}
@@ -132,7 +135,7 @@ function Scenario({owner}:{owner:string}){
     <View accessibilityRole="radiogroup" accessibilityLabel={t("title")} style={{gap:8}}>{[7,30].map(value=><Pressable key={value} accessibilityRole="radio" accessibilityState={{checked:days===value}} onPress={()=>setDays(value)} style={{padding:14,minHeight:48,backgroundColor:days===value?c.elevated:c.surface}}><Text style={{color:c.text}}>{t(value===7?"seven":"thirty")}</Text></Pressable>)}</View>
     <Text accessibilityRole="header" style={{color:c.text,fontSize:22,fontWeight:"700"}}>{t("schedules")}</Text>
     {doc?.schedules.length===0&&<Text style={{color:c.muted}}>{t("empty")}</Text>}
-    {doc?.schedules.map(row=><View key={row.id} style={{padding:14,gap:8,backgroundColor:c.elevated,borderRadius:12}}><Text style={{color:c.text}}>{formatCalendarDate(row.startDay,language)} · {t(row.frequency)} · {money(row.amount,row.currency)} · {row.walletId?(accounts.find(account=>account.id===row.walletId)?.name??t("walletUnavailable")):t("walletUnassigned")}</Text>{button(t("edit"),()=>{setEditing(row.id);setEditingRevision(doc.revision);setWalletId(row.walletId);setScheduleDay(row.startDay);setEndDay(row.endDay??"");setEnabled(row.active);setCurrency(row.currency);setAmount(String(row.amount));setFrequency(row.frequency);},busy)}{button(t("remove"),()=>void mutate(()=>cashflowSchedules.remove(owner,doc.revision,row.id)),busy)}</View>)}
+    {doc?.schedules.map(row=><View key={row.id} style={{padding:14,gap:8,backgroundColor:c.elevated,borderRadius:paperShape.card}}><Text style={{color:c.text}}>{formatCalendarDate(row.startDay,language)} · {t(row.frequency)} · {money(row.amount,row.currency)} · {row.walletId?(accounts.find(account=>account.id===row.walletId)?.name??t("walletUnavailable")):t("walletUnassigned")}</Text>{button(t("edit"),()=>{setEditing(row.id);setEditingRevision(doc.revision);setWalletId(row.walletId);setScheduleDay(row.startDay);setEndDay(row.endDay??"");setEnabled(row.active);setCurrency(row.currency);setAmount(String(row.amount));setFrequency(row.frequency);},busy)}{button(t("remove"),()=>void mutate(()=>cashflowSchedules.remove(owner,doc.revision,row.id)),busy)}</View>)}
     {field(t("start"),scheduleDay,setScheduleDay)}
     {field(t("end"),endDay,setEndDay)}
     <Pressable accessibilityRole="checkbox" accessibilityState={{checked:enabled}} onPress={()=>setEnabled(value=>!value)} style={{padding:14,minHeight:48,backgroundColor:c.surface}}><Text style={{color:c.text}}>{enabled?"☑":"☐"} {t("active")}</Text></Pressable>
