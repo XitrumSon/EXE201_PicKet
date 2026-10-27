@@ -5,6 +5,7 @@ import { useAuth } from "@/features/auth/auth-context";
 import { picketApi } from "@/core/api/client";
 import { refreshOwnedPurchases } from "./refresh-purchases";
 import { verifyAndFinishPurchase } from "./billing-policy";
+import { createPurchaseRecovery } from "./purchase-recovery";
 
 type BillingContext=ReturnType<typeof useIAP>&{revision:number;register:(options:UseIAPOptions)=>()=>void};
 const Context=createContext<BillingContext|null>(null);
@@ -43,30 +44,39 @@ function ConnectedBilling({children,accessToken}:{children:React.ReactNode;acces
     if(purchaseRequests.current.signal.aborted)purchaseRequests.current=new AbortController();
     return()=>{active.current=false;purchaseRequests.current.abort();};
   },[]);
+  const {connected,finishTransaction}=api;
   useEffect(()=>{
     const backend=picketApi;
-    if(!api.connected||!backend)return;
-    let current=true,running=false,lastSuccess=0;
+    if(!connected||!backend)return;
+    let current=true;
     const controller=new AbortController();
-    const refresh=async()=>{
-      if(!current||running||Date.now()-lastSuccess<12*60*60*1000)return;
-      running=true;
-      try{
+    const recovery=createPurchaseRecovery(async()=>{
         const purchases=await getAvailablePurchases({includeSuspendedAndroid:false});
-        if(!current)return;
-        const result=await refreshOwnedPurchases(purchases,request=>backend.verifyPlayPurchase(accessToken,request,controller.signal),()=>current);
+        if(!current)return false;
+        const result=await refreshOwnedPurchases(purchases,request=>{
+          const purchase=purchases.find(item=>item.purchaseToken===request.purchaseToken);
+          if(!purchase)throw new Error("Purchase no longer available");
+          return verifyAndFinishPurchase(purchase,value=>backend.verifyPlayPurchase(accessToken,value,controller.signal),async()=>{
+            if(!current)throw new Error("Billing session changed");
+            await finishTransaction({purchase,isConsumable:false});
+          });
+        },()=>current);
         if(current){
-          if(result.failed===0)lastSuccess=Date.now();
-          if(result.verified>0)setRevision(value=>value+1);
+          if(result.failed===0)setRevision(value=>value+1);
         }
-      }catch{/* Retain the authoritative server state; retry on the next resume. */}
-      finally{running=false;}
+        return result.failed===0;
+    });
+    const retries:ReturnType<typeof setTimeout>[]=[];
+    const resume=()=>{
+      retries.splice(0).forEach(clearTimeout);
+      void recovery.refresh(true);
+      for(const delay of [2000,6000,15000])retries.push(setTimeout(()=>{if(current&&AppState.currentState==="active")void recovery.refresh(true);},delay));
     };
-    void refresh();
-    const listener=AppState.addEventListener("change",state=>{if(state==="active")void refresh();});
-    const timer=setInterval(()=>{if(AppState.currentState==="active")void refresh();},60*60*1000);
-    return()=>{current=false;controller.abort();listener.remove();clearInterval(timer);};
-  },[accessToken,api.connected]);
+    resume();
+    const listener=AppState.addEventListener("change",state=>{if(state==="active")resume();});
+    const timer=setInterval(()=>{if(AppState.currentState==="active")void recovery.refresh();},60*60*1000);
+    return()=>{current=false;recovery.stop();controller.abort();listener.remove();clearInterval(timer);retries.forEach(clearTimeout);};
+  },[accessToken,connected,finishTransaction]);
   return <Context.Provider value={{...api,revision,register}}>{children}</Context.Provider>;
 }
 
