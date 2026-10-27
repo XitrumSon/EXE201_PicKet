@@ -1,5 +1,9 @@
 # Khôi phục yêu cầu đối soát chưa xác nhận
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Ngày: 2026-10-18. Nguồn: mục 3 [APP_COMPLETION_PLAN.md](APP_COMPLETION_PLAN.md), tiếp nối [RECONCILIATION_DURABLE_REQUEST_TDD.md](RECONCILIATION_DURABLE_REQUEST_TDD.md).
 
 ## Hành vi đã triển khai
