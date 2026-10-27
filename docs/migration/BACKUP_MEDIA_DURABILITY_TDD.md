@@ -1,5 +1,9 @@
 # Backup media durability follow-up — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Scope: groups 1/2 from [APP_COMPLETION_PLAN.md](APP_COMPLETION_PLAN.md). No commit/push, public release, BE/schema/RLS changes. Main account not used for restore testing.
 
 ## Restore-response loss fix
