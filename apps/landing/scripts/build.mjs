@@ -14,6 +14,9 @@ await mkdir(path.join(output, 'downloads'), { recursive:true });
 await cp(path.join(root, 'site', 'launch-assets'), path.join(output, 'launch-assets'), { recursive:true });
 const html = renderRelease(await readFile(path.join(root,'site','index.html'),'utf8'), release);
 await writeFile(path.join(output, 'index.html'), html);
+for (const page of ['privacy.html', 'account-deletion.html']) {
+  await cp(path.join(root, 'site', page), path.join(output, page));
+}
 await writeFile(path.join(output, 'release.json'), JSON.stringify(release, null, 2) + '\n');
 await writeFile(path.join(output, 'downloads', release.filename), apk);
 await writeFile(path.join(output, 'downloads', release.filename + '.sha256'), release.sha256 + '  ' + release.filename + '\n');
