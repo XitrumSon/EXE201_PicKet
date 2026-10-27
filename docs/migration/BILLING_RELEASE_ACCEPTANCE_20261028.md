@@ -24,6 +24,7 @@
 | RTDN thực | Subscription pull QA quan sát renewal(2), cancellation(3), purchase(4), revoke(12); server verified_at/expiry/active tương ứng được đọc lại |
 | Grace period | Payment method của riêng Plus tháng đổi sang always declines. Publisher IN_GRACE_PERIOD, RTDN loại 6, server vẫn active/PLUS 30/30 |
 | Account hold | Sau grace, Publisher ON_HOLD; RTDN loại 5; backend active=false khi app đóng. Mở lại UI FREE 3/3 |
+| Recovery từ hold | Play Billing Lab Restore → Publisher ACTIVE, RTDN loại 1, server active=true, UI PLUS 30/30. Đã dừng gia hạn gói test sau QA; còn quyền tới expiry |
 | Trùng/sai thứ tự | Offline test chạy handler RTDN thật với Google/JWT/RPC giả lập: lặp và event cũ đều đọc trạng thái Google hiện tại, dùng cùng token hash; không tin notificationType để cấp quyền |
 
 Chỉ dùng Google test instruments, không thẻ thật. Mọi mutation qua Publisher đều kiểm `testPurchase` trước. Token chỉ xử lý trong bộ nhớ, không ghi vào báo cáo/source/log. Không sửa số dư hoặc giao dịch tài chính của chủ dự án.
@@ -39,6 +40,6 @@ Chỉ dùng Google test instruments, không thẻ thật. Mọi mutation qua Pub
 
 Đã dọn 30 thư mục output sinh tự động (4,97 GiB), kiểm lại 50 APK/AAB backup giữ nguyên hash.
 
-11 tests thực thi verifier/RTDN source trong Node VM (mock network/JWT, không gọi Google), 13 SQL migration suites và quota Free/Plus/Pro PASS. Không thay schema hoặc Edge Function runtime để tạo bằng chứng. Bằng chứng riêng tư: `.artifacts/billing-lifecycle-20261028/`.
+11 tests thực thi verifier/RTDN source trong Node VM (mock network/JWT, không gọi Google), 13 SQL migration suites và quota Free/Plus/Pro PASS. Không thay schema hoặc Edge Function runtime để tạo bằng chứng. Bằng chứng riêng tư: `.artifacts/billing-lifecycle-20261028/`. Subscription pull QA tạm đã xóa; production push không thay đổi. Wi-Fi/data đã bật lại, hồ sơ Android QA tạm đã xóa, account Owner của emulator cập nhật vẫn giữ dữ liệu.
 
 Nguồn: [Google Billing testing](https://developer.android.com/google/play/billing/test), [cancel API](https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptionsv2/cancel), [revoke API](https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptionsv2/revoke). [Trạng thái](../PROJECT_STATUS.md) · [Backlog](../BACKLOG.md).
