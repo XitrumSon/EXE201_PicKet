@@ -114,6 +114,7 @@ Cập nhật 27/10/2026. Bắt đầu bằng các nguồn hiện hành dưới �
 - [Partner Notice effective periods — 21 October 2026](migration/PARTNER_EFFECTIVE_PERIOD_TDD_20261021.md)
 - [Managed keepsake photo encryption and backup acceptance](migration/PHOTO_VAULT_ANDROID_TDD_20261020.md)
 - [Android interrupted image selection — 21 October 2026](migration/PICKER_INTERRUPTION_TDD_20261021.md)
+- [Google Play Billing trên máy ảo — 27/10/2026](migration/PLAY_BILLING_EMULATOR_20261027.md)
 - [Android priorities and budget delivery — 2026-10-21](migration/PRIORITY_ANDROID_FOLLOWUP_20261021.md)
 - [Thực thi hoàn thiện dự án — 27/10/2026](migration/PROJECT_COMPLETION_20261027.md)
 - [Trạng thái hiện hành của Picket](migration/PROJECT_STATUS_20261025_SNAPSHOT.md)
