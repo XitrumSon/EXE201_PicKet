@@ -1,10 +1,15 @@
+import { paperControl , paperShape } from "@/core/theme/paper-foundations";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { TopAppBar , ChoiceChip, FieldLabel, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
-import { colors, radii } from "@picket/design-tokens";
-import { Redirect, router } from "expo-router";
+import { radii } from "@/core/ui/mobile-palette";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
@@ -14,11 +19,14 @@ import { useTransactions } from "@/features/transactions/transactions-context";
 
 export default function NewTransferScreen() {
   const {tx}=useTransactionCopy();
+  const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
-  const { accounts } = useAccounts();
+  const { accounts: allAccounts } = useAccounts();
+  const accounts = allAccounts.filter(account => !account.archived && !account.deletedAt);
+  const { currency } = useLocalSearchParams<{ currency?: string }>();
   const { createTransfer } = useTransactions();
-  const [sourceId, setSourceId] = useState(accounts[0]?.id ?? "");
-  const source = accounts.find((item) => item.id === sourceId) ?? accounts[0];
+  const [sourceId, setSourceId] = useState(accounts.find(account => account.currencyCode === currency)?.id ?? accounts[0]?.id ?? "");
+  const source = accounts.find((item) => item.id === sourceId) ?? accounts.find(item => item.currencyCode === currency) ?? accounts[0];
   const destinations = useMemo(() => accounts.filter((item) => item.id !== source?.id && item.currencyCode === source?.currencyCode), [accounts, source]);
   const [destinationId, setDestinationId] = useState("");
   const selectedDestinationId = destinations.some((item) => item.id === destinationId) ? destinationId : destinations[0]?.id ?? "";
@@ -60,8 +68,8 @@ export default function NewTransferScreen() {
   </PicketScreen>;
 }
 
-const styles = StyleSheet.create({
-  appBar: { justifyContent: "center", minHeight: 52 }, back: { color: colors.mauve, fontSize: 15, fontWeight: "700" }, heading: { color: colors.ink, fontSize: 29, fontWeight: "700", letterSpacing: -0.8, marginTop: 18 }, subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginBottom: 18, marginTop: 7 },
-  summary: { alignItems: "center", flexDirection: "row", gap: 14, padding: 16 }, summarySymbol: { color: colors.mauve, fontSize: 30, fontWeight: "700" }, summaryCopy: { flex: 1 }, summaryTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" }, summaryText: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 3 }, form: { marginTop: 14 },
-  choices: { flexDirection: "row", flexWrap: "wrap", gap: 9 }, input: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 54, paddingHorizontal: 16 }, amountBox: { alignItems: "center", borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, flexDirection: "row", minHeight: 58, paddingHorizontal: 16 }, amountInput: { color: colors.ink, flex: 1, fontSize: 24, fontWeight: "700", minHeight: 54 }, currency: { color: colors.mauve, fontSize: 14, fontWeight: "700" }, note: { minHeight: 88, paddingTop: 14, textAlignVertical: "top" }, empty: { color: colors.expense, fontSize: 13, lineHeight: 19 }, error: { color: colors.expense, fontSize: 13, fontWeight: "700", lineHeight: 19, marginTop: 14 },
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
+  appBar: { justifyContent: "center", minHeight: 52 }, back: { color: colors.link, fontSize: 15, fontWeight: "700" }, heading: { color: colors.ink, fontSize: 26, fontWeight: "700", letterSpacing: -0.8, marginTop: 18 }, subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginBottom: 18, marginTop: 7 },
+  summary: { alignItems: "center", flexDirection: "row", gap: 14, padding: 16 }, summarySymbol: { color: colors.link, fontSize: 30, fontWeight: "700" }, summaryCopy: { flex: 1 }, summaryTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" }, summaryText: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 3 }, form: { marginTop: 14 },
+  choices: { flexDirection: "row", flexWrap: "wrap", gap: 9 }, input: { backgroundColor: colors.white, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 16 }, amountBox: { alignItems: "center", borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, flexDirection: "row", minHeight: 58, paddingHorizontal: 16 }, amountInput: { color: colors.ink, flex: 1, fontSize: 24, fontWeight: "700", minHeight: 54 }, currency: { color: colors.link, fontSize: 14, fontWeight: "700" }, note: { minHeight: 88, paddingTop: 14, textAlignVertical: "top" }, empty: { color: colors.expense, fontSize: 13, lineHeight: 19 }, error: { color: colors.danger, fontSize: 13, fontWeight: "700", lineHeight: 19, marginTop: 14 },
 });
