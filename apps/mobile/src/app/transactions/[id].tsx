@@ -1,16 +1,14 @@
+import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
-import { colors, radii } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  } from "react-native";
+import { ActivityIndicator, Alert, Image, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { routes } from "@/core/navigation/routes";
@@ -19,13 +17,14 @@ import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
 import { getGuestReceipt } from "@/core/receipts/guest-receipt-store";
 import type { GuestReceipt } from "@/core/receipts/guest-receipt-model";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { ChoiceChip } from "@/core/ui/picket-ui";
+import { ChoiceChip, TopAppBar } from "@/core/ui/picket-ui";
 import { useAuth } from "@/features/auth/auth-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 import { buildTransactionEditRequest } from "@/features/transactions/transaction-edit-request";
 
 export default function TransactionDetailScreen() {
   const {tx,money}=useTransactionCopy();
+  const { colors, styles } = useMobileStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, localMode } = useAuth();
   const { archive, categories, loading, transactions, update } = useTransactions();
@@ -68,7 +67,7 @@ export default function TransactionDetailScreen() {
   if (loading && !transaction) {
     return (
       <SafeAreaView style={[styles.safeArea, styles.center]}>
-        <ActivityIndicator accessibilityLabel={tx("Đang tải giao dịch")} color={colors.mauve} />
+        <ActivityIndicator accessibilityLabel={tx("Đang tải giao dịch")} color={colors.link} />
       </SafeAreaView>
     );
   }
@@ -142,7 +141,7 @@ export default function TransactionDetailScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{tx("Sửa giao dịch")}</Text>
+        <TopAppBar title={tx("Sửa giao dịch")} backDisabled={busy} />
         <Text style={transaction.kind === "income" ? styles.income : styles.expense}>
           {transaction.kind === "income" ? tx("Khoản thu") : tx("Khoản chi")}
         </Text>
@@ -152,7 +151,7 @@ export default function TransactionDetailScreen() {
         {editable && <><Text style={styles.label}>{tx("Danh mục")}</Text><ScrollView contentContainerStyle={styles.categoryRow} horizontal showsHorizontalScrollIndicator={false}><ChoiceChip checked={currentCategoryId === null} label={tx("Cần phân loại")} onPress={() => setCategoryId(null)} />{categories.filter((item) => item.kind === transaction.kind || item.kind === "both").map((item) => <ChoiceChip checked={currentCategoryId === item.id} key={item.id} label={item.name} onPress={() => setCategoryId(item.id)} />)}</ScrollView></>}
         {message && <Text style={styles.error}>{tx(message)}</Text>}
         {editable && <Pressable disabled={busy} onPress={() => void save()} style={styles.primary}>
-          {busy ? <ActivityIndicator accessibilityLabel={tx("Đang lưu giao dịch")} color={colors.white} /> : <Text style={styles.primaryText}>{tx("Lưu thay đổi")}</Text>}
+          {busy ? <ActivityIndicator accessibilityLabel={tx("Đang lưu giao dịch")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{tx("Lưu thay đổi")}</Text>}
         </Pressable>}
         {editable && <Pressable disabled={busy} onPress={() => router.push(routes.splits(transactionId))} style={styles.actionButton}><Text style={styles.actionText}>{tx("Chia theo danh mục")}</Text></Pressable>}
         {transaction.kind === "expense" && <Pressable disabled={busy} onPress={() => router.push(routes.refund(transactionId))} style={styles.actionButton}><Text style={styles.actionText}>{tx("Tạo khoản hoàn tiền")}</Text></Pressable>}
@@ -169,26 +168,26 @@ export default function TransactionDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   safeArea: { backgroundColor: colors.cream, flex: 1 },
   center: { alignItems: "center", justifyContent: "center", padding: 24 },
-  content: { gap: 14, padding: 24, paddingBottom: 48 },
-  title: { color: colors.ink, fontSize: 30, fontWeight: "700", marginTop: 20 },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 14, padding: paperSpace.screen, paddingBottom: 48 },
+  title: { color: colors.ink, fontSize: 26, fontWeight: "700", marginTop: 20 },
   income: { color: colors.income, fontSize: 14, fontWeight: "700", marginBottom: 8 },
   expense: { color: colors.expense, fontSize: 14, fontWeight: "700", marginBottom: 8 },
-  input: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.small, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 52, paddingHorizontal: 16 },
+  input: { backgroundColor: colors.white, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 16 },
   readonly: { opacity: 0.65 },
   note: { minHeight: 88, paddingTop: 14, textAlignVertical: "top" },
   label: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   categoryRow: { gap: 8, paddingVertical: 2 },
-  error: { color: colors.expense, fontSize: 14, lineHeight: 20 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", marginTop: 8, minHeight: 52 },
-  primaryText: { color: colors.white, fontSize: 16, fontWeight: "700" },
-  actionButton: { alignItems: "center", borderColor: colors.mauve, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 48 },
-  actionText: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
+  error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
+  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", marginTop: 8, minHeight: paperControl.height },
+  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
+  actionButton: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height },
+  actionText: { color: colors.link, fontSize: 15, fontWeight: "700" },
   receiptImage: { backgroundColor: colors.white, height: 280, width: "100%" },
-  deleteButton: { alignItems: "center", borderColor: colors.expense, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 48 },
-  deleteText: { color: colors.expense, fontSize: 15, fontWeight: "700" },
+  deleteButton: { alignItems: "center", borderColor: colors.expense, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height },
+  deleteText: { color: colors.danger, fontSize: 15, fontWeight: "700" },
   secondary: { alignItems: "center", minHeight: 44, padding: 12 },
-  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
+  secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
 });
