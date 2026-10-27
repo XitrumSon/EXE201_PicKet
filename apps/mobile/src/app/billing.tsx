@@ -325,7 +325,10 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     }
   }
 
-  const orderedProducts = [...subscriptions].sort(
+  const orderedProducts = subscriptions.filter(
+    product => product.platform !== "android" ||
+      !product.productStatusAndroid || product.productStatusAndroid === "ok",
+  ).sort(
     (left, right) =>
       PICKET_SUBSCRIPTION_IDS.indexOf(left.id as PicketSubscriptionId) -
       PICKET_SUBSCRIPTION_IDS.indexOf(right.id as PicketSubscriptionId),
@@ -369,6 +372,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
             const keys = planKeys[product.id];
             const copy = {name:keys.name,cadence:t(keys.cadence),summary:t(keys.summary)};
             const offer=purchaseOffer(product);
+            const purchaseDisabled = catalogueLoading || !offer || !storeReady || !connected || busyProduct !== null || restoring;
             const displayPrice=offer?.displayPrice??t("priceUnavailable");
             return (
               <View key={product.id} style={styles.planCard}>
@@ -382,9 +386,9 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
                 <Text style={styles.planSummary}>{copy.summary}</Text>
                 <Pressable
                   accessibilityLabel={t("chooseLabel",{name:copy.name,cadence:copy.cadence})}
-                  disabled={catalogueLoading || !offer || !storeReady || !connected || busyProduct !== null || restoring}
+                  disabled={purchaseDisabled}
                   onPress={() => void purchase(product)}
-                  style={styles.primary}
+                  style={[styles.primary, purchaseDisabled && styles.disabled]}
                 >
                   {busyProduct === product.id ? (
                     <ActivityIndicator accessibilityLabel={t("buyingLabel",{name:copy.name,cadence:copy.cadence})} color={colors.onPrimary} />
@@ -450,6 +454,7 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   planSummary: { color: colors.muted, fontSize: 14, lineHeight: 21 },
   primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", minHeight: paperControl.height },
   primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
+  disabled: { opacity: 0.45 },
   secondary: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height },
   secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
   linkButton: { alignItems: "center", justifyContent: "center" },
