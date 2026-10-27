@@ -1,8 +1,11 @@
+import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { useTranslation } from "react-i18next";
 import type { billingVi } from "@/core/i18n/billing-resources";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
-import { radii } from "@/core/ui/mobile-palette";
 import {
   PICKET_SUBSCRIPTION_IDS,
   type Entitlements,
@@ -17,14 +20,7 @@ import {
 } from "expo-iap";
 import { Redirect, router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import {
-  ActivityIndicator,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { picketApi } from "@/core/api/client";
@@ -360,7 +356,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           <Text style={styles.notice}>{t("androidOnly")}</Text>
         ) : !connected ? (
           <View style={styles.loadingRow}>
-            <ActivityIndicator accessibilityLabel={t("connecting")} color={colors.mauve} />
+            <ActivityIndicator accessibilityLabel={t("connecting")} color={colors.link} />
             <Text style={styles.notice}>{t("connecting")}</Text>
           </View>
         ) : orderedProducts.length === 0 ? (
@@ -417,7 +413,7 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           onPress={() => void restore()}
           style={styles.secondary}
         >
-          {restoring ? <ActivityIndicator accessibilityLabel={t("restoring")} color={colors.mauve} /> : <Text style={styles.secondaryText}>{t("restore")}</Text>}
+          {restoring ? <ActivityIndicator accessibilityLabel={t("restoring")} color={colors.link} /> : <Text style={styles.secondaryText}>{t("restore")}</Text>}
         </Pressable>
         <Pressable
           disabled={Platform.OS !== "android"}
@@ -436,29 +432,29 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   safeArea: { backgroundColor: colors.cream, flex: 1 },
-  content: { gap: 14, padding: 24, paddingBottom: 48 },
-  back: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
-  title: { color: colors.ink, fontSize: 32, fontWeight: "700", lineHeight: 38 },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 14, padding: paperSpace.screen, paddingBottom: 48 },
+  back: { color: colors.link, fontSize: 15, fontWeight: "700" },
+  title: { color: colors.ink, fontSize: 26, fontWeight: "700", lineHeight: 38 },
   description: { color: colors.muted, fontSize: 15, lineHeight: 23 },
-  currentPlan: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, gap: 6, padding: 16 },
+  currentPlan: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: paperShape.card, borderWidth: 1, gap: 6, padding: 16 },
   currentPlanTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" },
   currentPlanText: { color: colors.muted, fontSize: 13, lineHeight: 19 },
   loadingRow: { alignItems: "center", flexDirection: "row", gap: 10 },
   notice: { color: colors.muted, fontSize: 14, lineHeight: 21 },
-  planCard: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.large, borderWidth: 1, gap: 14, padding: 18 },
+  planCard: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: paperShape.card, borderWidth: 1, gap: 14, padding: 18 },
   planHeader: { alignItems: "flex-start", flexDirection: "row", gap: 12, justifyContent: "space-between" },
   planNameBlock: { flex: 1 },
   planName: { color: colors.ink, fontSize: 20, fontWeight: "700" },
   cadence: { color: colors.muted, fontSize: 13, marginTop: 3 },
-  price: { color: colors.mauve, fontSize: 17, fontWeight: "700" },
+  price: { color: colors.link, fontSize: 17, fontWeight: "700" },
   planSummary: { color: colors.muted, fontSize: 14, lineHeight: 21 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", minHeight: 50 },
+  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", minHeight: paperControl.height },
   primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
-  secondary: { alignItems: "center", borderColor: colors.mauve, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 52 },
-  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
+  secondary: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height },
+  secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
   linkButton: { alignItems: "center", justifyContent: "center" },
-  linkText: { color: colors.mauve, fontSize: 14, fontWeight: "700", textAlign: "center" },
+  linkText: { color: colors.link, fontSize: 14, fontWeight: "700", textAlign: "center" },
   footnote: { color: colors.muted, fontSize: 12, lineHeight: 18, textAlign: "center" },
-  error: { color: colors.expense, fontSize: 14, lineHeight: 20 },
+  error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
   success: { color: colors.income, fontSize: 14, fontWeight: "700", lineHeight: 20 },
 });
