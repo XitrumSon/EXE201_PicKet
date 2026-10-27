@@ -1,5 +1,9 @@
 # Open-answer assessment draft — 25 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 This completes the local authoring slice, not cloud grading or release acceptance.
 
 - The existing development-only learning preview includes one versioned fictional
