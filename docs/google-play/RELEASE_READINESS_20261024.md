@@ -92,6 +92,24 @@ Landing cũng đã phát hành APK code 19 và được tải lại kiểm check
 
 #### Kết quả kiểm thử Billing sau kích hoạt
 
+#### Cấu hình cho chủ dự án test máy thật — 27/10/2026
+
+- Đã thêm mapping `GOOGLE_PLAY_BILLING_ENABLED` vào API Compose (mặc định false); production env đặt true theo yêu cầu chủ dự án. Recreate riêng API bằng image đang chạy `picket-api:completion-20261027`, không rebuild source cũ. Web/Caddy/OCR giữ nguyên container/start time. Backup: `/opt/picket/deploy/backups/billing-enabled-20261027T152053Z`.
+- Postflight với user tổng hợp xác nhận `newPurchasesEnabled=true`, Free quota 3, token giả bị từ chối, không tự nâng quyền và client không cấp được gói; đã xóa user tạm. HTTPS smoke API/web/auth/CORS/security headers đạt.
+- Play Console RTDN đã bật và lưu topic `projects/picket-510311/topics/picket-play-rtdn`, subscription/voided notifications. Tải lại xác nhận giá trị persisted. Send Test Message từ Console trả HTTP 200, body `{}`. Chưa đọc lại log handler cho thông báo mới này; bằng chứng Pub/Sub→handler 200 ở checkpoint trước vẫn là lần kiểm tra riêng. Chưa xác nhận lifecycle từ purchase thật.
+- Cờ API cho phép mua với mọi người dùng đã đăng nhập, không phải allowlist tester. Chỉ tài khoản được Google cấu hình license testing mới có phương thức test. Không đổi closed-test hoặc mở production track. Không coi việc bật cờ là đã nghiệm thu giao dịch.
+
+Các bước trên máy thật:
+
+1. Dùng đúng Google Account thuộc `Picket Internal` trong Play Store; mở https://play.google.com/apps/internaltest/4701320590610768254 và tham gia thử nghiệm.
+2. Cài/cập nhật Picket 1.0.7 từ Google Play qua liên kết đó. Nếu cần gỡ bản đang cài để đổi nguồn/chữ ký, đồng bộ hoặc backup dữ liệu trước; không xóa dữ liệu chỉ để test.
+3. Mở Picket, đăng nhập tài khoản Picket sẽ nhận quyền; vào Cá nhân → Gói Picket. Nếu đang mở từ trước, thoát màn gói và vào lại để đọc cờ mới; dùng Tải lại bảng giá khi cần.
+4. Chọn Plus tháng để thử nhanh. Hộp thoại Google phải hiển thị giao dịch thử và phương thức `Test card, always approves`/`Test instrument, always approves`. Nếu chỉ thấy thẻ thật hoặc không có thông báo test, hủy và kiểm tra lại tài khoản Play; không nhập thẻ thật.
+5. Sau khi xác minh, tier Plus và hạn mức OCR cloud 30/24h; Pro là 100/24h, Free 3/24h. Đóng/mở lại app và Khôi phục mua hàng phải giữ đúng quyền của cùng chủ tài khoản. Dùng `always declines` để kiểm tra không được nâng quyền khi từ chối.
+6. Quản lý/hủy qua Google Play; dùng Play Billing Lab cho grace/hold/renewal. Không mua chồng bốn gói trên cùng tài khoản để giả nghiệm thu đổi gói. Gửi thời điểm thao tác, gói và thông báo lỗi nếu có; không gửi purchase token/mật khẩu.
+
+Google hướng dẫn test methods, tài khoản cài app quyết định tài khoản mua và test renewal: https://developer.android.com/google/play/billing/test?hl=en. Evidence config/postflight/smoke: `.artifacts/billing-device-setup-20261027/`.
+
 **Cập nhật Console sau đăng nhập 27/10:** đã đọc danh sách Internal testing `Picket Internal` gồm 3 tài khoản và chọn chính danh sách hiện có trong Manage account → Play settings → License testing. Đã xác nhận Save, tải lại URL độc lập và thấy `Picket Internal` checked, 3 users, response `RESPOND_NORMALLY`, không còn thay đổi chưa lưu. Không ghi email cá nhân vào Git. Trạng thái này thay thế phần chưa xác minh license tester/browser trong checkpoint dưới; không thay đổi alpha/closed-test hoặc quyền quản trị Console. Mua thử, ack, restore và lifecycle chưa nghiệm thu trên Play Store; runtime mua mới vẫn cần xử lý trong môi trường kiểm thử.
 
 - Mobile Billing: 21/21 tests đạt (purchase validation, readiness, verify-before-finish, restore/refresh, locale, race/unmount/account scope).
