@@ -1,5 +1,8 @@
 # Truy cập quản trị Picket trên web
 
+<!-- project-status-link -->
+> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+
 **Cập nhật production 22/10:** workspace admin riêng đã triển khai, source `6993560`. Login staff vào `/admin`, các URL tài chính user bị chuyển về admin; không đổi quyền mobile/API. [Bằng chứng và rollback](migration/WEB_PRODUCTION_20261022.md). Các dòng chưa deploy bên dưới thuộc checkpoint local trước đó.
 
 Cập nhật 22/10/2026. Không thay UI Next.js hoặc mobile trong lượt tạo tài khoản này.
@@ -33,7 +36,7 @@ Nếu callback lỗi hoặc email hết hạn: gửi lại từ trang Quên mậ
 
 Chủ sở hữu đã xác nhận trong hội thoại 22/10 rằng đặt lại mật khẩu và vào `/admin` thành công. Đây là nghiệm thu thủ công của chủ sở hữu cho truy cập web; không suy thành mọi thao tác admin đã test. Không tự thao tác khóa tài khoản, cấp gói hoặc đổi cài đặt toàn cục trên người dùng khác để test login.
 
-Checkpoint tạo tài khoản ban đầu: staff bổ sung vào user. Theo yêu cầu mới, source Next.js local đã tách workspace: staff tự vào `/admin`, không truy cập trang/server action tài chính user; user không vào admin. Đây là điều hướng/entrypoint web, không thay role API/mobile. **Chưa triển khai bản web mới lên production**; xem [báo cáo redesign](migration/WEB_REDESIGN_20261022.md).
+Checkpoint tạo tài khoản ban đầu: staff bổ sung vào user. Theo yêu cầu mới, source Next.js local đã tách workspace: staff tự vào `/admin`, không truy cập trang/server action tài chính user; user không vào admin. Đây là điều hướng/entrypoint web, không thay role API/mobile. Web workspace đã được triển khai; các mô tả source-only ở checkpoint trước không còn là hiện trạng; xem [báo cáo redesign](migration/WEB_UI_ACCEPTANCE_20261022.md).
 
 ## Thu hồi khi không còn sử dụng
 
