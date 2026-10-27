@@ -1,15 +1,16 @@
+import { TopAppBar } from "@/core/ui/picket-ui";
+import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
-import { colors, radii } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
+import { radii } from "@/core/ui/mobile-palette";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { routes } from "@/core/navigation/routes";
@@ -20,6 +21,7 @@ import { useTransactions } from "@/features/transactions/transactions-context";
 
 export default function TransactionSplitsScreen() {
   const {tx,money:formatVnd}=useTransactionCopy();
+  const { colors, styles } = useMobileStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, localMode } = useAuth();
   const { categories, getSplits, setSplits, transactions } = useTransactions();
@@ -39,7 +41,7 @@ export default function TransactionSplitsScreen() {
   );
 
   useEffect(() => {
-    if (!session || !id || !transaction) return;
+    if ((!session && !localMode) || !id || !transaction) return;
     let active = true;
     void getSplits(id)
       .then((splits) => {
@@ -59,11 +61,11 @@ export default function TransactionSplitsScreen() {
     return () => {
       active = false;
     };
-  }, [getSplits, id, session, transaction]);
+  }, [getSplits, id, session, localMode, transaction]);
 
   if (!session && !localMode) return <Redirect href={routes.login} />;
   if (!transaction || !loaded) {
-    return <SafeAreaView style={[styles.safeArea, styles.center]}>{transaction ? <ActivityIndicator accessibilityLabel={tx("Đang tải phân bổ giao dịch")} color={colors.mauve} /> : <Text style={styles.error}>{tx("Không tìm thấy giao dịch.")}</Text>}</SafeAreaView>;
+    return <SafeAreaView style={[styles.safeArea, styles.center]}>{transaction ? <ActivityIndicator accessibilityLabel={tx("Đang tải phân bổ giao dịch")} color={colors.link} /> : <Text style={styles.error}>{tx("Không tìm thấy giao dịch.")}</Text>}</SafeAreaView>;
   }
   if (transaction.kind !== "expense" && transaction.kind !== "income") {
     return <SafeAreaView style={[styles.safeArea, styles.center]}><Text style={styles.error}>{tx("Loại giao dịch này không hỗ trợ chia danh mục.")}</Text><Pressable onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>{tx("Quay lại")}</Text></Pressable></SafeAreaView>;
@@ -119,7 +121,7 @@ export default function TransactionSplitsScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.title}>{tx("Chia danh mục")}</Text>
+        <TopAppBar title={tx("Chia danh mục")} backDisabled={busy} />
         <Text style={styles.subtitle}>{transaction.title}</Text>
         <View style={styles.totalCard}>
           <Text style={styles.totalLabel}>{tx("Đã phân bổ")}</Text>
@@ -132,7 +134,7 @@ export default function TransactionSplitsScreen() {
           </View>
         ))}
         {message && <Text style={styles.error}>{tx(message)}</Text>}
-        <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel={tx("Đang lưu phân bổ giao dịch")} color={colors.white} /> : <Text style={styles.primaryText}>{tx("Lưu phân bổ")}</Text>}</Pressable>
+        <Pressable disabled={busy} onPress={() => void submit()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel={tx("Đang lưu phân bổ giao dịch")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{tx("Lưu phân bổ")}</Text>}</Pressable>
         <Pressable disabled={busy} onPress={() => { setAmounts(Object.fromEntries(availableCategories.map((item) => [item.id, ""]))); }} style={styles.clear}><Text style={styles.clearText}>{tx("Bỏ toàn bộ phân bổ")}</Text></Pressable>
         <Pressable disabled={busy} onPress={() => router.back()} style={styles.secondary}><Text style={styles.secondaryText}>{tx("Hủy")}</Text></Pressable>
       </ScrollView>
@@ -140,25 +142,25 @@ export default function TransactionSplitsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   safeArea: { backgroundColor: colors.cream, flex: 1 },
   center: { alignItems: "center", justifyContent: "center", padding: 24 },
-  content: { gap: 12, padding: 24, paddingBottom: 48 },
-  title: { color: colors.ink, fontSize: 30, fontWeight: "700", marginTop: 20 },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 12, padding: paperSpace.screen, paddingBottom: 48 },
+  title: { color: colors.ink, fontSize: 26, fontWeight: "700", marginTop: 20 },
   subtitle: { color: colors.muted, fontSize: 15, marginBottom: 8 },
-  totalCard: { backgroundColor: colors.white, borderRadius: radii.medium, marginBottom: 6, padding: 16 },
+  totalCard: { backgroundColor: colors.white, borderRadius: paperShape.card, marginBottom: 6, padding: 16 },
   totalLabel: { color: colors.muted, fontSize: 12 },
   totalValue: { fontSize: 18, fontWeight: "700", marginTop: 5 },
   valid: { color: colors.income },
   invalid: { color: colors.expense },
   row: { alignItems: "center", backgroundColor: colors.white, borderRadius: radii.small, flexDirection: "row", gap: 12, padding: 12 },
   category: { color: colors.ink, flex: 1, fontSize: 15, fontWeight: "700" },
-  amountInput: { borderColor: colors.peach, borderRadius: 8, borderWidth: 1, color: colors.ink, minHeight: 44, paddingHorizontal: 12, textAlign: "right", width: 130 },
-  error: { color: colors.expense, fontSize: 14, lineHeight: 20 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", marginTop: 8, minHeight: 52 },
-  primaryText: { color: colors.white, fontSize: 16, fontWeight: "700" },
+  amountInput: { borderColor: colors.peach, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, minHeight: 44, paddingHorizontal: 12, textAlign: "right", width: 130 },
+  error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
+  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", marginTop: 8, minHeight: paperControl.height },
+  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
   clear: { alignItems: "center", minHeight: 44, padding: 12 },
   clearText: { color: colors.expense, fontSize: 14, fontWeight: "700" },
   secondary: { alignItems: "center", minHeight: 44, padding: 12 },
-  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
+  secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
 });
