@@ -1,5 +1,9 @@
 # Native reminder owner race — 21 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Reproduction and guarantee
 
 Logout cleanup can finish before an already-running Android scheduling request returns. A pre-await owner check alone therefore permits a reminder from the previous account to remain scheduled.
