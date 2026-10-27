@@ -1,5 +1,9 @@
 # Picket delivery and release parity
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Trạng thái phát hành/nghiệm thu hiện hành: [PROJECT_STATUS.md](../PROJECT_STATUS.md). Phát hành mới nhất **1.0.4/code 5**, [release report](ANDROID_RELEASE_1_0_4_20261022.md); Google callback lạnh đã đạt lượt mới. Các nhánh thiết bị/Play chưa đủ bằng chứng không được suy là hoàn tất từ trạng thái chức năng cơ bản. [Staff report](STAFF_ADMIN_ACCEPTANCE_20261022.md) ghi 18 kiểm tra đạt và các giới hạn, không chứng nhận toàn bộ global settings/email.
 
 Ngày 22/10: [checklist phần 1 máy ảo đã đạt](PART1_ACCEPTANCE_20261022.md), gồm natural expiry/revoke/A–B–A, media race/disk-full, picker fallback, thông báo, chữ lớn và đo lịch nondebug. Không suy thành đã nghiệm thu điện thoại thật, Play sandbox, staff hay file backup Flutter lịch sử. Các checkpoint bên dưới giữ số test/phạm vi tại thời điểm cũ.
