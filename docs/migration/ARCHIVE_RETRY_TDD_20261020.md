@@ -1,5 +1,9 @@
 # Archive retry after a lost response — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Observed Android defect
 
 The mixed bulk archive exercise produced successful, queued and version-conflict rows in one run. Follow-up inspection found an additional false conflict: one queued DELETE had already committed before connectivity was lost, and retrying its original version returned 409. The mixed bulk scenario therefore remains open, despite its initial nominal result.
