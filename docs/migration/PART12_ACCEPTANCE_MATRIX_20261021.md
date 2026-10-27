@@ -1,5 +1,9 @@
 # Parts 1–2 acceptance matrix — 2026-10-21
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 **22 October closure:** requested Part 1 emulator follow-up cases PASS; [final scope, evidence and verification](PART1_ACCEPTANCE_20261022.md). Historical diagnostics below retain their original failures; current CAL-03 uses separate nondebug/steady/postboot evidence. This is not certification of the entire roadmap or real-device/external prerequisites.
 
 Latest source is **415 mobile tests PASS**, zero failures/skips, after writable-space preflight (excluding Android reserved blocks), compact previews/lazy viewer, picker fallback and late reminder cancellation. Typecheck/lint hooks PASS (24 existing warnings). [Full-volume capture acceptance](REAL_ENOSPC_ANDROID_20261021.md) now PASS in two separate actual-ENOSPC native branches: cold launch and controlled restore timing. Earlier ANR/faulty space API/harness failures are retained, not relabelled. This does not certify every background/reboot or performance variant.
