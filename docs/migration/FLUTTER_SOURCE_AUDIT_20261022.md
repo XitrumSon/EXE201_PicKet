@@ -1,5 +1,9 @@
 # Audit source Flutter còn sót — 22/10/2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Kết luận trong phạm vi kiểm tra
 
 Không tìm thấy Flutter runtime/source client đang tồn tại trong working source cần xóa hoặc chuyển tiếp. Git history vẫn được giữ để truy vết; không xóa lịch sử Git hay SDK Flutter cài trên laptop. Không phát hiện thêm nhóm chức năng chỉ còn ở source Flutter mà chưa có đích Expo trong đối chiếu dưới đây. Điều này không thay thế nghiệm thu mọi chi tiết nghiệp vụ, điện thoại thật hay Billing sandbox.
