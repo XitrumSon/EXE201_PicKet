@@ -1,5 +1,9 @@
 # Budget warning parity — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Scope and observed defect
 
 Follow-up to `APP_COMPLETION_PLAN.md`, part 1 notification acceptance. The existing reminder collector summed direct-category expense rows only. It could warn the original category for the entire purchase, miss the split category, and retain a warning after a linked refund. The notification screen also lacked the current period's carry/transfer limits.
