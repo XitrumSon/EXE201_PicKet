@@ -1,3 +1,4 @@
+import { paperShape, paperSpace } from "../../core/theme/paper-foundations";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
@@ -41,6 +42,9 @@ function harness(rows = new Map<string, unknown>()) {
   let background: ((state: string) => void) | undefined, confirmClear: (() => void) | undefined;
   const colors = new Proxy({}, { get: (_target, key) => String(key) });
   const adapters: Record<string, unknown> = {
+    "@/core/ui/picket-text": { PicketText: "Text" },
+    "@/core/ui/picket-scroll-view": { PicketScrollView: "ScrollView" },
+    "@/core/theme/paper-foundations": { paperShape, paperSpace },
     react: { useState, useRef, useCallback, useEffect: effect },
     "react/jsx-runtime": { jsx: (type: unknown, props: object) => ({ type, props }), jsxs: (type: unknown, props: object) => ({ type, props }) },
     "react-i18next": { useTranslation: () => ({ t: (key: string, values: object) => i18n.t(key, { ...values, ns: "assessment" }) }) },
