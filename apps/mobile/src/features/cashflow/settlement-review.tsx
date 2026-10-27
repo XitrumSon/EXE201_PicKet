@@ -1,7 +1,9 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { paperShape } from "@/core/theme/paper-foundations";
 import {ForecastCaptureCard} from "./forecast-capture-card";
 import {SettlementCloudCard} from "./settlement-cloud-card";
 import { useEffect,useRef,useState } from "react";
-import { Text,View } from "react-native";
+import { View } from "react-native";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -16,7 +18,7 @@ import { scopeSchedules } from "./schedule-scope";
 
 function SettlementButton({label,onPress,disabled=false}:{label:string;onPress:()=>void;disabled?:boolean}){
  const {colors:c}=useAppTheme();
- return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={onPress} style={{minHeight:48,padding:12,borderWidth:1,borderColor:c.border,borderRadius:10}}><Text style={{color:disabled?c.muted:c.primary}}>{label}</Text></Pressable>;
+ return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={onPress} style={{minHeight:48,padding:12,borderWidth:1,borderColor:c.border,borderRadius:paperShape.button}}><Text style={{color:disabled?c.muted:c.primary}}>{label}</Text></Pressable>;
 }
 type Props={owner:string;snapshot:LedgerSnapshot;accounts:string[];currency:string;schedules:CashflowSchedule[];days:number;onChange:()=>void;onUse:(ids:string[])=>void};
 export function SettlementReview(props:Props){return <SettlementReviewSession key={props.owner} {...props}/>;}
