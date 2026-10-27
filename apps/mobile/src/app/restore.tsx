@@ -1,22 +1,22 @@
+import { TopAppBar } from "@/core/ui/picket-ui";
+import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { useTranslation } from "react-i18next";
 import { createRestoreRunner, backupValidationMessage, refreshRestoredProviders } from "@/core/export/restore-attempt";
 import { withLocalOwnerAccess } from "@/core/sync/offline-cache";
 import { useBills } from "@/features/bills/bills-context";
 import { useSubscriptions } from "@/features/subscriptions/subscriptions-context";
-import { colors, radii } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import type { FinanceExportEnvelope, FinanceImportSummary } from "@picket/domain";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { Redirect, router } from "expo-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { picketApi } from "@/core/api/client";
@@ -45,6 +45,7 @@ interface PendingRestore {
 
 export default function RestoreScreen() {
   const {t}=useTranslation("restore");
+  const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const guest = useGuestFinance();
   const owner=session?.user.id??(localMode?"device-guest":null);
@@ -123,7 +124,6 @@ export default function RestoreScreen() {
         picketApi!.loadFinanceSnapshot(session!.access_token),
       ]);
       if(!isCurrent())return;
-      if(!isCurrent())return;
       setPending({
         exported,
         encrypted: decoded,
@@ -172,10 +172,7 @@ export default function RestoreScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.back()}>
-          <Text style={styles.back}>{t("back")}</Text>
-        </Pressable>
-        <Text accessibilityRole="header" style={styles.title}>{t("title")}</Text>
+        <TopAppBar title={t("title")} backDisabled={busy} />
         <Text style={styles.description}>
           {localMode ? t("deviceDescription") : t("cloudDescription")}
         </Text>
@@ -185,7 +182,7 @@ export default function RestoreScreen() {
         </View>
         <TextInput accessibilityLabel={t("password")} autoCapitalize="none" autoComplete="off" onChangeText={setPassword} placeholder={t("passwordPlaceholder")} editable={!busy} secureTextEntry style={styles.input} value={password} />
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void chooseBackup()} style={styles.secondary}>
-          {busy && !pending ? <ActivityIndicator accessibilityLabel={t("reading")} color={colors.mauve} /> : <Text style={styles.secondaryText}>{t("choose")}</Text>}
+          {busy && !pending ? <ActivityIndicator accessibilityLabel={t("reading")} color={colors.link} /> : <Text style={styles.secondaryText}>{t("choose")}</Text>}
         </Pressable>
         {pending && (
           <View style={styles.summary}>
@@ -217,7 +214,7 @@ export default function RestoreScreen() {
               onPress={() => void restore()}
               style={[styles.primary, (busy || (!awaitingReload && confirmation !== "RESTORE")) && styles.disabled]}
             >
-              {busy ? <ActivityIndicator accessibilityLabel={t("restoring")} color={colors.white} /> : <Text style={styles.primaryText}>{t(awaitingReload?"retryReload":"restore")}</Text>}
+              {busy ? <ActivityIndicator accessibilityLabel={t("restoring")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{t(awaitingReload?"retryReload":"restore")}</Text>}
             </Pressable>
           </>
         )}
@@ -227,26 +224,26 @@ export default function RestoreScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   safeArea: { backgroundColor: colors.cream, flex: 1 },
-  content: { gap: 16, padding: 24, paddingBottom: 48 },
-  back: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
-  title: { color: colors.ink, fontSize: 32, fontWeight: "700", lineHeight: 38 },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 16, padding: paperSpace.screen, paddingBottom: 48 },
+  back: { color: colors.link, fontSize: 15, fontWeight: "700" },
+  title: { color: colors.ink, fontSize: 26, fontWeight: "700", lineHeight: 38 },
   description: { color: colors.muted, fontSize: 15, lineHeight: 23 },
-  notice: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, gap: 5, padding: 16 },
+  notice: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: paperShape.card, borderWidth: 1, gap: 5, padding: 16 },
   noticeTitle: { color: colors.ink, fontSize: 15, fontWeight: "700" },
   noticeText: { color: colors.muted, fontSize: 13, lineHeight: 20 },
-  secondary: { alignItems: "center", borderColor: colors.mauve, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 52 },
-  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
-  summary: { backgroundColor: colors.white, borderRadius: radii.medium, gap: 6, padding: 18 },
+  secondary: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height },
+  secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
+  summary: { backgroundColor: colors.white, borderRadius: paperShape.card, gap: 6, padding: 18 },
   summaryTitle: { color: colors.ink, fontSize: 16, fontWeight: "700", marginBottom: 4 },
   summaryText: { color: colors.ink, fontSize: 14 },
   revision: { color: colors.muted, fontSize: 12, marginTop: 6 },
   label: { color: colors.ink, fontSize: 14, fontWeight: "700" },
-  input: { backgroundColor: colors.white, borderColor: colors.mauve, borderRadius: radii.small, borderWidth: 1, color: colors.ink, fontSize: 17, minHeight: 54, paddingHorizontal: 16 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", minHeight: 54 },
-  primaryText: { color: colors.white, fontSize: 15, fontWeight: "700" },
+  input: { backgroundColor: colors.white, borderColor: colors.primaryOutline, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 17, minHeight: paperControl.height, paddingHorizontal: 16 },
+  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", minHeight: paperControl.height },
+  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
   disabled: { opacity: 0.45 },
-  error: { color: colors.expense, fontSize: 14, lineHeight: 20 },
+  error: { color: colors.danger, fontSize: 14, lineHeight: 20 },
   success: { color: colors.income, fontSize: 14, fontWeight: "700", lineHeight: 20 },
 });
