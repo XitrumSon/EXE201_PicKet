@@ -1,5 +1,9 @@
 # Real Android storage exhaustion — 21 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Isolation / safety
 
 Created a new, previously nonexistent AVD `Picket_QA_Disk_Fault_35`, Android 35 Play Store x86_64, port 5558. Primary QA emulator was closed only after its active tests completed; its app data and the production package were not cleared. New AVD uses only guest synthetic data.
