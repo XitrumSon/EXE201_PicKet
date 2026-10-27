@@ -231,7 +231,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
           },
         }));
         if (error) throw error;
-        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        const browsers = Platform.OS === "android"
+          ? await WebBrowser.getCustomTabsSupportingBrowsersAsync()
+          : null;
+        const browserPackage = browsers?.preferredBrowserPackage ??
+          browsers?.browserPackages.find(pkg => browsers.servicePackages.includes(pkg));
+        if (Platform.OS === "android" && !browserPackage) {
+          throw new AuthCallbackError("Cần cài hoặc bật trình duyệt hỗ trợ đăng nhập (Chrome, Edge hoặc Firefox), rồi thử lại.");
+        }
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo, { browserPackage });
         if (result.type === "success") {
           const handled = await exchangeCallbackUrl(result.url);
           if (!handled) {
