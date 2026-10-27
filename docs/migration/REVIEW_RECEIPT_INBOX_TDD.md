@@ -1,5 +1,9 @@
 # Review Inbox: hóa đơn cần kiểm tra — 2026-10-18
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Nguồn: `APP_COMPLETION_PLAN.md`, mục 3. Increment này chỉ bổ sung receipt review vào Expo Android; không sửa API, schema hay triển khai backend.
 
 ## Hành vi đã bổ sung
