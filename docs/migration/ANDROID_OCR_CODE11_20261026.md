@@ -1,5 +1,9 @@
 # Automatic OCR orientation and retry UI — Android code 11
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 26 October 2026. The owner reports code 10 still rejects the same VAT invoice.
 A local diagnostic reproduced the picker JPEG quality-80 step (106 OCR lines),
 unlike the earlier source-image-only check (109 lines). The compressed result
