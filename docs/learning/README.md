@@ -50,4 +50,4 @@ Hai generator đồng bộ cả Markdown/JSON trong thư mục này và JSON tĩ
 
 ID bài, version quiz và 36 vị trí đáp án giữ nguyên để không làm mất tiến độ cũ. Bản bổ sung ghi editorialRevision=2; cả hai locale có cùng 60 phép kiểm số học. Không thay schema hoặc mở quyền chấm cloud.
 
-Nội dung đã được tác giả đối chiếu nguồn/số học. Chưa có phê duyệt độc lập hoặc pilot người học; trạng thái công bố cloud vẫn là bản nháp. Nội dung biên tập mới nằm trong source, chưa nằm trong APK/AAB code 18 đã phát hành trước lượt biên tập này.
+Nội dung đã được tác giả đối chiếu nguồn/số học. Chưa có phê duyệt độc lập hoặc pilot người học; trạng thái công bố cloud vẫn là bản nháp. Nội dung biên tập 2 được đóng gói từ APK/AAB code 19 và tiếp tục có trong code 20; code 18 trước đó chưa có phần bổ sung.
