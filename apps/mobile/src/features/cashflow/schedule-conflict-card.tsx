@@ -1,5 +1,7 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { paperShape } from "@/core/theme/paper-foundations";
 import { useEffect, useRef, useState } from "react";
-import { Text, View } from "react-native";
+import { View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { picketApi } from "@/core/api/client";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -13,7 +15,7 @@ import { useAccounts } from "@/features/accounts/accounts-context";
 
 function ConflictButton({label,onPress,disabled=false}:{label:string;onPress:()=>void;disabled?:boolean}){
   const {colors:c}=useAppTheme();
-  return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={onPress} style={{minHeight:48,padding:14,borderWidth:1,borderColor:c.border,borderRadius:12,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.primary}}>{label}</Text></Pressable>;
+  return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={onPress} style={{minHeight:48,padding:14,borderWidth:1,borderColor:c.border,borderRadius:paperShape.button,backgroundColor:disabled?c.disabledSurface:c.surface}}><Text style={{color:disabled?c.disabledText:c.primary}}>{label}</Text></Pressable>;
 }
 
 export function ScheduleConflictCard({owner}:{owner:string}){
@@ -72,7 +74,7 @@ export function ScheduleConflictCard({owner}:{owner:string}){
           <Text style={{color:c.text}}>{t("deviceCopy")}: {describe(local)}</Text>
           <Text style={{color:c.text}}>{t("cloudCopy")}: {describe(cloud)}</Text>
           <View accessibilityRole="radiogroup" accessibilityLabel={t("scheduleNumber",{count:index+1})} style={{gap:6}}>
-            {(["local","cloud","omit"] as const).filter(choice=>choice==="omit"||(choice==="local"?local:cloud)).map(choice=><Pressable key={choice} accessibilityRole="radio" accessibilityState={{checked:choices[id]===choice,disabled:busy}} disabled={busy} onPress={()=>setChoices(old=>({...old,[id]:choice}))} style={{minHeight:48,padding:12,borderWidth:1,borderColor:choices[id]===choice?c.primary:c.border,borderRadius:10}}><Text style={{color:c.text}}>{t(choice==="local"?"keepDevice":choice==="cloud"?"keepCloud":"omitSchedule")}</Text></Pressable>)}
+            {(["local","cloud","omit"] as const).filter(choice=>choice==="omit"||(choice==="local"?local:cloud)).map(choice=><Pressable key={choice} accessibilityRole="radio" accessibilityState={{checked:choices[id]===choice,disabled:busy}} disabled={busy} onPress={()=>setChoices(old=>({...old,[id]:choice}))} style={{minHeight:48,padding:12,borderWidth:1,borderColor:choices[id]===choice?c.primary:c.border,borderRadius:paperShape.button}}><Text style={{color:c.text}}>{t(choice==="local"?"keepDevice":choice==="cloud"?"keepCloud":"omitSchedule")}</Text></Pressable>)}
           </View></View>;
       })}
       <ConflictButton label={t("applyChoices")} onPress={()=>void reconcile(true)} disabled={busy||rows.some(id=>!choices[id])}/>
