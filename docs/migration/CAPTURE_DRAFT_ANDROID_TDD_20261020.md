@@ -1,5 +1,9 @@
 # Durable capture draft — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Journey and scope
 
 Source: camera/draft work remaining in `APP_COMPLETION_PLAN.md`. A user should be able to capture an image, edit incomplete OCR fields, leave/reopen the screen or restart Android's app process, and resume the same draft. Opening retake camera then cancelling must not discard the previous draft. Transaction completion must clear only the capture that produced it, not a newer capture.
