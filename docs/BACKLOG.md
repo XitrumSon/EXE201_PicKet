@@ -27,7 +27,7 @@ Cập nhật 28/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế du
 | Việc | Quyết định hiện tại |
 | --- | --- |
 | Closed test | Giữ alpha draft theo chủ dự án. Khi mở cần nhóm/tester và cohort thật; không tự chuyển completed |
-| Billing | Bốn SKU test verified/Publisher-acknowledged. Cancel/expiry/refund/decline/offline recovery/owner rejection/grace/hold/recovery và RTDN tương ứng đã kiểm chứng. Còn pending native và live replay bị approval chặn; xem báo cáo 28/10 |
+| Billing | Bốn SKU test verified/Publisher-acknowledged. Cancel/expiry/refund/decline/offline recovery/owner rejection/grace/hold/recovery và RTDN tương ứng đã kiểm chứng. Pending native không áp dụng cho auto-renew; còn live replay bị approval chặn; xem báo cáo 28/10 |
 | Nội dung học cloud | VI/EN biên tập 2 đã có trong code 20; còn review độc lập/pilot và quyết định publish. Cloud hiện không có bài published |
 | Cloud grading trả phí | Hoãn ngoài MVP. Không bật AI cá nhân hoặc truyền câu trả lời local lên cloud chỉ để đóng checklist |
 | Diện mạo túi cloud | Tùy chỉnh đã lưu owner-local; chưa đồng bộ appearance qua cloud |
@@ -45,6 +45,6 @@ Cập nhật 28/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế du
 - Supabase đã xác minh 49 migration; không cần chạy lại migration chỉ để đồng bộ tài liệu.
 - Dọn output build và hợp nhất design thuộc lượt repository sync hiện tại, theo [báo cáo](migration/REPOSITORY_SYNC_20261027.md).
 
-Checkpoint Billing code 22 được bổ sung bởi [nghiệm thu ngày 28/10](migration/BILLING_RELEASE_ACCEPTANCE_20261028.md). Không còn gate Publisher ack/cancel/refund/grace/hold; pending native và live replay vẫn mở theo giới hạn đã ghi.
+Checkpoint Billing code 22 được bổ sung bởi [nghiệm thu ngày 28/10](migration/BILLING_RELEASE_ACCEPTANCE_20261028.md). Không còn gate Publisher ack/cancel/refund/grace/hold; pending native không áp dụng cho danh mục auto-renew; live replay còn bị approval chặn.
 
-Ngày 28/10: [lifecycle và public release](migration/BILLING_RELEASE_ACCEPTANCE_20261028.md) thay checkpoint code 22 ở trên về các ca đã bổ sung. Publisher ack, cancel/expiry/refund, decline, offline recovery và owner rejection đã có bằng chứng mới. Không liệt kê lại các ca này là chưa chạy. Pending native, live replay và grace/hold đã kiểm chứng; phần giới hạn còn lại xem báo cáo.
+Ngày 28/10: [lifecycle và public release](migration/BILLING_RELEASE_ACCEPTANCE_20261028.md) thay checkpoint code 22 ở trên về các ca đã bổ sung. Publisher ack, cancel/expiry/refund, decline, offline recovery và owner rejection đã có bằng chứng mới. Không liệt kê lại các ca này là chưa chạy. Pending native không áp dụng cho auto-renew; grace/hold đã kiểm chứng; live replay còn bị approval chặn, xem báo cáo.
