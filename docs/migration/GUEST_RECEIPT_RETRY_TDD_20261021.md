@@ -1,5 +1,9 @@
 # Guest receipt commit/progress recovery — 2026-10-21
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Scope: local-only Expo Android receipt creation. Cloud receipt lost-response acceptance is reported separately. The real-user app/package and cloud finances are not changed by these tests.
 
 Current follow-up: [Part 1 execution](PART1_CURRENT_EXECUTION_20261021.md). Android Document Picker/Share Sheet round-trip preserves `receiptCreateIds`: two ledger entries including one deletion tombstone, one live transaction/receipt and the keepsake photo (`vault-roundtrip-results.json`). Intentional-edit acceptance now also PASS: native progress-write failure, UI edit to title/amount, repeated old-request retry across cold restarts, exactly one transaction retaining the edit (`guest-progress-e41b9eb9/result.json`). Concurrent-handler execution remains a separate case, not inferred from a rapid-tap test.
