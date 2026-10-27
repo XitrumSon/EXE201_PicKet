@@ -1,5 +1,9 @@
 # Kế hoạch hoàn thiện Expo Android
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Ngày rà soát: 2026-10-22. Phạm vi: Expo Android + Dart API hiện có; không khôi phục Flutter, không làm iOS. Các mục dưới đây phân biệt code đã có với bằng chứng kiểm thử còn thiếu. Không tự nâng `verified` từ unit test hoặc từ route tồn tại.
 
 ## Trạng thái hiện hành — đọc trước các ghi chép lịch sử
@@ -16,7 +20,7 @@ Ngày rà soát: 2026-10-22. Phạm vi: Expo Android + Dart API hiện có; khô
 
 ### Nhật ký checkpoint lịch sử
 
-Follow-up chủ sở hữu 22/10: đã tự reset mật khẩu và xác nhận truy cập `/admin` bằng alias admin riêng. Sau đó đã yêu cầu admin-only và redesign toàn web, không sửa mobile. Chủ sở hữu chốt giữ web cloud, không bổ sung guest/offline. Source Next.js local đã hoàn tất tách workspace/đổi điều hướng và thiết kế responsive trong phạm vi cloud; chưa deploy hoặc nghiệm thu production. [Báo cáo web](WEB_REDESIGN_20261022.md).
+Follow-up chủ sở hữu 22/10: đã tự reset mật khẩu và xác nhận truy cập `/admin` bằng alias admin riêng. Sau đó đã yêu cầu admin-only và redesign toàn web, không sửa mobile. Chủ sở hữu chốt giữ web cloud, không bổ sung guest/offline. Source Next.js local đã hoàn tất tách workspace/đổi điều hướng và thiết kế responsive trong phạm vi cloud; chưa deploy hoặc nghiệm thu production. [Báo cáo web](WEB_UI_ACCEPTANCE_20261022.md).
 
 Các đoạn bên dưới giữ kết quả tại thời điểm thực thi. Trạng thái hiện hành ở chỉ mục phía trên và ma trận nghiệm thu; không đọc các dòng “chưa triển khai/đang chạy” cũ như trạng thái hiện tại.
 
