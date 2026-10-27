@@ -140,3 +140,7 @@ Play Internal đã đọc lại completed với code 20; alpha vẫn code 6 draf
 ## Play Internal code 21 và giao dịch thử thật qua Play
 
 Internal đã cập nhật 1.0.8/code 21 (ARM64+x86_64); alpha/beta/production không đổi. Máy ảo CH Play tải được đủ bốn giá, mua Plus tháng bằng Test card thành công, restore cấp PLUS/30; server và cold restart xác nhận quyền. Callback sau onboarding Google chưa tự cập nhật đúng; chưa nghiệm thu ack API/lifecycle và các SKU khác. [Báo cáo có giới hạn và bằng chứng](../migration/PLAY_BILLING_EMULATOR_20261027.md). Landing vẫn APK 1.0.7/code 20.
+
+## Checkpoint Internal code 22 — gói và OCR
+
+Internal 1.0.9/code 22 completed đã được đọc lại và cập nhật trên CH Play máy ảo. Màn gói Paper tháng/năm, foreground purchase recovery, cả bốn SKU server-verified/BillingClient-acknowledged và cloud quota 3/30/100 đã có [báo cáo chi tiết](../migration/BILLING_COMPLETION_20261027.md). 922 mobile tests, lint/typecheck và SQL quotas PASS. Chưa đóng toàn bộ lifecycle/Publisher ack API; alpha draft và production không đổi, landing giữ APK code 20.
