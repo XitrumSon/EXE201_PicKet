@@ -10,7 +10,7 @@ Cập nhật 27/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế du
 | --- | --- | --- |
 | Điện thoại ARM64 | Camera/OCR hóa đơn thật, sinh trắc, thông báo, độ mượt và cập nhật giữ dữ liệu trên code 20 chưa có kết quả cuối | Chủ dự án đã nhận tự test; xem checklist thiết bị thật |
 | Play Console | Xác nhận Finance category, các khai báo Console và kết quả review hiện hành | Quyền Console; không suy từ API upload |
-| RTDN từ Play | Pub/Sub → handler đã đạt; còn topic setting và Send Test Message từ Play Console | Play Console |
+| RTDN từ Play | Topic đã lưu, tải lại xác nhận; Send Test Message từ Console HTTP 200. Còn kiểm tra log delivery mới và lifecycle purchase thật | Thiết bị license tester |
 | APKPure | Bằng chứng cuối từ chủ dự án: code 19 pending approval. Chưa xác nhận kết quả mới hoặc code 20 | Review nền tảng/tài khoản chủ sở hữu |
 | TalkBack | Có semantic/font/responsive kiểm từng phần; chưa có spoken audit toàn bộ luồng chính | Thiết bị hoặc môi trường assistive-tech phù hợp |
 
@@ -27,7 +27,7 @@ Cập nhật 27/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế du
 | Việc | Quyết định hiện tại |
 | --- | --- |
 | Closed test | Giữ alpha draft theo chủ dự án. Khi mở cần nhóm/tester và cohort thật; không tự chuyển completed |
-| Billing | Bốn base plan ACTIVE; license testing đã lưu danh sách Picket Internal (3 tài khoản), tải lại xác nhận. Đã đạt 21 mobile + 7 Dart tests, 22 assertions quyền gói cô lập và kiểm tra từ chối mua giả trên production. Runtime mua mới=false; cần thiết bị Play Store dùng tài khoản tester, RTDN và S01–S14 để nghiệm thu đầu cuối |
+| Billing | Bốn base plan ACTIVE; license testing đã lưu danh sách Picket Internal (3 tài khoản), tải lại xác nhận. Đã đạt 21 mobile + 7 Dart tests, 22 assertions quyền gói cô lập và kiểm tra từ chối mua giả trên production. Runtime mua mới=true, RTDN topic đã lưu/Send Test HTTP 200; còn delivery/lifecycle và S01–S14 trên thiết bị license tester |
 | Nội dung học cloud | VI/EN biên tập 2 đã có trong code 20; còn review độc lập/pilot và quyết định publish. Cloud hiện không có bài published |
 | Cloud grading trả phí | Hoãn ngoài MVP. Không bật AI cá nhân hoặc truyền câu trả lời local lên cloud chỉ để đóng checklist |
 | Diện mạo túi cloud | Tùy chỉnh đã lưu owner-local; chưa đồng bộ appearance qua cloud |
