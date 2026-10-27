@@ -1,5 +1,9 @@
 # Managed keepsake photo encryption and backup acceptance
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Date: 2026-10-20. Follow-up to [Android extended matrix](ANDROID_EXTENDED_MATRIX_20261020.md). This increment is part of the remaining emulator checklist, not completion of all ten areas.
 
 ## Latest follow-up — 2026-10-20
