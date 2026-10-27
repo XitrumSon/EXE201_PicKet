@@ -1,24 +1,51 @@
-import { colors } from "@picket/design-tokens";
+import { dockVisibleOn } from "./navigation-layout";
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { useAppTheme } from "@/features/settings/appearance-provider";
+import { useProfile } from "@/features/profile/profile-context";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { router, usePathname, type Href } from "expo-router";
-import { Keyboard, StyleSheet, Text, View } from "react-native";
-import { useEffect, useState } from "react";
+import { Keyboard, StyleSheet, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { captureJournal } from "@/core/ocr/capture-storage";
+import { guestOwnerId } from "@/core/local/guest-finance";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/features/auth/auth-context";
 import { AccessiblePressable as Pressable } from "./accessible-pressable";
 import { AppIcon, type IconName } from "./app-icon";
 
-const destinations: { path: "/" | "/transactions" | "/accounts" | "/budgets" | "/profile"; label: string; icon: IconName; activeIcon: IconName }[] = [
-  { path: "/", label: "Tổng quan", icon: "home-outline", activeIcon: "home" },
-  { path: "/transactions", label: "Giao dịch", icon: "receipt-text-outline", activeIcon: "receipt-text" },
-  { path: "/accounts", label: "Ví", icon: "wallet-outline", activeIcon: "wallet" },
-  { path: "/budgets", label: "Ngân sách", icon: "chart-donut", activeIcon: "chart-donut" },
-  { path: "/profile", label: "Cá nhân", icon: "account-outline", activeIcon: "account" },
+const destinations: { path: "/" | "/transactions" | "/capture" | "/planning" | "/profile"; label: string; english: string; icon: IconName }[] = [
+  { path: "/", label: "Nhà", english: "Home", icon: "home-outline" },
+  { path: "/transactions", label: "Chi tiêu", english: "Spending", icon: "wallet-outline" },
+  { path: "/capture", label: "Chụp", english: "Capture", icon: "camera-outline" },
+  { path: "/planning", label: "Dự định", english: "Plans", icon: "bullseye-arrow" },
+  { path: "/profile", label: "Mình", english: "Me", icon: "account-outline" },
 ];
 
 /** Keep existing deep links and providers intact while sharing destination navigation. */
 export function NavigationShell() {
+  const { language } = useAppTheme();
+  const { profile } = useProfile();
+  const { colors, styles } = useMobileStyles(createStyles);
   const pathname = usePathname().replace(/\/$/, "") || "/";
   const { session, localMode } = useAuth();
+  const owner = session?.user.id ?? (localMode ? guestOwnerId : null);
+  const currentOwner = useRef(owner);
+  useEffect(() => { currentOwner.current = owner; return () => { currentOwner.current = null; }; }, [owner]);
+  async function navigate(path: Href) {
+    if (path === "/transactions" && owner) {
+      try {
+        const draft = await captureJournal.load(owner);
+        if (owner !== currentOwner.current) return;
+        if (draft) { router.navigate("/capture"); return; }
+      } catch {
+        if (owner !== currentOwner.current) return;
+        // The capture screen offers recovery without deleting unreadable data.
+        router.navigate("/capture"); return;
+      }
+    }
+    router.navigate(path);
+  }
   const insets = useSafeAreaInsets();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   useEffect(() => {
@@ -26,23 +53,28 @@ export function NavigationShell() {
     const hide = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
     return () => { show.remove(); hide.remove(); };
   }, []);
-  if (keyboardVisible || (!session && !localMode) || !destinations.some((item) => item.path === pathname)) return null;
-  return <View style={[styles.bar, { paddingBottom: Math.max(8, insets.bottom) }]}>
+  if (keyboardVisible || (!session && !localMode) || !dockVisibleOn(pathname)) return null;
+  return <View accessibilityRole="tablist" style={[styles.bar, { bottom: Math.max(12, insets.bottom) }]}><View pointerEvents="none" accessible={false} style={styles.tray} />
     {destinations.map((item) => {
-      const active = pathname === item.path;
-      return <Pressable key={item.path} accessibilityRole="tab" accessibilityLabel={item.label} accessibilityState={{ selected: active }} onPress={() => { if (!active) router.navigate(item.path as Href); }} style={styles.destination}>
-        <View key={active ? "selected" : "idle"} style={[styles.indicator, active && styles.selected]}><AppIcon name={active ? item.activeIcon : item.icon} color={active ? colors.ink : colors.muted} /></View>
-        <Text style={[styles.label, active && styles.activeLabel]}>{item.label}</Text>
+      const camera = item.path === "/capture";
+      const active = pathname === item.path || (item.path === "/planning" && pathname === "/budgets");
+      const label = language === "vi" ? (item.path === "/profile" ? profile?.displayName?.trim().split(/\s+/).pop() || item.label : item.label) : item.english;
+      return <Pressable key={item.path} accessibilityRole={camera ? "button" : "tab"} accessibilityLabel={label} accessibilityState={camera ? undefined : { selected: active }} onPress={() => { if (!active) void navigate(item.path as Href); }} hitSlop={camera ? { top: 28, bottom: 4, left: 4, right: 4 } : 4} style={[styles.destination, active && styles.selected]}>
+        <View style={camera ? styles.camera : styles.indicator}><AppIcon name={item.icon} size={camera ? 26 : 23} color={camera ? colors.onCamera : active ? colors.selectedText : colors.muted} /></View>
+        <Text style={[styles.label, active && styles.activeLabel]}>{label}</Text>
       </Pressable>;
     })}
   </View>;
 }
 
-const styles = StyleSheet.create({
-  bar: { position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: colors.white, borderTopWidth: 1, borderTopColor: colors.line, flexDirection: "row", paddingTop: 8, paddingHorizontal: 4 },
-  destination: { flex: 1, alignItems: "center", justifyContent: "center", gap: 4, paddingVertical: 4 },
-  indicator: { width: 56, height: 30, borderRadius: 20, overflow: "hidden", backgroundColor: colors.white, alignItems: "center", justifyContent: "center" },
-  selected: { backgroundColor: colors.peach },
-  label: { color: colors.muted, fontSize: 11, lineHeight: 16, fontWeight: "500", textAlign: "center" },
-  activeLabel: { color: colors.ink, fontWeight: "700" },
+
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
+  bar: { position: "absolute", left: 12, right: 12, maxWidth: 600, alignSelf: "center", flexDirection: "row", paddingHorizontal: 5, paddingBottom: 5, paddingTop: 29 },
+  tray: { position: "absolute", top: 24, left: 0, right: 0, bottom: 0, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderTopLeftRadius: 30, borderTopRightRadius: 30, borderBottomRightRadius: 30, borderBottomLeftRadius: 16, shadowColor: colors.camera, shadowOffset: { width: 0, height: 8 }, shadowOpacity: .16, shadowRadius: 18, boxShadow: [{ offsetX: 0, offsetY: 8, blurRadius: 18, color: colors.camera + "29" }] },
+  destination: { flex: 1, minHeight: 62, alignItems: "center", justifyContent: "center", gap: 3, paddingVertical: 6, borderRadius: 21 },
+  indicator: { height: 27, alignItems: "center", justifyContent: "center" },
+  selected: { backgroundColor: colors.selectedSurface },
+  camera: { width: 60, height: 60, marginTop: -30, marginBottom: 1, borderWidth: 5, borderColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderBottomRightRadius: 24, borderBottomLeftRadius: 10, transform: [{ rotate: "-3deg" }], backgroundColor: colors.camera, alignItems: "center", justifyContent: "center", shadowColor: colors.camera, shadowOffset: { width: 0, height: 5 }, shadowOpacity: .25, shadowRadius: 12, elevation: 6 },
+  label: { color: colors.muted, fontFamily: "PicketDisplay", fontSize: 11, lineHeight: 16, textAlign: "center" },
+  activeLabel: { color: colors.selectedText },
 });
