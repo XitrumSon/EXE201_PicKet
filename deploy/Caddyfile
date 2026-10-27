@@ -6,7 +6,7 @@
 	root * /srv/picket-landing
 	@revalidated not path /downloads/*.apk
 	header @revalidated Cache-Control "no-cache"
-	header Content-Security-Policy "default-src 'none'; img-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+	header Content-Security-Policy "default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 	@apk path /downloads/*.apk
 	header @apk {
 		Content-Type application/vnd.android.package-archive
