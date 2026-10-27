@@ -1,5 +1,9 @@
 # Bills offline refresh — 2026-10-17
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## User journey
 
 Người dùng tạo hóa đơn khi mất mạng, đóng/mở lại ứng dụng, rồi khôi phục mạng. Hàng đợi phải giữ thay đổi, gửi lên server đúng một lần và màn Hóa đơn phải tự bỏ lỗi kết nối cũ sau lần refresh thành công.
