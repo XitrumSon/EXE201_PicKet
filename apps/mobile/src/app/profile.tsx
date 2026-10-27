@@ -1,12 +1,15 @@
+import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { useTranslation } from "react-i18next";
 import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
-import { radii } from "@/core/ui/mobile-palette";
 import type { CurrentProfile, Entitlements } from "@picket/domain";
 import { Redirect, router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, StyleSheet, Switch, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { picketApi } from "@/core/api/client";
@@ -16,12 +19,14 @@ import { exportEncryptedBackup, exportFinanceCsv, exportGuestBackup } from "@/co
 import { useGuestFinance } from "@/core/local/guest-finance-context";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { AppIcon } from "@/core/ui/app-icon";
-import { MenuRow, SectionTitle, Surface, TopAppBar } from "@/core/ui/picket-ui";
+import { ChoiceChip, IconButton, MenuRow, SectionTitle, Surface, TopAppBar } from "@/core/ui/picket-ui";
 import { useAuth } from "@/features/auth/auth-context";
 import { isStaff } from "@/features/admin/admin-mobile";
 import { useProfile } from "@/features/profile/profile-context";
 import { useDeviceLock } from "@/features/security/device-lock";
 import { AppUpdateSection, InstalledVersion } from "@/features/updates/app-update-section";
+import { pendingMutationCount, mutationConflictCount } from "@/core/sync/mutation-queue";
+import { signOutCopy } from "@/features/profile/sign-out-copy";
 
 const personas = ["Đi làm", "Sinh viên", "Tự do", "Gia đình"] as const;
 const goals = ["Hiểu chi tiêu", "Tiết kiệm", "Quản lý hóa đơn"] as const;
@@ -34,7 +39,7 @@ export default function ProfileScreen() {
   const { error, loading, profile, refresh } = useProfile();
 
   if (!session && !localMode) return <Redirect href={routes.login} />;
-  if (loading && !profile) return <SafeAreaView style={[styles.safeArea, styles.fallbackPage]}><View style={[styles.center, styles.fallbackBody]}><ActivityIndicator accessibilityLabel={t("Đang tải hồ sơ")} color={colors.mauve} /></View><InstalledVersion /></SafeAreaView>;
+  if (loading && !profile) return <SafeAreaView style={[styles.safeArea, styles.fallbackPage]}><View style={[styles.center, styles.fallbackBody]}><ActivityIndicator accessibilityLabel={t("Đang tải hồ sơ")} color={colors.link} /></View><InstalledVersion /></SafeAreaView>;
   if (!profile) return <SafeAreaView style={[styles.safeArea, styles.fallbackPage]}><View style={[styles.center, styles.fallbackBody]}><Text style={styles.error}>{error ? t(error,{defaultValue:error}) : t("Chưa có hồ sơ lưu trên thiết bị. Hãy kết nối mạng rồi thử lại.")}</Text><Pressable accessibilityRole="button" onPress={() => void refresh()}><Text style={styles.back}>{t("Tải lại hồ sơ")}</Text></Pressable></View><InstalledVersion /></SafeAreaView>;
 
   return <ProfileForm key={profile.id} profile={profile} />;
@@ -42,7 +47,7 @@ export default function ProfileScreen() {
 
 function ProfileForm({ profile }: { profile: CurrentProfile }) {
   const {t}=useTranslation("profile");
-  const { colors, styles } = useMobileStyles(createStyles);
+  const { colors, styles, theme } = useMobileStyles(createStyles);
   const { session, localMode, leaveLocalMode, signOut } = useAuth();
   const { updatePreferences, updateProfile } = useProfile();
   const deviceLock = useDeviceLock();
@@ -60,6 +65,9 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
   const [backupPassword, setBackupPassword] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
+  const signOutReading = useRef(false);
+  const activeOwner = useRef(session?.user.id);
+  useLayoutEffect(() => { activeOwner.current = session?.user.id; return () => { activeOwner.current = undefined; }; }, [session?.user.id]);
 
   async function changeVisibility(next: boolean) {
     if (visibilityDraft !== null) return;
@@ -133,7 +141,8 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
     finally { setBusy(false); }
   }
 
-  function confirmSignOut() {
+  async function confirmSignOut() {
+    if (busy || signOutReading.current) return;
     if (localMode) {
       Alert.alert(t("Thoát chế độ trên thiết bị?"), t("Dữ liệu trên máy được giữ riêng và sẽ hiện lại khi bạn chọn dùng không cần đăng nhập."), [
         { text: t("Hủy"), style: "cancel" },
@@ -141,11 +150,25 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
       ]);
       return;
     }
-    Alert.alert(t("Đăng xuất?"), t("Bản nháp và thay đổi chưa đồng bộ vẫn được giữ trên thiết bị này."), [
+    const owner = session?.user.id;
+    if (!owner) return;
+    signOutReading.current = true;
+    setBusy(true);
+    let copy: "signOutClean" | "signOutPending";
+    try {
+      const [pending, conflicts] = await Promise.all([pendingMutationCount(owner), mutationConflictCount(owner)]);
+      if (activeOwner.current !== owner) return;
+      copy = signOutCopy(pending, conflicts);
+    } catch {
+      if (activeOwner.current === owner) setMessage("Không kiểm tra được đồng bộ. Hãy thử lại.");
+      return;
+    } finally { signOutReading.current = false; if (activeOwner.current === owner) setBusy(false); }
+    Alert.alert(t("Đăng xuất?"), t(copy), [
       { text: t("Hủy"), style: "cancel" },
       {
         text: t("Đăng xuất"),
         onPress: () => {
+          if (activeOwner.current !== owner) return;
           setBusy(true);
           setMessage(null);
           void (async () => {
@@ -167,7 +190,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <TopAppBar title={t("Cá nhân")} back={false} />
-        <Surface peach style={styles.profileCard}><View style={styles.avatar}><AppIcon name="account" color={colors.onPrimary} size={36} /></View><Text style={styles.profileName}>{profile.displayName || t("Bạn của Picket")}</Text><Text style={styles.description}>{localMode ? t("Lưu riêng trên thiết bị") : session?.user.email}</Text><Pressable accessibilityState={{ expanded: editingProfile }} onPress={() => setEditingProfile(!editingProfile)}><Text style={styles.back}>{editingProfile ? t("Đóng chỉnh sửa") : t("Chỉnh sửa hồ sơ")}</Text></Pressable></Surface>
+        <Surface style={styles.profileCard}><View style={styles.avatar}><AppIcon name="account" color={colors.onPrimary} size={26} /></View><View style={{ flex: 1 }}><Text numberOfLines={2} style={styles.profileName}>{profile.displayName || t("Bạn của Picket")}</Text><Text numberOfLines={localMode ? 2 : 1} ellipsizeMode={localMode ? "tail" : "middle"} style={styles.description}>{localMode ? t("Lưu riêng trên thiết bị") : session?.user.email}</Text></View><IconButton icon={editingProfile ? "close" : "pencil-outline"} label={editingProfile ? t("Đóng chỉnh sửa") : t("Chỉnh sửa hồ sơ")} onPress={() => setEditingProfile(!editingProfile)} /></Surface>
         {editingProfile && <Surface>
         <Text style={styles.label}>{t("Tên hiển thị")}</Text>
         <TextInput accessibilityLabel={t("Tên hiển thị")} maxLength={120} onChangeText={setDisplayName} style={styles.input} value={displayName} />
@@ -177,18 +200,18 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
         <Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={styles.primary}>{busy ? <ActivityIndicator accessibilityLabel={t("Đang lưu hồ sơ")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{t("Lưu thay đổi")}</Text>}</Pressable>
         </Surface>}
         <SectionTitle title={t("Tùy chọn và bảo mật")} />
-        <View style={styles.switchRow}><View style={styles.switchCopy}><Text style={styles.switchTitle}>{t("Ẩn số dư")}</Text><Text style={styles.switchDescription}>{t("Che số tiền trên màn hình tổng quan.")}</Text></View><Switch accessibilityLabel={t("Ẩn số dư")} disabled={visibilityDraft !== null} hitSlop={12} onValueChange={(next) => void changeVisibility(next)} thumbColor={colors.white} trackColor={{ false: colors.peach, true: colors.mauve }} value={hideBalance} /></View>
-        <View style={styles.switchRow}><View style={styles.switchCopy}><Text style={styles.switchTitle}>{t("Khóa ứng dụng")}</Text><Text style={styles.switchDescription}>{t("Yêu cầu sinh trắc học hoặc mã khóa thiết bị khi mở lại Picket.")}</Text></View><Switch accessibilityLabel={t("Khóa ứng dụng")} disabled={deviceLock.busy} hitSlop={12} onValueChange={(next) => void deviceLock.setEnabled(next).then((saved) => { if (!saved) setMessage("Chưa thể đổi khóa. Hãy thiết lập mã khóa thiết bị rồi thử lại."); })} thumbColor={colors.white} trackColor={{ false: colors.peach, true: colors.mauve }} value={deviceLock.enabled} /></View>
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()}><Text style={styles.back}>{t("Lưu tùy chọn")}</Text></Pressable>
+        <MenuRow icon="palette-outline" title={t("Giao diện", { defaultValue: "Giao diện" })} description={t("Bảng màu và chế độ sáng/tối", { defaultValue: "Bảng màu và chế độ sáng/tối" })} onPress={() => router.push(routes.appearance)} />
+        <View style={styles.switchRow}><View style={styles.switchCopy}><Text style={styles.switchTitle}>{t("Ẩn số dư")}</Text><Text style={styles.switchDescription}>{t("Che số tiền trên màn hình tổng quan.")}</Text></View><Switch accessibilityLabel={t("Ẩn số dư")} disabled={visibilityDraft !== null} hitSlop={12} onValueChange={(next) => void changeVisibility(next)} thumbColor={theme === "dark" && !hideBalance ? colors.muted : colors.white} trackColor={{ false: colors.peach, true: colors.mauve }} value={hideBalance} /></View>
+        <View style={styles.switchRow}><View style={styles.switchCopy}><Text style={styles.switchTitle}>{t("Khóa ứng dụng")}</Text><Text style={styles.switchDescription}>{t("Yêu cầu sinh trắc học hoặc mã khóa thiết bị khi mở lại Picket.")}</Text></View><Switch accessibilityLabel={t("Khóa ứng dụng")} disabled={deviceLock.busy} hitSlop={12} onValueChange={(next) => void deviceLock.setEnabled(next).then((saved) => { if (!saved) setMessage("Chưa thể đổi khóa. Hãy thiết lập mã khóa thiết bị rồi thử lại."); })} thumbColor={theme === "dark" && !deviceLock.enabled ? colors.muted : colors.white} trackColor={{ false: colors.peach, true: colors.mauve }} value={deviceLock.enabled} /></View>
         {entitlements && <View style={styles.planCard}><Text style={styles.planTitle}>Picket {entitlements.tier.toUpperCase()}</Text><Text style={styles.planText}>{t("ocrRemaining",{remaining:entitlements.ocrFallbackRemaining,limit:entitlements.ocrFallbackDailyLimit})}</Text></View>}
         {message && <Text accessibilityLiveRegion="polite" style={message.startsWith("Đã") ? styles.success : styles.error}>{t(message,{defaultValue:message})}</Text>}
         <SectionTitle title={t("Công cụ của bạn")} />
         <Surface style={styles.menuGroup}>
-        <MenuRow disabled={busy} icon="calendar-check-outline" title={t("Hóa đơn cần thanh toán")} onPress={() => router.push(routes.bills)} />
+        <MenuRow disabled={busy} icon="calendar-check-outline" illustration="receipt" title={t("Hóa đơn cần thanh toán")} onPress={() => router.push(routes.bills)} />
         <MenuRow disabled={busy} icon="repeat" title={t("Chi phí định kỳ")} onPress={() => router.push(routes.subscriptions)} />
-        <MenuRow disabled={busy} icon="shape-outline" title={t("Quản lý danh mục")} onPress={() => router.push(routes.categories)} />
+        <MenuRow disabled={busy} icon="shape-outline" illustration="shopping" title={t("Quản lý danh mục")} onPress={() => router.push(routes.categories)} />
         <MenuRow disabled={busy} icon="chart-box-outline" title={t("Thống kê thu chi")} onPress={() => router.push(routes.insights)} />
-        <MenuRow disabled={busy} icon="image-multiple-outline" title={t("Bộ sưu tập kỷ vật")} onPress={() => router.push(routes.keepsakes)} />
+        <MenuRow disabled={busy} icon="image-multiple-outline" illustration="gift" title={t("Bộ sưu tập kỷ vật")} onPress={() => router.push(routes.keepsakes)} />
         <MenuRow disabled={busy} icon="bell-outline" title={t("Thông báo và nhắc việc")} onPress={() => router.push(routes.notifications)} />
         </Surface>
         <SectionTitle title={t("Tài khoản và dữ liệu")} />
@@ -222,14 +245,14 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
 function ChoiceGroup<T extends string>({ label, options, selected, select }: { label: string; options: readonly T[]; selected: string; select(value: T): void }) {
   const {t}=useTranslation("profile");
   const { styles } = useMobileStyles(createStyles);
-  return <View><Text style={styles.label}>{label}</Text><View style={styles.choices}>{options.map((option) => <Pressable accessibilityRole="radio" accessibilityState={{ checked: selected === option }} key={option} onPress={() => select(option)} style={[styles.choice, selected === option && styles.choiceSelected]}><Text style={[styles.choiceText, selected === option && styles.choiceTextSelected]}>{t(option,{defaultValue:option})}</Text></Pressable>)}</View></View>;
+  return <View><Text style={styles.label}>{label}</Text><View style={styles.choices}>{options.map((option) => <ChoiceChip checked={selected === option} key={option} label={t(option,{defaultValue:option})} onPress={() => select(option)} />)}</View></View>;
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   fallbackPage: { paddingBottom: 140 },
   fallbackBody: { flex: 1, width: "100%", paddingHorizontal: 20 },
-  profileCard: { alignItems: "center", gap: 8, paddingVertical: 24 }, avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.mauve, alignItems: "center", justifyContent: "center" }, profileName: { color: colors.ink, fontSize: 23, lineHeight: 32, fontWeight: "700", textAlign: "center" }, menuGroup: { paddingVertical: 4 },
-  signOut: { alignItems: "center", borderColor: colors.peach, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 52 },
+  profileCard: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12 }, avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.mauve, alignItems: "center", justifyContent: "center" }, profileName: { color: colors.ink, fontSize: 20, lineHeight: 28, fontWeight: "700" }, menuGroup: { paddingVertical: 4 },
+  signOut: { alignItems: "center", borderColor: colors.border, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height },
   signOutText: { color: colors.ink, fontSize: 15, fontWeight: "700" },
-  safeArea: { backgroundColor: colors.cream, flex: 1 }, center: { alignItems: "center", justifyContent: "center" }, content: { gap: 12, padding: 20, paddingBottom: 140 }, header: { minHeight: 38 }, back: { color: colors.mauve, fontSize: 14, fontWeight: "700", paddingVertical: 12 }, title: { color: colors.ink, fontSize: 32, fontWeight: "700", lineHeight: 38 }, description: { color: colors.muted, fontSize: 13, lineHeight: 20, textAlign: "center" }, label: { color: colors.ink, fontSize: 14, fontWeight: "600", marginTop: 16, marginBottom: 8 }, input: { backgroundColor: colors.cream, borderColor: colors.line, borderRadius: radii.small, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 56, paddingHorizontal: 15 }, choices: { flexDirection: "row", flexWrap: "wrap", gap: 8 }, choice: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.pill, borderWidth: 1, minHeight: 48, justifyContent: "center", paddingHorizontal: 15 }, choiceSelected: { backgroundColor: colors.mauve, borderColor: colors.mauve }, choiceText: { color: colors.ink, fontSize: 14, fontWeight: "600" }, choiceTextSelected: { color: colors.onPrimary }, switchRow: { alignItems: "center", backgroundColor: colors.white, borderRadius: radii.medium, flexDirection: "row", gap: 14, minHeight: 76, padding: 16 }, switchCopy: { flex: 1 }, switchTitle: { color: colors.ink, fontSize: 15, fontWeight: "600" }, switchDescription: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 3 }, planCard: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, gap: 5, padding: 16 }, planTitle: { color: colors.ink, fontSize: 15, fontWeight: "700" }, planText: { color: colors.muted, fontSize: 13, lineHeight: 19 }, primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: 28, justifyContent: "center", marginTop: 20, minHeight: 52 }, primaryText: { color: colors.onPrimary, fontSize: 16, fontWeight: "700" }, secondary: { alignItems: "center", borderColor: colors.mauve, borderRadius: radii.small, borderWidth: 1, justifyContent: "center", minHeight: 52 }, secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "700" }, sensitive: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 12 }, deleteLink: { alignItems: "center", minHeight: 48, justifyContent: "center" }, deleteText: { color: colors.expense, fontSize: 14, fontWeight: "700" }, error: { color: colors.expense, fontSize: 14 }, success: { color: colors.income, fontSize: 14, fontWeight: "600" },
+  safeArea: { backgroundColor: colors.cream, flex: 1 }, center: { alignItems: "center", justifyContent: "center" }, content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 8, padding: paperSpace.screen, paddingBottom: 140 }, header: { minHeight: 38 }, back: { color: colors.link, fontSize: 14, fontWeight: "700", paddingVertical: 12 }, title: { color: colors.ink, fontSize: 26, fontWeight: "700", lineHeight: 38 }, description: { color: colors.muted, fontSize: 13, lineHeight: 20 }, label: { color: colors.ink, fontSize: 14, fontWeight: "600", marginTop: 16, marginBottom: 8 }, input: { backgroundColor: colors.cream, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 15 }, choices: { flexDirection: "row", flexWrap: "wrap", gap: 8 }, choice: { backgroundColor: colors.white, borderColor: colors.border, borderRadius: paperShape.chip, borderWidth: 1, minHeight: 48, justifyContent: "center", paddingHorizontal: 15 }, choiceSelected: { backgroundColor: colors.mauve, borderColor: colors.primaryOutline }, choiceText: { color: colors.ink, fontSize: 14, fontWeight: "600" }, choiceTextSelected: { color: colors.onPrimary }, switchRow: { alignItems: "center", backgroundColor: colors.white, borderRadius: paperShape.card, flexDirection: "row", gap: 14, minHeight: 64, padding: 12 }, switchCopy: { flex: 1 }, switchTitle: { color: colors.ink, fontSize: 15, fontWeight: "600" }, switchDescription: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 3 }, planCard: { backgroundColor: colors.white, borderColor: colors.border, borderRadius: paperShape.card, borderWidth: 1, gap: 5, padding: 16 }, planTitle: { color: colors.ink, fontSize: 15, fontWeight: "700" }, planText: { color: colors.muted, fontSize: 13, lineHeight: 19 }, primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", marginTop: 20, minHeight: paperControl.height }, primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" }, secondary: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height }, secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" }, sensitive: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 12 }, deleteLink: { alignItems: "center", minHeight: 48, justifyContent: "center" }, deleteText: { color: colors.danger, fontSize: 14, fontWeight: "700" }, error: { color: colors.danger, fontSize: 14 }, success: { color: colors.income, fontSize: 14, fontWeight: "600" },
 });
