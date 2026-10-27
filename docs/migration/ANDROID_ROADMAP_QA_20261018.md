@@ -1,5 +1,9 @@
 # Kiểm thử 8 luồng Android — 2026-10-18
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Nguồn: [APP_COMPLETION_PLAN.md](APP_COMPLETION_PLAN.md). Báo cáo này ghi phạm vi thực chạy, không tuyên bố tất cả 8 luồng đã hoàn thiện.
 
 Follow-up phiên offline: [OFFLINE_SESSION_RECOVERY_TDD.md](OFFLINE_SESSION_RECOVERY_TDD.md) ghi bản sửa bootstrap/deadline, Android cold-start offline với client clock +2 giờ và queue 321 ₫→reconnect một bản ghi. Natural server expiry chưa nghiệm thu. Bộ mobile mới nhất 144/144, không thay thế các giới hạn trong bảng bằng chứng cũ.
