@@ -1,3 +1,4 @@
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
 import { PicketScrollView as ScrollView } from "@/core/ui/picket-scroll-view";
 import { PicketText as Text } from "@/core/ui/picket-text";
@@ -77,6 +78,7 @@ export default function BillingScreen() {
 function BillingContent({ accessToken, userId }: { accessToken: string; userId: string }) {
   const { colors, styles } = useMobileStyles(createStyles);
   const { t } = useTranslation("billing");
+  const [cadence, setCadence] = useState<"monthly" | "yearly">("monthly");
   const [busyProduct, setBusyProduct] = useState<string | null>(null);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState<{key:keyof typeof billingVi;tier?:string} | null>(null);
@@ -165,7 +167,10 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
     void picketApi
       .currentEntitlements(accessToken)
       .then((value) => {
-        if (active&&request===entitlementRead.current) setEntitlements(value);
+        if (active&&request===entitlementRead.current) {
+          setEntitlements(value);
+          if(revision>0){setBusyProduct(null);operationScope.current.purchasing=false;setMessage(null);}
+        }
       })
       .catch(() => {
         if (active&&request===entitlementRead.current) setEntitlements(null);
@@ -326,8 +331,8 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
   }
 
   const orderedProducts = subscriptions.filter(
-    product => product.platform !== "android" ||
-      !product.productStatusAndroid || product.productStatusAndroid === "ok",
+    product => product.id.endsWith(cadence) && (product.platform !== "android" ||
+      !product.productStatusAndroid || product.productStatusAndroid === "ok"),
   ).sort(
     (left, right) =>
       PICKET_SUBSCRIPTION_IDS.indexOf(left.id as PicketSubscriptionId) -
@@ -341,20 +346,23 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
         <Pressable onPress={() => router.back()}>
           <Text style={styles.back}>{t("back")}</Text>
         </Pressable>
+        <View style={styles.headingGroup}><Text style={styles.eyebrow}>{t("eyebrow")}</Text>
         <Text accessibilityRole="header" style={styles.title}>{t("title")}</Text>
-        <Text style={styles.description}>
-          {t("description")}
-        </Text>
-
-        {entitlements && (
-          <View style={styles.currentPlan}>
-            <Text style={styles.currentPlanTitle}>{t("current",{tier:entitlements.tier.toUpperCase()})}</Text>
-            <Text style={styles.currentPlanText}>
-              {t("quota",{remaining:entitlements.ocrFallbackRemaining,limit:entitlements.ocrFallbackDailyLimit})}
-            </Text>
+        <Text style={styles.notice}>{t("intro")}</Text></View>
+        {entitlements && <View style={styles.currentPlan}>
+          <View style={styles.currentHeading}>
+            <View style={styles.currentIcon}><MaterialCommunityIcons name={entitlements.tier === "pro" ? "crown-outline" : entitlements.tier === "plus" ? "star-four-points-outline" : "sprout-outline"} size={28} color={colors.ink} /></View>
+            <View style={styles.flex}><Text style={styles.currentPlanTitle}>{t("current",{tier:entitlements.tier.toUpperCase()})}</Text><Text style={styles.currentPlanText}>{t("remainingLabel")}</Text></View>
+            <Text style={styles.allowance}>{entitlements.ocrFallbackRemaining}<Text style={styles.allowanceTotal}>/{entitlements.ocrFallbackDailyLimit}</Text></Text>
           </View>
-        )}
-
+          <View style={styles.meter}><View style={[styles.meterFill,{width:`${Math.min(100,Math.max(0,entitlements.ocrFallbackRemaining/Math.max(1,entitlements.ocrFallbackDailyLimit)*100))}%`}]} /></View>
+          <Text style={styles.currentPlanText}>{t("quota",{remaining:entitlements.ocrFallbackRemaining,limit:entitlements.ocrFallbackDailyLimit})}</Text>
+          {entitlements.ocrFallbackRemaining===0&&<Text accessibilityLiveRegion="polite" style={styles.exhausted}>{t("exhausted")}</Text>}
+        </View>}
+        <View style={styles.sectionHeading}><Text style={styles.sectionTitle}>{t("compare")}</Text><MaterialCommunityIcons name="receipt-text-outline" size={24} color={colors.link} /></View>
+        <View accessibilityRole="tablist" style={styles.cadenceTabs}>
+          {(["monthly","yearly"] as const).map(value=><Pressable key={value} accessibilityRole="tab" accessibilityState={{selected:cadence===value}} disabled={busyProduct!==null||restoring} onPress={()=>setCadence(value)} style={[styles.cadenceTab,cadence===value&&styles.cadenceSelected]}><Text style={[styles.cadenceText,cadence===value&&styles.cadenceSelectedText]}>{t(value==="monthly"?"monthlyTab":"yearlyTab")}</Text></Pressable>)}
+        </View>
         {Platform.OS !== "android" ? (
           <Text style={styles.notice}>{t("androidOnly")}</Text>
         ) : !connected ? (
@@ -370,6 +378,8 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           orderedProducts.map((product) => {
             if (!isPicketSubscriptionId(product.id)) return null;
             const keys = planKeys[product.id];
+            const isPro=product.id.startsWith("picket_pro_");
+            const isCurrent=entitlements?.tier===(isPro?"pro":"plus");
             const copy = {name:keys.name,cadence:t(keys.cadence),summary:t(keys.summary)};
             const offer=purchaseOffer(product);
             const purchaseDisabled = catalogueLoading || !offer || !storeReady || !connected || busyProduct !== null || restoring;
@@ -377,13 +387,17 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
             return (
               <View key={product.id} style={styles.planCard}>
                 <View style={styles.planHeader}>
+                  <View style={[styles.planIcon,{backgroundColor:isPro?colors.pocketLilac:colors.pocketMint}]}><MaterialCommunityIcons name={isPro?"crown-outline":"star-four-points-outline"} size={28} color={colors.ink}/></View>
                   <View style={styles.planNameBlock}>
                     <Text style={styles.planName}>{copy.name}</Text>
                     <Text style={styles.cadence}>{copy.cadence}</Text>
+                    {isCurrent&&<Text style={styles.currentBadge}>{t("currentBadge")}</Text>}
                   </View>
                   <Text style={styles.price}>{displayPrice}</Text>
                 </View>
-                <Text style={styles.planSummary}>{copy.summary}</Text>
+                <View style={styles.benefitRow}><MaterialCommunityIcons name="cloud-check-outline" size={21} color={colors.link}/><View style={styles.flex}><Text style={styles.benefitTitle}>{t("quotaAmount",{count:isPro?100:30})}</Text><Text style={styles.currentPlanText}>{t("quotaWindow")}</Text></View></View>
+                <View style={styles.benefitRow}><MaterialCommunityIcons name="cellphone-check" size={21} color={colors.link}/><Text style={[styles.currentPlanText,styles.flex]}>{t("localIncluded")}</Text></View>
+                <Text style={styles.cadence}>{t(cadence==="monthly"?"billedMonthly":"billedYearly")}</Text>
                 <Pressable
                   accessibilityLabel={t("chooseLabel",{name:copy.name,cadence:copy.cadence})}
                   disabled={purchaseDisabled}
@@ -401,6 +415,9 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
           })
         )}
 
+        <View style={styles.freeRow}><View style={styles.freeIcon}><MaterialCommunityIcons name="sprout-outline" size={25} color={colors.ink}/></View><View style={styles.flex}><Text style={styles.benefitTitle}>{t("freePlan")}</Text><Text style={styles.currentPlanText}>{t("freeAllowance")}</Text></View><MaterialCommunityIcons name="check-circle-outline" size={21} color={colors.income}/></View>
+        <Text style={styles.notice}>{t("allIncluded")}</Text>
+        <Text style={styles.sectionTitle}>{t("storeTools")}</Text>
         {message && (
           <Text accessibilityLiveRegion="polite" style={success ? styles.success : styles.error}>
             {t(message.key,{tier:message.tier})}
@@ -435,22 +452,42 @@ function BillingContent({ accessToken, userId }: { accessToken: string; userId: 
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
+  headingGroup:{gap:8},
+  flex: { flex: 1, minWidth: 0 },
+  eyebrow: {color:colors.link,fontSize:11,fontWeight:"800",letterSpacing:1.1},
+  intro: {color:colors.ink,fontSize:22,lineHeight:30,fontWeight:"800"},
+  currentHeading:{flexDirection:"row",alignItems:"center",gap:12},
+  currentIcon:{width:48,height:48,borderRadius:16,alignItems:"center",justifyContent:"center",backgroundColor:colors.surface},
+  allowance:{color:colors.ink,fontSize:30,fontWeight:"800"},allowanceTotal:{fontSize:15,color:colors.muted},
+  meter:{height:6,borderRadius:3,backgroundColor:colors.surface,overflow:"hidden",marginVertical:8},meterFill:{height:6,backgroundColor:colors.primary,borderRadius:3},
+  exhausted:{color:colors.danger,fontSize:13,lineHeight:20},
+  sectionHeading:{flexDirection:"row",alignItems:"center",justifyContent:"space-between",marginTop:8},
+  sectionTitle:{color:colors.ink,fontSize:18,fontWeight:"800"},
+  cadenceTabs:{flexDirection:"row",backgroundColor:colors.elevated,borderRadius:paperShape.button,padding:4,gap:4},
+  cadenceTab:{flex:1,alignItems:"center",justifyContent:"center",minHeight:48,borderRadius:paperShape.button},
+  cadenceSelected:{backgroundColor:colors.primary},cadenceText:{color:colors.muted,fontSize:14,fontWeight:"700"},cadenceSelectedText:{color:colors.onPrimary},
+  planIcon:{width:48,height:48,borderRadius:16,alignItems:"center",justifyContent:"center"},
+  benefitRow:{flexDirection:"row",gap:10,alignItems:"center"},benefitTitle:{color:colors.ink,fontSize:15,fontWeight:"700"},
+  currentBadge:{color:colors.link,fontSize:10,fontWeight:"800",letterSpacing:0.5,marginTop:4},
+  freeRow:{flexDirection:"row",alignItems:"center",gap:12,paddingVertical:12,borderBottomWidth:1,borderBottomColor:colors.line},
+  freeIcon:{width:44,height:44,borderRadius:14,alignItems:"center",justifyContent:"center",backgroundColor:colors.pocketBlue},
+
   safeArea: { backgroundColor: colors.cream, flex: 1 },
-  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 14, padding: paperSpace.screen, paddingBottom: 48 },
+  content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: paperSpace.section, padding: paperSpace.screen, paddingBottom: 48 },
   back: { color: colors.link, fontSize: 15, fontWeight: "700" },
   title: { color: colors.ink, fontSize: 26, fontWeight: "700", lineHeight: 38 },
   description: { color: colors.muted, fontSize: 15, lineHeight: 23 },
-  currentPlan: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: paperShape.card, borderWidth: 1, gap: 6, padding: 16 },
+  currentPlan: { backgroundColor: colors.peach, borderColor: colors.peach, borderRadius: paperShape.card, borderWidth: 1, gap: 6, padding: 16 },
   currentPlanTitle: { color: colors.ink, fontSize: 16, fontWeight: "700" },
   currentPlanText: { color: colors.muted, fontSize: 13, lineHeight: 19 },
   loadingRow: { alignItems: "center", flexDirection: "row", gap: 10 },
   notice: { color: colors.muted, fontSize: 14, lineHeight: 21 },
-  planCard: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: paperShape.card, borderWidth: 1, gap: 14, padding: 18 },
+  planCard: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: paperShape.card, borderWidth: 1, gap: 14, padding: paperControl.cardPadding },
   planHeader: { alignItems: "flex-start", flexDirection: "row", gap: 12, justifyContent: "space-between" },
-  planNameBlock: { flex: 1 },
-  planName: { color: colors.ink, fontSize: 20, fontWeight: "700" },
+  planNameBlock: { flex: 1, minWidth: 0 },
+  planName: { color: colors.ink, fontSize: 18, fontWeight: "700" },
   cadence: { color: colors.muted, fontSize: 13, marginTop: 3 },
-  price: { color: colors.link, fontSize: 17, fontWeight: "700" },
+  price: { color: colors.link, fontSize: 19, fontWeight: "800", flexShrink: 1, textAlign: "right" },
   planSummary: { color: colors.muted, fontSize: 14, lineHeight: 21 },
   primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", minHeight: paperControl.height },
   primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
