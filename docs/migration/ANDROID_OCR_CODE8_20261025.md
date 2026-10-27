@@ -1,5 +1,9 @@
 # OCR candidate — Android 1.0.4 / code 8
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Built 25 October 2026 from the current local working tree after `f5f93bd7`.
 Uploaded to Google Play Internal testing on 25 October 2026; device acceptance
 is still pending. This is not a public production release.
