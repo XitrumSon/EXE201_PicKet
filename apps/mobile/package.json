@@ -71,6 +71,8 @@
     "test:sync": "tsx --test src/core/sync/*.test.ts",
     "test:ui": "tsx --test src/core/ui/*.test.ts",
     "test:settings": "tsx --test src/features/settings/*.test.ts src/core/i18n/*.test.ts src/core/theme/*.test.ts",
+    "test:learning": "tsx --test src/features/learning/*.test.ts",
+    "test:cashflow": "tsx --test src/features/cashflow/*.test.ts",
     "typecheck": "tsc --noEmit",
     "release:preflight": "node scripts/validate-release-env.mjs"
   },
