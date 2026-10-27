@@ -1,7 +1,9 @@
-import { colors } from "@picket/design-tokens";
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
-import { Linking, StyleSheet, Text } from "react-native";
+import { Linking, StyleSheet } from "react-native";
 
 import { picketApi } from "@/core/api/client";
 import { supabase } from "@/core/supabase/client";
@@ -11,6 +13,7 @@ import { safePartnerUrl, selectPartnerAd, visiblePartnerNotice, type PartnerNoti
 import { useAuth } from "@/features/auth/auth-context";
 
 export function PartnerNotice() {
+  const { styles } = useMobileStyles(createStyles);
   const { session } = useAuth();
   const owner = session?.user.id;
   const [snapshot, setSnapshot] = useState<PartnerNoticeSnapshot | null>(null);
@@ -59,4 +62,4 @@ export function PartnerNotice() {
   </>;
 }
 
-const styles = StyleSheet.create({label:{color:colors.mauve,fontSize:11,fontWeight:"800",letterSpacing:1},title:{color:colors.ink,fontSize:17,fontWeight:"800",marginTop:8},copy:{color:colors.ink,fontSize:14,lineHeight:21,marginTop:7},link:{color:colors.mauve,fontSize:13,fontWeight:"800",marginTop:10}});
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({label:{color:colors.link,fontSize:11,fontWeight:"700",letterSpacing:1},title:{color:colors.ink,fontSize:17,fontWeight:"700",marginTop:8},copy:{color:colors.ink,fontSize:14,lineHeight:21,marginTop:7},link:{color:colors.link,fontSize:13,fontWeight:"700",marginTop:10}});
