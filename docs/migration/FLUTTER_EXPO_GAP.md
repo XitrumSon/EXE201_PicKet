@@ -1,5 +1,9 @@
 # Flutter → Expo Android: các luồng còn thiếu
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Audit source mới nhất 22/10: [báo cáo kiểm kê](FLUTTER_SOURCE_AUDIT_20261022.md). Source hiện tại không còn Flutter runtime; 94 file Dart đều thuộc backend. Đối chiếu 63 file Dart lịch sử/nhóm màn hình với đích Expo không phát hiện thêm nhóm chỉ còn ở Flutter. Không xóa TypeScript backup đang dùng. Người dùng không có file Flutter lịch sử và đã bỏ nghiệm thu đầu vào đó khỏi MVP; không biến thành PASS. Các bảng thiếu sót/checkpoint bên dưới là lịch sử, không phải danh sách tính năng hiện đang chưa chuyển.
 
 Nghiệm thu cập nhật 22/10: [checklist phần 1 máy ảo đã đạt](PART1_ACCEPTANCE_20261022.md). Không phát sinh chức năng Flutter mới còn phải chuyển từ các ca này; đầu vào file xuất Flutter thật vẫn là kiểm chứng tương thích lịch sử riêng, chưa được thay thế bằng fixture tổng hợp.
