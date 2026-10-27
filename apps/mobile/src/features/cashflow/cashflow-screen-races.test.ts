@@ -1,3 +1,4 @@
+import { paperShape, paperSpace } from "../../core/theme/paper-foundations";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
@@ -42,6 +43,9 @@ test("rapid schedule save callbacks dispatch one mutation", async () => {
     }
   };
   const adapters: Record<string, unknown> = {
+    "@/core/ui/picket-text": { PicketText: "Text" },
+    "@/core/ui/picket-scroll-view": { PicketScrollView: "ScrollView" },
+    "@/core/theme/paper-foundations": { paperShape, paperSpace },
     react: { useState: state, useRef: ref, useEffect: effect, useCallback: (callback: unknown) => callback },
     "react/jsx-runtime": { jsx: (type: unknown, props: unknown) => ({ type, props }), jsxs: (type: unknown, props: unknown) => ({ type, props }) },
     "react-native": { Text: "Text", View: "View", ScrollView: "ScrollView", TextInput: "TextInput" },
