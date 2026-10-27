@@ -13,6 +13,16 @@ function Resolve-RepoPath([string]$relative) {
 }
 
 $relativeTargets = [System.Collections.Generic.List[string]]::new()
+$artifactRoot = Resolve-RepoPath '.artifacts'
+if (Test-Path -LiteralPath $artifactRoot -PathType Container) {
+    Get-ChildItem -LiteralPath $artifactRoot -Directory -Filter '*export*' |
+        Where-Object {
+            (($_.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -eq 0) -and
+            (Test-Path -LiteralPath (Join-Path $_.FullName 'metadata.json') -PathType Leaf) -and
+            (Test-Path -LiteralPath (Join-Path $_.FullName '_expo') -PathType Container)
+        } |
+        ForEach-Object { $relativeTargets.Add([System.IO.Path]::GetRelativePath($repoRoot, $_.FullName)) }
+}
 $moduleRoot = Resolve-RepoPath 'apps/mobile/node_modules'
 if (Test-Path -LiteralPath $moduleRoot -PathType Container) {
     Get-ChildItem -LiteralPath $moduleRoot -Directory -Recurse -Filter android -ErrorAction Stop |
@@ -28,10 +38,14 @@ if (Test-Path -LiteralPath $moduleRoot -PathType Container) {
 }
 foreach ($relative in @(
     'apps/mobile/android/app/build',
+    'apps/mobile/android/app/.cxx',
     'apps/mobile/android/build',
     'apps/mobile/android/.gradle',
+    'apps/mobile/android/.kotlin',
     'apps/mobile/dist',
+    'apps/api/build',
     'web/.next',
+    'web/.next-dev',
     'apps/landing/dist',
     '.artifacts/roadmap-qa/cache-size-audit'
 )) {
