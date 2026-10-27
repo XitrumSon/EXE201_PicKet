@@ -15,7 +15,7 @@ Chạy tại thư mục gốc repository bằng PowerShell, với Node và Pytho
 
 ```powershell
 npm test --prefix apps/landing
-$env:PICKET_APK = (Resolve-Path '.artifacts/releases/picket-1.0.7-20-production-arm64-v8a.apk').Path
+$env:PICKET_APK = (Resolve-Path '.artifacts/releases/picket-1.0.9-22-production-arm64-v8a.apk').Path
 npm run build --prefix apps/landing
 python -m http.server 4175 --bind 127.0.0.1 --directory apps/landing/dist
 ```
@@ -32,7 +32,7 @@ Chạy tại gốc repository:
 
 ```powershell
 ./apps/landing/scripts/deploy.ps1 `
-  -ApkPath '.artifacts/releases/picket-1.0.7-20-production-arm64-v8a.apk'
+  -ApkPath '.artifacts/releases/picket-1.0.9-22-production-arm64-v8a.apk'
 ```
 
 Nếu dùng máy/khóa SSH khác:
@@ -79,3 +79,7 @@ Bảng hỗ trợ dùng HTML Popover: mở bằng nút Hỗ trợ, đóng bằng
 Đã bỏ nút bật/tắt chuyển động theo yêu cầu chủ dự án. Hiệu ứng tự khởi chạy khi mở trang; hiệu ứng trang trí tự chạy kết thúc sau một lượt, còn phản hồi theo con trỏ/cuộn vẫn hoạt động. Thiết lập reduced motion của hệ thống vẫn được ưu tiên.
 
 Các liên kết section trong trang cuộn đến nội dung mà không thêm hash vào URL khi JavaScript hoạt động; giữ query string, focus và liên kết gốc cho keyboard/no-JS. Link cũ có fragment hợp lệ vẫn mở đúng section rồi làm sạch URL bằng replaceState, không tạo thêm history entry.
+
+## APK 1.0.9/code 22 — 28/10/2026
+
+Landing production đã cập nhật APK ARM64 1.0.9/code 22, ký cùng khóa các bản trực tiếp trước đó. Đã tải toàn bộ APK công khai và đối chiếu SHA-256; cập nhật native từ code 18 sang code 22 trên máy ảo x86_64 giữ tài khoản, số dư và 4 ví. Bản x86 chỉ dùng QA, không phải file tải public. Xem [báo cáo vòng đời và phát hành](../../docs/migration/BILLING_RELEASE_ACCEPTANCE_20261028.md).
