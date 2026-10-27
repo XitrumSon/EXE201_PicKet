@@ -1,5 +1,9 @@
 # Keepsake outbox acknowledgement — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Later native acceptance: [KEEPSAKE_CONTROLLED_LOSS_ANDROID.md](KEEPSAKE_CONTROLLED_LOSS_ANDROID.md) adds controlled metadata PATCH response loss, queue 1→0/object audit and one cached-photo A–B–A scenario. Earlier statements below about those cases being unverified describe the preceding increment; cache-full/race and durable create-before-network remain open.
 
 Source: [APP_COMPLETION_PLAN.md](APP_COMPLETION_PLAN.md), offline/media durability. Scope: Expo Android, no BE, remote schema, Storage policy, credentials, or public release changes. No commit/push per user request.
