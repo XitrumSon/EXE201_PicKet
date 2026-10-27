@@ -1,12 +1,16 @@
+import { paperControl , paperShape } from "@/core/theme/paper-foundations";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { useTranslation } from "react-i18next";
 import { parseBillForm, billDateInput } from "@/features/bills/bill-form";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { TopAppBar , ChoiceChip, DangerAction, FieldLabel, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
-import { colors, radii } from "@picket/design-tokens";
 import type { BillStatus } from "@picket/domain";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
@@ -17,6 +21,7 @@ const statuses: BillStatus[] = ["pending", "paid", "overdue"];
 
 export default function BillDetailScreen() {
   const { t } = useTranslation("bills");
+  const { styles } = useMobileStyles(createStyles);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session, localMode } = useAuth();
   const { archive, bills, update } = useBills();
@@ -51,7 +56,7 @@ export default function BillDetailScreen() {
   }
 
   return <PicketScreen>
-    <TopAppBar title={t("detail")} subtitle={t("detailSubtitle")} backDisabled={busy} />
+    <TopAppBar illustration="home" title={t("detail")} subtitle={t("detailSubtitle")} backDisabled={busy} />
     <Surface>
       <FieldLabel>{t("name")}</FieldLabel><TextInput accessibilityLabel={t("name")} maxLength={160} onChangeText={setTitle} style={styles.input} value={currentTitle} />
       <FieldLabel>{t("amount")}</FieldLabel><TextInput money accessibilityLabel={t("amountLabel")} keyboardType="number-pad" onChangeText={setAmount} style={styles.input} value={currentAmount} />
@@ -63,4 +68,4 @@ export default function BillDetailScreen() {
   </PicketScreen>;
 }
 
-const styles = StyleSheet.create({ appBar: { justifyContent: "center", minHeight: 52 }, back: { color: colors.mauve, fontSize: 15, fontWeight: "700" }, heading: { color: colors.ink, fontSize: 29, fontWeight: "700", letterSpacing: -0.8, marginTop: 18 }, subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginBottom: 22, marginTop: 7 }, input: { borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 54, paddingHorizontal: 16 }, choices: { flexDirection: "row", flexWrap: "wrap", gap: 9 }, error: { color: colors.expense, fontSize: 13, fontWeight: "700", lineHeight: 19, marginTop: 14 } });
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({ appBar: { justifyContent: "center", minHeight: 52 }, back: { color: colors.link, fontSize: 15, fontWeight: "700" }, heading: { color: colors.ink, fontSize: 26, fontWeight: "700", letterSpacing: -0.8, marginTop: 18 }, subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginBottom: 22, marginTop: 7 }, input: { borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 16 }, choices: { flexDirection: "row", flexWrap: "wrap", gap: 9 }, error: { color: colors.danger, fontSize: 13, fontWeight: "700", lineHeight: 19, marginTop: 14 } });
