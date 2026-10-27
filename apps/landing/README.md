@@ -1,37 +1,81 @@
-# Picket Android launch page
+# Picket landing page
 
-Standalone, buildless HTML/CSS, compiled only to substitute verified release metadata and copy assets. No React/Next dependency, authentication, analytics, remote font requests, or runtime JavaScript. The existing `web/` application is unchanged by this launch page.
+Landing tĩnh tại **https://picketfinance.com**, độc lập với Next.js ở `web/` và `app.picketfinance.com`. Source công khai ở `site/`; `dist/` là output build và không commit. Không có analytics hoặc font từ bên thứ ba. Animation/tương tác dùng module JavaScript local theo progressive enhancement; nội dung và link tải vẫn đọc được khi tắt JavaScript.
 
-## Build and preview
+## Sửa giao diện và xem thử
 
-Node 22.13+; no npm install is required in this directory.
+- `site/index.html`: nội dung, liên hệ, footer, FAQ và bảng hỗ trợ.
+- `site/launch-assets/paper-v1.css`: token Paper, layout và responsive.
+- `site/launch-assets/paper-motion-v1.css`, `paper-motion-v1.js`, `paper-motion-state.js`: animation, story, giảm chuyển động và mô phỏng khoản chi; không gọi API.
+- `site/launch-assets/`: ảnh minh họa, ảnh giao diện, font Nunito local và QR.
+- `site/privacy.html`, `site/account-deletion.html`: nội dung chính sách, dùng chung font/footer landing.
+- `release.json`: metadata của APK đã được ký và xác minh. Không đổi metadata chỉ vì sửa landing.
+
+Chạy tại thư mục gốc repository bằng PowerShell, với Node và Python đã cài:
 
 ```powershell
 npm test --prefix apps/landing
-$env:PICKET_APK = 'D:\EXE201\Project\.artifacts\ui-redesign\picket-production-arm64.apk'
+$env:PICKET_APK = (Resolve-Path '.artifacts/releases/picket-1.0.7-20-production-arm64-v8a.apk').Path
 npm run build --prefix apps/landing
 python -m http.server 4175 --bind 127.0.0.1 --directory apps/landing/dist
 ```
 
-Open `http://127.0.0.1:4175`. `dist/` and APKs are ignored; distribute signed APKs through the web server, not Git source history. A build rejects a missing APK, mismatched size/SHA-256, unsafe filename, emulator ABI, or QA package declared in the release manifest. The byte validator checks the manifest and hash; independently verify the real APK identity/signature/ABI before approving its hash. It does not parse Android binary manifests itself.
+Mở `http://127.0.0.1:4175`. Kiểm tra cả desktop/mobile, footer, bảng hỗ trợ và link tải. Build kiểm đúng byte size và SHA-256 từ `release.json`, từ chối APK thiếu hoặc không khớp. Việc xác minh mã gói/chữ ký/ABI thực phải làm bằng công cụ Android trước khi duyệt metadata.
 
-## Publish a new release
+## Đưa code landing mới nhất lên production
 
-1. Build the current Expo source for `arm64-v8a` using production public configuration and the existing release signing key. Do not publish the x86_64 QA/emulator artifact.
-2. Use Android `apksigner verify --print-certs` and `aapt2 dump badging`. Check production package, version, minSdk, ABI and non-debuggable build. Inspect the embedded bundle for production API and absence of QA loopback.
-3. Update `release.json` with measured metadata and SHA-256. Include a hash fragment in the filename; never replace bytes at an immutable download URL. Release 1.0.1 uses Android versionCode 2; increment versionCode for every subsequent release rather than relying only on dates.
-4. Rebuild and test. The site and checksum use this single manifest; do not edit download links manually. The QR opens the landing URL and is independent of the APK filename.
-5. Upload `dist/` to `/opt/picket/apps/landing/dist`. Keep previous release content outside the served directory for rollback. Do not put private backups, signing files or env files under `dist/`.
-6. Caddy mounts this directory read-only. Its matcher serves only `/`, `/launch-assets/*`, `/downloads/*`, `/release.json`. All other paths retain `reverse_proxy web:3000`, including `/login`, `/dashboard`, and `/auth/callback`.
-7. Validate Caddy/Compose before applying. For the first directory mount, recreate **only Caddy** with `up -d --no-deps --no-build caddy`. Do not run the full Compose deployment or pull/rebuild web/API/OCR for a landing-only update.
-8. Verify the live HTTPS page, full download hash, content type/disposition and byte-range response; check existing login/API. On later updates, upload a complete staged distribution then switch/copy into the served directory without removing still-advertised APKs.
+Source được deploy là source hiện có trên máy chạy lệnh. Review thay đổi và lưu commit có phạm vi trước khi phát hành. **Git push hiện chỉ chạy kiểm tra CI; chưa tự deploy VPS.**
 
-Rollback: restore the saved Caddyfile and Compose file, recreate only Caddy; or restore a previous complete landing distribution with its matching manifest. No database migration is involved.
+Điều kiện: Node, Python, OpenSSH (`ssh`, `scp`) và `tar`; quyền SSH tới VPS; Python 3.12+ và Docker trên VPS. Khóa mặc định là `$env:USERPROFILE/.ssh/picket_ovh`; không commit khóa.
 
-## Design and evidence
+Chạy tại gốc repository:
 
-Reuse Picket colors: surface `#FFF8F0`, primary `#96606D`, primary container `#FFD6BA`, on-surface `#4A2C2A`, secondary text `#806268`. Material 3 semantic roles, filled/tonal actions, 48px primary touch targets, a hierarchy of radii, visible focus, native details/summary, reduced motion, and responsive reflow. This is a small site-specific mapping, not a claim of full Material component-library conformance.
+```powershell
+./apps/landing/scripts/deploy.ps1 `
+  -ApkPath '.artifacts/releases/picket-1.0.7-20-production-arm64-v8a.apk'
+```
 
-Sans typography matches the native app. The actual app screenshot is from a disposable local guest profile with a 2,500,000 VND demonstration wallet; no real account or credentials are published. Logo is reused from `apps/mobile/assets/picket-logo.png`. QR generated with `qrcode` 1.5.4 (MIT), targeting the public landing URL; no QR package is shipped to visitors.
+Nếu dùng máy/khóa SSH khác:
 
-See [launch verification](../../docs/migration/LANDING_RELEASE_TDD.md). Design reference: [Material color roles](https://m3.material.io/styles/color/the-color-system) and [typography](https://m3.material.io/styles/typography/applying-type). Installation guidance: [Android alternative distribution](https://developer.android.com/distribute/marketing-tools/alternative-distribution); device policy and verification prompts may differ, so the page never recommends disabling Play Protect.
+```powershell
+./apps/landing/scripts/deploy.ps1 `
+  -ApkPath 'D:/releases/picket-production-arm64.apk' `
+  -SshTarget 'ubuntu@51.79.207.154' `
+  -SshKey 'D:/keys/picket_ovh'
+```
+
+Script tự chạy test → build với APK được kiểm hash → đóng gói file public của bản hiện hành → upload → backup → publish assets trước HTML/metadata → validate/reload Caddy. Script server ở `deploy/deploy-landing.py`; thư mục serve là `/opt/picket/apps/landing/dist`.
+
+- Giữ nguyên APK cũ và URL đã phát hành; từ chối ghi đè URL APK với byte khác.
+- Chỉ bổ sung `font-src 'self'` và `script-src 'self'` trong CSP của landing nếu cần. Không deploy hoặc restart web/API/OCR.
+- Backup riêng từng lượt trong `/opt/picket/deploy/backups/landing-<UTC>/before`; đường dẫn được in trong kết quả.
+- Nếu bước publish/validate/reload thất bại, tự phục hồi HTML, assets, metadata và Caddy từ backup.
+- Không chạy toàn bộ `docker compose up` để chỉ sửa landing.
+
+Sau deploy, kiểm tra `https://picketfinance.com`, `/privacy.html`, `/account-deletion.html`, `/release.json`, tải APK và đối chiếu SHA-256. Mở bảng hỗ trợ, xem footer trên điện thoại và xác nhận `/login` vẫn chuyển tới web. Không coi thông báo upload thành công là nghiệm thu trình duyệt.
+
+## Phát hành APK mới khác với cập nhật landing
+
+Để đưa **mobile source mới** tới người dùng, phải build APK/AAB production mới với versionCode tăng và khóa ký hiện có; xác minh bằng `apksigner`/`aapt2`, kiểm tra cấu hình API và nghiệm thu cài mới/cập nhật giữ dữ liệu. Sau đó cập nhật `release.json` bằng metadata thực, dùng filename có hash mới rồi chạy lại script landing. Google Play cần upload AAB riêng; script landing không phát hành Google Play.
+
+Sửa landing không làm thay đổi APK. Lượt motion/release tiếp theo ngày 27/10 đã đưa APK 1.0.7/code 20 lên landing, chứa UI Paper mới. Ảnh native vẫn dùng dữ liệu QA tổng hợp; không coi đó là nghiệm thu thiết bị thật.
+
+## Phục hồi bản landing trước
+
+Dùng đúng đường dẫn `before` mà lượt deploy đã in. Trên VPS, sao chép `index.html`, `privacy.html`, `account-deletion.html`, `release.json` và nội dung `launch-assets/` từ backup về `/opt/picket/apps/landing/dist/`; phục hồi `Caddyfile` về `/opt/picket/deploy/Caddyfile`. Chạy `docker exec picket-caddy-1 caddy validate --config /etc/caddy/Caddyfile`, rồi `docker exec picket-caddy-1 caddy reload --config /etc/caddy/Caddyfile`. Không xóa thư mục downloads. Kiểm tra HTTPS, font, link tải và checksum lại sau phục hồi.
+
+## Thiết kế và bằng chứng
+
+Paper dùng đúng palette mobile: canvas `#FFF8ED`, surface `#FFFCF5`, text `#302132`, muted `#72636E`, primary `#793268`, border `#EADDD5`; font Nunito 400/700 local. Dùng nút pill, thẻ radius 22, nền mint/lilac/peach và minh họa từ `apps/mobile/assets/paper`. Ảnh native chỉ chứa dữ liệu tổng hợp của tài khoản QA; không công bố tài khoản thật. Không thêm nhận xét khách hàng, lượng người dùng, giờ hỗ trợ hoặc thông tin pháp nhân chưa được xác minh.
+
+Bảng hỗ trợ dùng HTML Popover: mở bằng nút Hỗ trợ, đóng bằng ×, Escape hoặc bấm ngoài; kênh liên hệ luôn có ở footer khi trình duyệt cũ không hỗ trợ Popover. FAQ/checksum dùng details/summary. Link ngoài có tên rõ, tab mới được báo cho screen reader; focus hiển thị và tôn trọng reduced motion.
+
+[Báo cáo deploy Paper](../../docs/migration/LANDING_PAPER_DEPLOYMENT_20261027.md) · [Trạng thái dự án](../../docs/PROJECT_STATUS.md).
+
+[Nghiên cứu motion và kiểm chứng](../../docs/migration/LANDING_MOTION_RESEARCH_20261027.md) · [Android 1.0.7/code 20](../../docs/migration/ANDROID_RELEASE_1_0_7_20261027.md).
+
+## Cập nhật điều hướng và chuyển động 27/10
+
+Đã bỏ nút bật/tắt chuyển động theo yêu cầu chủ dự án. Hiệu ứng tự khởi chạy khi mở trang; hiệu ứng trang trí tự chạy kết thúc sau một lượt, còn phản hồi theo con trỏ/cuộn vẫn hoạt động. Thiết lập reduced motion của hệ thống vẫn được ưu tiên.
+
+Các liên kết section trong trang cuộn đến nội dung mà không thêm hash vào URL khi JavaScript hoạt động; giữ query string, focus và liên kết gốc cho keyboard/no-JS. Link cũ có fragment hợp lệ vẫn mở đúng section rồi làm sạch URL bằng replaceState, không tạo thêm history entry.
