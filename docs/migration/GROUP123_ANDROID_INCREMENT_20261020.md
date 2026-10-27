@@ -1,5 +1,9 @@
 # Android increment: guest receipt, two-device conflict and split reporting
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Date: 2026-10-20. Source plan: [APP_COMPLETION_PLAN.md](APP_COMPLETION_PLAN.md), groups 1–3. No commit/push, backend change, migration or public ARM64 release in this increment.
 
 Newer follow-up: [ANDROID_EXTENDED_MATRIX_20261020.md](ANDROID_EXTENDED_MATRIX_20261020.md) records additional native results, current APK checksum and 228-test verification. Remaining items below describe this earlier increment and are superseded only for explicitly accepted branches in the newer report.
