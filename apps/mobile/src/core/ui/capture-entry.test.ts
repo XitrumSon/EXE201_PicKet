@@ -1,3 +1,4 @@
+import { paperShape, paperSpace } from "../theme/paper-foundations";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -24,6 +25,9 @@ function harness() {
   const element=(type:unknown,props:Record<string,unknown>):Element=>({type,props});
   const fallback=new Proxy({}, {get:(_target,key)=>String(key)});
   const modules:Record<string,unknown>={
+    "@/core/ui/picket-text": { PicketText: "Text" },
+    "@/core/ui/picket-scroll-view": { PicketScrollView: "ScrollView" },
+    "@/core/theme/paper-foundations": { paperShape, paperSpace },
     react:hooks,"react/jsx-runtime":{jsx:element,jsxs:element},
     "react-native":{...Object.fromEntries(["ActivityIndicator","Image","ScrollView","Text","View"].map(name=>[name,name])),StyleSheet:{create:(value:unknown)=>value},Alert:{}},
     "react-native-safe-area-context":{SafeAreaView:"SafeAreaView"},
