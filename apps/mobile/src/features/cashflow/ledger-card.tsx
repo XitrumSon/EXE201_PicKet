@@ -1,5 +1,7 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { paperShape } from "@/core/theme/paper-foundations";
 import { useEffect,useRef,useState } from "react";
-import { AppState,Text,View } from "react-native";
+import { AppState, View } from "react-native";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { picketApi } from "@/core/api/client";
@@ -64,16 +66,16 @@ function LedgerFactsSession({storyOnly=false,owner,currency,schedules,days,onInv
  return <View style={{padding:16,gap:12,borderRadius:14,borderWidth:1,borderColor:c.border}}>
   <Text accessibilityRole="header" style={{color:c.text,fontSize:21,fontWeight:"700"}}>{t("ledgerTitle")}</Text>
   <Text style={{color:c.muted,lineHeight:22}}>{t("ledgerNotice")}</Text>
-  <Pressable accessibilityRole="button" disabled={busy} accessibilityState={{disabled:busy}} onPress={()=>void load()} style={{minHeight:48,padding:14,backgroundColor:c.surface}}><Text style={{color:c.primary}}>{t(busy?"ledgerLoading":"ledgerLoad")}</Text></Pressable>
+  <Pressable accessibilityRole="button" disabled={busy} accessibilityState={{disabled:busy}} onPress={()=>void load()} style={{minHeight:48,padding:14,backgroundColor:c.surface}}><Text style={{color:c.link}}>{t(busy?"ledgerLoading":"ledgerLoad")}</Text></Pressable>
   {failed&&<Text accessibilityRole="alert" style={{color:c.expense}}>{t(pending?"ledgerPending":"ledgerError")}</Text>}
   {snapshot&&<>
    <Text style={{color:c.muted}}>{t("ledgerOrigin",{time:new Intl.DateTimeFormat(localeFor(language),{dateStyle:"medium",timeStyle:"short"}).format(new Date(snapshot.asOf))})}</Text>
-   {snapshot.wallets.filter(row=>!row.archived&&!row.deletedAt&&row.currencyCode===currency).map(row=><Pressable key={row.id} accessibilityRole="checkbox" accessibilityLabel={row.name} accessibilityState={{checked:selected.includes(row.id)}} onPress={()=>{onInvalidate();setSelected(old=>old.includes(row.id)?old.filter(id=>id!==row.id):[...old,row.id]);}} style={{minHeight:48,padding:12,borderWidth:1,borderColor:selected.includes(row.id)?c.primary:c.border,borderRadius:10}}><Text style={{color:c.text}}>{selected.includes(row.id)?"☑":"☐"} {row.name}</Text></Pressable>)}
+   {snapshot.wallets.filter(row=>!row.archived&&!row.deletedAt&&row.currencyCode===currency).map(row=><Pressable key={row.id} accessibilityRole="checkbox" accessibilityLabel={row.name} accessibilityState={{checked:selected.includes(row.id)}} onPress={()=>{onInvalidate();setSelected(old=>old.includes(row.id)?old.filter(id=>id!==row.id):[...old,row.id]);}} style={{minHeight:48,padding:12,borderWidth:1,borderColor:selected.includes(row.id)?c.primary:c.border,borderRadius:paperShape.button}}><Text style={{color:c.text}}>{selected.includes(row.id)?"☑":"☐"} {row.name}</Text></Pressable>)}
    {selected.length>0&&!facts&&<Text style={{color:c.expense}}>{t("ledgerError")}</Text>}
    {facts&&(storyOnly?<WeeklyStoryCard key={JSON.stringify([selected,currency,snapshot.asOf])} snapshot={snapshot} accounts={selected} currency={currency}/>:<>
     <Text accessibilityLiveRegion="polite" style={{color:c.text,fontWeight:"700"}}>{t("ledgerBalance")}: {money(facts.balance)}</Text>
-    <Pressable accessibilityRole="button" onPress={()=>setShowEntries(value=>!value)} style={{minHeight:48,padding:12}}><Text style={{color:c.primary}}>{t("ledgerRecords",{count:facts.includedTransactionIds.length})}</Text></Pressable>
-    {showEntries&&facts.includedTransactionIds.map((id,index)=><Pressable key={id} accessibilityRole="button" onPress={()=>router.push({pathname:"/transactions/[id]",params:{id}})} style={{minHeight:48,padding:12}}><Text style={{color:c.primary}}>{t("ledgerRecord",{count:index+1})}</Text></Pressable>)}
+    <Pressable accessibilityRole="button" onPress={()=>setShowEntries(value=>!value)} style={{minHeight:48,padding:12}}><Text style={{color:c.link}}>{t("ledgerRecords",{count:facts.includedTransactionIds.length})}</Text></Pressable>
+    {showEntries&&facts.includedTransactionIds.map((id,index)=><Pressable key={id} accessibilityRole="button" onPress={()=>router.push({pathname:"/transactions/[id]",params:{id}})} style={{minHeight:48,padding:12}}><Text style={{color:c.link}}>{t("ledgerRecord",{count:index+1})}</Text></Pressable>)}
     <Text style={{color:c.muted,lineHeight:22}}>{t("ledgerUseHint")}</Text>
     <SettlementReview key={JSON.stringify([selected,currency,schedules,days])} owner={owner} snapshot={snapshot} accounts={selected} currency={currency} schedules={schedules} days={days} onChange={onInvalidate} onUse={ids=>{if(facts&&snapshot)onUse(facts.balance,new Date(snapshot.asOf).toISOString().slice(0,10),ids,[...selected]);}}/>
    </>)}
