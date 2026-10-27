@@ -9,7 +9,10 @@ test('release page is readable without JavaScript and points to one approved APK
   assert.equal((html.match(/<h1\b/g)||[]).length,1);
   assert.match(html, /<html lang="vi">/);
   assert.match(html, /<main id="main">/);
-  assert.ok(!html.includes('<script'));
+  // Content/download remain server-rendered; progressive motion uses local modules only.
+  const scripts = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/g) ?? [];
+  assert.equal(scripts.length, 1);
+  assert.match(scripts[0], /^<script type="module" src="\/launch-assets\/paper-motion-v1\.js"><\/script>$/);
   assert.ok(!html.includes('{{'));
   assert.equal((html.match(new RegExp('href="/downloads/'+release.filename+'"','g'))||[]).length,2);
   assert.match(html, /Không bắt buộc tạo tài khoản/);
@@ -25,11 +28,10 @@ test('Caddy serves only landing paths statically and preserves existing Next rou
   assert.match(caddy, /header @revalidated Cache-Control "no-cache"/);
 });
 
-test('landing exposes same-origin web login in header, hero and footer without downloading or opening another tab', async () => {
+test('landing exposes same-origin web login in header and footer without downloading or opening another tab', async () => {
   const html = await readFile(new URL('site/index.html', root), 'utf8');
   for (const [name, pattern] of [
     ['header', /<header\b[\s\S]*?<\/header>/],
-    ['hero', /<div class="hero-actions">[\s\S]*?<\/div>/],
     ['footer', /<footer\b[\s\S]*?<\/footer>/],
   ]) {
     const section = html.match(pattern)?.[0] ?? '';
