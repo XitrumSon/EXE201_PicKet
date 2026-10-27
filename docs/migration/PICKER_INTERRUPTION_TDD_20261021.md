@@ -1,5 +1,9 @@
 # Android interrupted image selection — 21 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Accepted behavior
 
 The user explicitly selected: restore the previously saved draft and ask to select the image again when Android kills the process and does not deliver the new selection. Do not adopt an unowned pending native result or promise recovery of a result the OS never delivered. Activity recreation with an actually delivered image remains a separate previously accepted case.
