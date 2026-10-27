@@ -144,3 +144,7 @@ Internal đã cập nhật 1.0.8/code 21 (ARM64+x86_64); alpha/beta/production k
 ## Checkpoint Internal code 22 — gói và OCR
 
 Internal 1.0.9/code 22 completed đã được đọc lại và cập nhật trên CH Play máy ảo. Màn gói Paper tháng/năm, foreground purchase recovery, cả bốn SKU server-verified/BillingClient-acknowledged và cloud quota 3/30/100 đã có [báo cáo chi tiết](../migration/BILLING_COMPLETION_20261027.md). 922 mobile tests, lint/typecheck và SQL quotas PASS. Chưa đóng toàn bộ lifecycle/Publisher ack API; alpha draft và production không đổi, landing giữ APK code 20.
+
+## Cập nhật ngày 28/10/2026
+
+[Báo cáo lifecycle/public APK](../migration/BILLING_RELEASE_ACCEPTANCE_20261028.md): acknowledgement Publisher, cancel/expiry/refund, decline, offline recovery và owner isolation đã có bằng chứng; 7 ảnh Paper VI/en-US được thay và readback. Finance category/contacts/Advertising ID đã rà, 10 khai báo processed. App vẫn draft, alpha draft giữ nguyên; không gửi tất cả thay đổi vì danh sách review có alpha và nút submit bị gate thiết lập. Landing 1.0.9/code 22 đã deploy/checksum. APKPure code 19 còn review.
