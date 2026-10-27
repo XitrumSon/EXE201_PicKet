@@ -127,10 +127,10 @@ export function ConflictScreenContent({ owner }: { owner: string }) {
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.cream }, content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 14, padding: paperSpace.screen, paddingBottom: 48 },
-  back: { color: colors.link, fontWeight: "700" }, title: { color: colors.ink, fontSize: 30, fontWeight: "700" },
+  back: { color: colors.link, fontWeight: "700" }, title: { color: colors.ink, fontSize: 26, fontWeight: "700" },
   subtitle: { color: colors.muted, lineHeight: 21 }, card: { backgroundColor: colors.white, borderRadius: paperShape.card, gap: 7, padding: 16 },
   name: { color: colors.ink, fontSize: 16, fontWeight: "700" }, meta: { color: colors.muted, fontSize: 12 },
   button: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, marginTop: 8, minHeight: 48, justifyContent: "center", paddingHorizontal: 12 },
   buttonText: { color: colors.link, fontWeight: "700" }, empty: { color: colors.muted, textAlign: "center", marginTop: 30 },
-  message:{color:colors.ink,fontSize:13},help:{color:colors.muted,fontSize:12,lineHeight:18},editor:{backgroundColor:colors.cream,borderColor:colors.peach,borderRadius:paperShape.card,borderWidth:1,color:colors.ink,fontFamily:"monospace",minHeight:150,padding:12,textAlignVertical:"top"},retry:{alignItems:"center",backgroundColor:colors.mauve,borderRadius:paperShape.button,justifyContent:"center",minHeight:48},retryText:{color:colors.onPrimary,fontWeight:"800"},
+  message:{color:colors.ink,fontSize:13},help:{color:colors.muted,fontSize:12,lineHeight:18},editor:{backgroundColor:colors.cream,borderColor:colors.peach,borderRadius:paperShape.card,borderWidth:1,color:colors.ink,fontFamily:"monospace",minHeight:150,padding:12,textAlignVertical:"top"},retry:{alignItems:"center",backgroundColor:colors.mauve,borderRadius:paperShape.button,justifyContent:"center",minHeight:48},retryText:{color:colors.onPrimary,fontWeight:"700"},
 });
