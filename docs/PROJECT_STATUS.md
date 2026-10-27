@@ -1,13 +1,13 @@
 # Trạng thái hiện hành của Picket
 
-Cập nhật **27/10/2026, Asia/Saigon**. Đây là nguồn trạng thái chung cho mobile, web, API, Supabase và phát hành. [Mục lục tài liệu](README.md). Các báo cáo theo ngày giữ bằng chứng của lần chạy đó; danh sách pending cũ không tự động là backlog hiện tại.
+Cập nhật **28/10/2026, Asia/Saigon**. Đây là nguồn trạng thái chung cho mobile, web, API, Supabase và phát hành. [Mục lục tài liệu](README.md). Các báo cáo theo ngày giữ bằng chứng của lần chạy đó; danh sách pending cũ không tự động là backlog hiện tại.
 
 ## Phiên bản và môi trường
 
 | Thành phần | Trạng thái đã xác minh |
 | --- | --- |
 | Mobile source/release | 1.0.9 / code 22; màn gói Paper và foreground purchase recovery; bản APK landing vẫn code 20 |
-| Landing public | Paper có chuyển động, tương tác và footer; APK 1.0.7/code 20 ARM64, tải toàn bộ và kiểm SHA-256 PASS |
+| Landing public | Paper; APK 1.0.9/code 22 ARM64, ký đúng khóa, tải toàn bộ/checksum PASS ngày 28/10 |
 | Google Play Internal | AAB 1.0.9/code 22 ARM64+x86_64, đọc lại completed; alpha draft không đổi. Landing vẫn APK code 20 |
 | Google Play alpha | Code 6 draft; chưa phải thử nghiệm kín đang chạy |
 | Google Play production/beta | Chưa có release |
@@ -106,3 +106,7 @@ Các mục phụ thuộc thiết bị, người dùng, Google review hoặc th�
 ## Gói Paper và quota OCR — checkpoint code 22
 
 [Kiểm thử hoàn tất trong phạm vi](migration/BILLING_COMPLETION_20261027.md): 1.0.9/code 22 đã lên Internal và cập nhật bằng CH Play; bốn SKU có server verification và BillingClient acknowledgement. Pro tháng/năm tự khôi phục quyền khi về foreground, cold restart PRO 100. Màn gói Paper có tháng/năm, icon, quota và hai mode; chữ 150% đã kiểm tra. 29 Billing/922 mobile tests, lint/typecheck và SQL suites PASS. API thật nhận đủ 3/30/100 OCR, request kế tiếp 429, retry không thêm lượt; đã đợi hết hàng đợi và xóa ba fixture user/ảnh. Paid fixture OCR không phải bằng chứng mua Play. Lifecycle cancel/refund/grace/hold/decline/pending/RTDN còn mở; không đánh đồng native acknowledgement với Publisher ack API.
+
+## Billing lifecycle và public APK — 28/10/2026
+
+[Checkpoint mới](migration/BILLING_RELEASE_ACCEPTANCE_20261028.md): Publisher API đã xác nhận acknowledgement cả bốn SKU test; hủy gia hạn giữ expiry, refund/revoke thu hồi quyền, RTDN thực cập nhật expiry/active khi app đóng. Decline không cấp gói, mất mạng sau mua phục hồi PLUS sau restart; owner khác bị từ chối. Landing đã lên APK 1.0.9/code 22; Play có 7 ảnh Paper mới cho VI/en-US, Finance/contacts/Advertising ID đã rà và lưu. Closed test vẫn draft, ảnh/khai báo không đồng nghĩa app đã review/công khai. APKPure code 19 vẫn Publishing, bản 1.0.9 sẵn để upload sau review. Pending native và live RTDN replay còn gate; grace/hold đã kiểm chứng Publisher/RTDN/server/native trong báo cáo mới.
