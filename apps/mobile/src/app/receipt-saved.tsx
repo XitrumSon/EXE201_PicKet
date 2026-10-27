@@ -1,6 +1,8 @@
-import { colors } from "@picket/design-tokens";
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { routes } from "@/core/navigation/routes";
 import { receiptHome } from "@/core/ui/receipt-flow-policy";
 import { AppIcon } from "@/core/ui/app-icon";
@@ -8,6 +10,7 @@ import { PicketScreen, PrimaryAction, TopAppBar } from "@/core/ui/picket-ui";
 import { useAuth } from "@/features/auth/auth-context";
 
 export default function ReceiptSavedScreen() {
+  const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const { receiptId, transactionId, month = "" } = useLocalSearchParams<{ receiptId?: string; transactionId?: string; month?: string }>();
   if (!session && !localMode) return <Redirect href={routes.login} />;
@@ -20,4 +23,4 @@ export default function ReceiptSavedScreen() {
     <PrimaryAction label="Xem hóa đơn" onPress={() => router.replace(localMode ? routes.transaction(transactionId) : receiptId ? routes.receipt(receiptId) : routes.transaction(transactionId))} />
   </View></PicketScreen>;
 }
-const styles = StyleSheet.create({ content: { gap: 20, paddingVertical: 36 }, title: { color: colors.ink, fontSize: 28, fontWeight: "700" }, copy: { color: colors.muted, fontSize: 16, lineHeight: 24 } });
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({ content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 20, paddingVertical: 36 }, title: { color: colors.ink, fontSize: 28, fontWeight: "700" }, copy: { color: colors.muted, fontSize: 16, lineHeight: 24 } });
