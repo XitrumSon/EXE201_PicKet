@@ -1,5 +1,9 @@
 # Bounded auth transport and real token expiry — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Journeys
 
 - A signed-in user with a fresh token signs out while offline without leaving the interface busy indefinitely. SDK session removal must remain authoritative; the app must not delete another owner's queue or image cache.
