@@ -1,5 +1,9 @@
 # Keepsake controlled response loss — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Source: [APP_COMPLETION_PLAN.md](APP_COMPLETION_PLAN.md), follow-up to [media retry](KEEPSAKE_MEDIA_RETRY_TDD.md) and [outbox acknowledgement](KEEPSAKE_OUTBOX_ACK_TDD.md). No commit/push, public release, backend deployment, database migration or permission change.
 
 ## Isolation and test artifact
