@@ -1,5 +1,8 @@
 # Triển khai Picket trên một VPS
 
+<!-- current-project-status -->
+Trạng thái triển khai và nghiệm thu cập nhật 27/10/2026: [PROJECT_STATUS](../docs/PROJECT_STATUS.md). Dùng trạng thái này để đối chiếu các ví dụ và checkpoint bên dưới.
+
 **Web/landing 22/10/2026:** đã triển khai image `picket-web:web-20261022-6993560`, source/build context ở `/opt/picket/releases/web-20261022-6993560/source`. Compose production đã cập nhật riêng web; không rebuild API từ cây cũ hoặc chạy full-stack up/remove-orphans cho thay đổi web. [Bằng chứng, giới hạn và rollback](../docs/migration/WEB_PRODUCTION_20261022.md). Các mô tả landing-only ở checkpoint trước bên dưới không bao gồm đợt triển khai web mới này.
 
 Phát hành/nghiệm thu hiện hành: [PROJECT_STATUS.md](../docs/PROJECT_STATUS.md). Landing static đang phục vụ Android **1.0.4/code 5**; [triển khai/checksum/rollback](../docs/migration/ANDROID_RELEASE_1_0_4_20261022.md). Đợt này chỉ đổi landing/download/manifest, không recreate container API/web/OCR. Các số audit và phiên bản ghi theo ngày phía dưới là checkpoint lịch sử, không phải chứng nhận bảo mật hiện tại; cần audit lại theo lockfile trước một đợt triển khai mới.
