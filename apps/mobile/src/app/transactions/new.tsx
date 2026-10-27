@@ -1,17 +1,14 @@
+import { paperControl , paperShape } from "@/core/theme/paper-foundations";
+import { PicketText as Text } from "@/core/ui/picket-text";
 import { useTransactionCopy,type TransactionNotice } from "@/features/transactions/use-transaction-copy";
-import { colors, radii } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
+import { radii } from "@/core/ui/mobile-palette";
 import { MAX_MONEY, type TransactionKind } from "@picket/domain";
 import { Redirect, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Image, StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { completeDuplicateCapture } from "@/core/receipts/duplicate-capture-completion";
@@ -43,11 +40,13 @@ import { fromByteArray } from "base64-js";
 import { finishReceiptFlow } from "@/core/ui/receipt-flow-policy";
 import { calendarReceiptDay } from "@/core/ui/receipt-calendar";
 import { captureJournal } from "@/core/ocr/capture-storage";
+import { canAttachReceipt } from "@/core/ocr/receipt-eligibility";
 
 type BasicTransactionKind = Extract<TransactionKind, "expense" | "income">;
 
 export default function NewTransactionScreen() {
   const {tx,locale,money}=useTransactionCopy();
+  const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const owner = session?.user.id ?? (localMode ? guestOwnerId : null);
   const { accounts } = useAccounts();
@@ -133,6 +132,7 @@ export default function NewTransactionScreen() {
   async function submit() {
     if (loadingDraft || busy) return;
     if (params.receiptDraftId && !receiptDraft) return setMessage("Không đọc được bản nháp ảnh. Hãy quay lại bước quét; giao dịch chưa được tạo.");
+    if (receiptDraft && !receiptDraft.transactionId && !canAttachReceipt(receiptDraft)) return setMessage("Ảnh chưa được nhận diện là hóa đơn hợp lệ. Hãy quay lại chụp hoặc chọn ảnh khác.");
     const parsedAmount = Number.parseInt(amount, 10);
     if (!selectedAccountId && !receiptDraft?.transactionRequest) return setMessage("Hãy tạo hoặc chọn một tài khoản.");
     if (!title.trim()) return setMessage("Hãy nhập nội dung giao dịch.");
@@ -290,7 +290,7 @@ export default function NewTransactionScreen() {
   return (
     <PicketScreen>
       <TopAppBar title={tx("Giao dịch mới")} subtitle={tx("Ghi lại khoản thu hoặc chi của bạn.")} />
-        {loadingDraft && <ActivityIndicator accessibilityLabel={tx("Đang tải bản nháp hóa đơn")} color={colors.mauve} />}
+        {loadingDraft && <ActivityIndicator accessibilityLabel={tx("Đang tải bản nháp hóa đơn")} color={colors.link} />}
         {receiptDraft && (
           <View style={styles.receiptCard}>
             <Image accessibilityLabel={tx("Ảnh hóa đơn của giao dịch mới")} source={{ uri: receiptDraft.imageUri }} style={styles.receiptImage} />
@@ -327,7 +327,8 @@ export default function NewTransactionScreen() {
         <FieldLabel>{tx("Số tiền")}</FieldLabel><View style={styles.amountBox}><TextInput money accessibilityLabel={tx("Số tiền giao dịch")} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={amount} onChangeText={setAmount} /><Text style={styles.currency}>VND</Text></View>
         <FieldLabel>{tx("Nội dung")}</FieldLabel><TextInput accessibilityLabel={tx("Nội dung giao dịch")} placeholder={tx("Ví dụ: Ăn trưa")} placeholderTextColor={colors.muted} style={styles.input} value={title} onChangeText={setTitle} />
 
-        <FieldLabel>{tx("Tài khoản")}</FieldLabel>
+        <FieldLabel>{tx("Ví / tài khoản thanh toán")}</FieldLabel>
+        {accounts.length === 0 && <View><Text style={styles.empty}>{tx("Bạn cần tạo ví trước khi lưu giao dịch. Ngân sách là tùy chọn.")}</Text><Pressable accessibilityRole="button" onPress={() => router.push(routes.newAccount)}><Text style={styles.manage}>{tx("Tạo ví đầu tiên")}</Text></Pressable></View>}
         <View accessibilityRole="radiogroup" style={styles.choices}>
           {accounts.map((account) => (
             <ChoiceChip checked={selectedAccountId === account.id} key={account.id} label={account.name} onPress={() => setAccountId(account.id)} />
@@ -352,40 +353,40 @@ export default function NewTransactionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   appBar: { justifyContent: "center", minHeight: 52 },
-  back: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
-  title: { color: colors.ink, fontSize: 29, fontWeight: "700", letterSpacing: -0.8, marginTop: 18 },
+  back: { color: colors.link, fontSize: 15, fontWeight: "700" },
+  title: { color: colors.ink, fontSize: 26, fontWeight: "700", letterSpacing: -0.8, marginTop: 18 },
   subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginBottom: 18, marginTop: 7 },
-  segment: { backgroundColor: colors.white, borderRadius: radii.medium, flexDirection: "row", marginBottom: 14, padding: 4 },
-  segmentItem: { alignItems: "center", borderRadius: 8, flex: 1, padding: 11 },
+  segment: { backgroundColor: colors.white, borderRadius: paperShape.chip, flexDirection: "row", marginBottom: 14, padding: 4 },
+  segmentItem: { alignItems: "center", borderRadius: paperShape.chip, flex: 1, padding: 11 },
   segmentSelected: { backgroundColor: colors.mauve },
   segmentText: { color: colors.ink, fontWeight: "700" },
-  segmentTextSelected: { color: colors.white },
-  receiptCard: { alignItems: "center", backgroundColor: colors.white, borderRadius: radii.small, flexDirection: "row", gap: 12, padding: 10 },
+  segmentTextSelected: { color: colors.onPrimary },
+  receiptCard: { alignItems: "center", backgroundColor: colors.white, borderRadius: paperShape.card, flexDirection: "row", gap: 12, padding: 10 },
   receiptImage: { backgroundColor: colors.cream, borderRadius: 8, height: 64, width: 48 },
   receiptCopy: { flex: 1 },
   receiptTitle: { color: colors.ink, fontSize: 14, fontWeight: "700" },
   receiptHint: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 3 },
   form: { marginTop: 0 },
-  input: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 54, paddingHorizontal: 16 },
+  input: { backgroundColor: colors.white, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 16 },
   amountBox: { alignItems: "center", borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, flexDirection: "row", minHeight: 58, paddingHorizontal: 16 },
-  amountInput: { color: colors.mauve, flex: 1, fontSize: 36, fontWeight: "700", fontVariant: ["tabular-nums"], minHeight: 76 },
-  currency: { color: colors.mauve, fontSize: 14, fontWeight: "700" },
+  amountInput: { color: colors.link, flex: 1, fontSize: 36, fontWeight: "700", fontVariant: ["tabular-nums"], minHeight: 76 },
+  currency: { color: colors.link, fontSize: 14, fontWeight: "700" },
   note: { minHeight: 88, paddingTop: 14, textAlignVertical: "top" },
   label: { color: colors.ink, fontSize: 14, fontWeight: "700", marginTop: 2 },
   labelRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
-  manage: { color: colors.mauve, fontSize: 13, fontWeight: "700" },
+  manage: { color: colors.link, fontSize: 13, fontWeight: "700" },
   choices: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  choice: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.pill, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 },
-  selected: { backgroundColor: colors.mauve, borderColor: colors.mauve },
+  choice: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: paperShape.chip, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 },
+  selected: { backgroundColor: colors.mauve, borderColor: colors.primaryOutline },
   choiceText: { color: colors.ink, fontWeight: "700" },
-  selectedText: { color: colors.white },
+  selectedText: { color: colors.onPrimary },
   empty: { color: colors.muted, fontSize: 13 },
-  error: { color: colors.expense, fontSize: 14 },
-  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: radii.small, justifyContent: "center", marginTop: 8, minHeight: 52 },
-  primaryText: { color: colors.white, fontSize: 16, fontWeight: "700" },
+  error: { color: colors.danger, fontSize: 14 },
+  primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", marginTop: 8, minHeight: paperControl.height },
+  primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
   disabled: { opacity: 0.55 },
   secondary: { alignItems: "center", minHeight: 44, padding: 12 },
-  secondaryText: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
+  secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" },
 });
