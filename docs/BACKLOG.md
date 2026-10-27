@@ -27,7 +27,7 @@ Cập nhật 27/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế du
 | Việc | Quyết định hiện tại |
 | --- | --- |
 | Closed test | Giữ alpha draft theo chủ dự án. Khi mở cần nhóm/tester và cohort thật; không tự chuyển completed |
-| Billing | Bốn base plan ACTIVE. Đã đạt 21 mobile + 7 Dart tests, 22 assertions quyền gói cô lập và kiểm tra từ chối mua giả trên production. Runtime mua mới=false; cần license tester/Play Store, RTDN và S01–S14 để nghiệm thu đầu cuối |
+| Billing | Bốn base plan ACTIVE; license testing đã lưu danh sách Picket Internal (3 tài khoản), tải lại xác nhận. Đã đạt 21 mobile + 7 Dart tests, 22 assertions quyền gói cô lập và kiểm tra từ chối mua giả trên production. Runtime mua mới=false; cần thiết bị Play Store dùng tài khoản tester, RTDN và S01–S14 để nghiệm thu đầu cuối |
 | Nội dung học cloud | VI/EN biên tập 2 đã có trong code 20; còn review độc lập/pilot và quyết định publish. Cloud hiện không có bài published |
 | Cloud grading trả phí | Hoãn ngoài MVP. Không bật AI cá nhân hoặc truyền câu trả lời local lên cloud chỉ để đóng checklist |
 | Diện mạo túi cloud | Tùy chỉnh đã lưu owner-local; chưa đồng bộ appearance qua cloud |
