@@ -1,5 +1,9 @@
 # Owner privacy lifecycle continuation — 25 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 This supersedes earlier statements that an unconfirmed deletion automatically
 resumes local use, and earlier lists of pending attributed media/preference
 cleanup. It is an engineering checkpoint, not complete P1–P5/release acceptance.
