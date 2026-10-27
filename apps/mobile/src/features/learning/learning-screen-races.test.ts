@@ -1,3 +1,4 @@
+import { paperShape, paperSpace } from "../../core/theme/paper-foundations";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
@@ -14,6 +15,9 @@ function harness(initialFailure=false){
  const effect=(fn:()=>unknown,deps:unknown[])=>{const i=cursor++,old=slots[i] as {deps:unknown[];cleanup?:()=>void}|undefined;if(!old||deps.some((v,j)=>!Object.is(v,old.deps[j]))){old?.cleanup?.();slots[i]={deps,cleanup:fn()};}};
  const lesson={lessonId:"lesson",version:1,title:"Lesson",objective:"Objective",body:"Body",workedExample:{description:"Example"},questions:[{prompt:"Q",choices:[{text:"Answer",explanation:"Why"}]}],optionalAction:{text:"Action"},sources:[]};
  const progress={version:1,completed:[]};const adapters:Record<string,unknown>={
+    "@/core/ui/picket-text": { PicketText: "Text" },
+    "@/core/ui/picket-scroll-view": { PicketScrollView: "ScrollView" },
+    "@/core/theme/paper-foundations": { paperShape, paperSpace },
  react:{useState:state,useRef:ref,useEffect:effect},"react/jsx-runtime":{jsx:(type:unknown,props:unknown)=>({type,props}),jsxs:(type:unknown,props:unknown)=>({type,props})},
  "react-native":{Text:"Text",View:"View",ScrollView:"ScrollView",AppState:{addEventListener:(_event:string,fn:(state:string)=>void)=>{onActive=fn;return {remove:()=>{}};}}},"react-native-safe-area-context":{SafeAreaView:"SafeAreaView"},
  "@/core/ui/accessible-pressable":{AccessiblePressable:"Pressable"},"@/features/settings/appearance-provider":{useAppTheme:()=>({colors:{},language:"en"})},"react-i18next":{useTranslation:()=>({t:(key:string)=>key})},"@/features/auth/auth-context":{useAuth:()=>({session:null,localMode:true})},
