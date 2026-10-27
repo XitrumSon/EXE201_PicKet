@@ -1,8 +1,10 @@
-import { colors } from "@picket/design-tokens";
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { formatVnd, type ReceiptRecord } from "@picket/domain";
 import { Redirect, router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { picketApi } from "@/core/api/client";
@@ -15,6 +17,7 @@ import { selectReceiptReviews, selectReviewInbox } from "@/features/transactions
 
 // Remount per owner; never retain a previous account's receipts on screen.
 function ReceiptReviews({ accessToken, onRetry }: { accessToken: string; onRetry: () => void }) {
+  const { styles } = useMobileStyles(createStyles);
   const [rows, setRows] = useState<ReceiptRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -50,6 +53,7 @@ function ReceiptReviews({ accessToken, onRetry }: { accessToken: string; onRetry
 }
 
 export default function ReviewInboxScreen() {
+  const { styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const [receiptAttempt, setReceiptAttempt] = useState(0);
   const { error, loading, refresh, transactions } = useTransactionHistory();
@@ -66,12 +70,12 @@ export default function ReviewInboxScreen() {
     <Text accessibilityRole="header" style={styles.section}>Giao dịch cần kiểm tra</Text>
     {error && <Pressable accessibilityRole="button" onPress={() => void refresh()}><Text accessibilityLiveRegion="polite" style={styles.warning}>{error} Chạm để thử lại.</Text></Pressable>}
     {loading && <Text style={styles.warning}>Đang đối chiếu toàn bộ lịch sử giao dịch…</Text>}
-    {!loading && !error && (flagged.length === 0 ? <EmptyState title="Giao dịch đã gọn gàng" description="Không có giao dịch cần phân loại hoặc nghi trùng trong dữ liệu đã tải." symbol="✓" /> :
+    {!loading && !error && (flagged.length === 0 ? <EmptyState illustration="receipt" title="Giao dịch đã gọn gàng" description="Không có giao dịch cần phân loại hoặc nghi trùng trong dữ liệu đã tải." symbol="✓" /> :
       <View style={styles.stack}>{flagged.map(({ item, reason }) => <Pressable accessibilityLabel={`${item.title}, ${reason}, ${formatVnd(item.amount)}`} accessibilityRole="button" key={item.id} onPress={() => router.push(routes.transaction(item.id))}><Surface><View style={styles.row}><View style={styles.copy}><Text style={styles.title}>{item.title}</Text><Text style={styles.reason}>{reason}</Text></View><Text style={styles.amount}>{formatVnd(item.amount)}</Text></View></Surface></Pressable>)}</View>)}
   </PicketScreen>;
 }
 
-const styles = StyleSheet.create({
-  section: { color: colors.ink, fontSize: 18, fontWeight: "800", marginTop: 18, marginBottom: 12 },
-  back:{color:colors.mauve,fontSize:15,fontWeight:"800",marginBottom:18},heading:{color:colors.ink,fontSize:29,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginBottom:22,marginTop:7},warning:{color:colors.expense,fontSize:13,lineHeight:20,marginBottom:16},stack:{gap:10},row:{alignItems:"center",flexDirection:"row",gap:14},copy:{flex:1},title:{color:colors.ink,fontSize:16,fontWeight:"800"},reason:{color:colors.muted,fontSize:12,marginTop:6},amount:{color:colors.ink,fontSize:14,fontWeight:"800"},
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
+  section: { color: colors.ink, fontSize: 18, fontWeight: "700", marginTop: 18, marginBottom: 12 },
+  back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,lineHeight:22,marginBottom:22,marginTop:7},warning:{color:colors.expense,fontSize:13,lineHeight:20,marginBottom:16},stack:{gap:10},row:{alignItems:"center",flexDirection:"row",gap:14},copy:{flex:1},title:{color:colors.ink,fontSize:16,fontWeight:"700"},reason:{color:colors.muted,fontSize:12,marginTop:6},amount:{color:colors.ink,fontSize:14,fontWeight:"800"},
 });
