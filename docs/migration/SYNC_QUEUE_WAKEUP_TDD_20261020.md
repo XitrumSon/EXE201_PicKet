@@ -1,5 +1,9 @@
 # Active-app mutation queue wakeup — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Latest mixed-bulk follow-up: the initial success/queued/conflict result did not constitute full acceptance. A queued archive that had committed before losing its response generated a false 409 on replay. A local API regression fix and 79 passing API tests are recorded in [ARCHIVE_RETRY_TDD_20261020.md](ARCHIVE_RETRY_TDD_20261020.md); VPS deployment and native rerun remain pending.
 
 ## Journey and observed defect
