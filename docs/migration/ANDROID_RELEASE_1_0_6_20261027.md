@@ -1,5 +1,8 @@
 # Android 1.0.6 / code 19 — 27/10/2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
 [Trạng thái dự án](../PROJECT_STATUS.md).
 
 ## Thay đổi
