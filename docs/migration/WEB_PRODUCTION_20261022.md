@@ -1,5 +1,9 @@
 # Web + landing production — 22/10/2026 (Asia/Saigon)
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Theo phê duyệt rõ ràng của chủ sở hữu, đã push nhánh `feat/picket-platform-ocr` lên GitHub và triển khai Next.js web cloud/admin cùng landing có nút **Đăng nhập**. Runtime source: `699356093b79bd0e032bee99d195ea569b6e6e1f`.
 
 - Landing: https://picket.51-79-207-154.sslip.io/
