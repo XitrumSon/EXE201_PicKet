@@ -1,5 +1,9 @@
 # Android interaction stability — 2026-10-20
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Scope: Expo Android UI only; existing Dart/Supabase contracts retained. No commit/push, production database migration, public ARM64 APK replacement or landing deployment.
 
 ## Implemented
