@@ -1,5 +1,9 @@
 # Interrupted account deletion recovery — 25 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 This continuation closes the common-cache recovery gap from the 24 October
 checkpoint. It does not complete separate media/outbox erasure or native release
 acceptance.
