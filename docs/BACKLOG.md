@@ -27,7 +27,7 @@ Cập nhật 27/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế du
 | Việc | Quyết định hiện tại |
 | --- | --- |
 | Closed test | Giữ alpha draft theo chủ dự án. Khi mở cần nhóm/tester và cohort thật; không tự chuyển completed |
-| Billing | Bốn base plan ACTIVE; license testing đã lưu danh sách Picket Internal (3 tài khoản), tải lại xác nhận. Đã đạt 21 mobile + 7 Dart tests, 22 assertions quyền gói cô lập và kiểm tra từ chối mua giả trên production. Runtime mua mới=true, RTDN topic đã lưu/Send Test HTTP 200; còn delivery/lifecycle và S01–S14 trên thiết bị license tester |
+| Billing | Bốn base plan ACTIVE; license testing đã lưu danh sách Picket Internal (3 tài khoản), tải lại xác nhận. Đã đạt 21 mobile + 7 Dart tests, 22 assertions quyền gói cô lập và kiểm tra từ chối mua giả trên production. Runtime mua mới=true, RTDN topic đã lưu/Send Test HTTP 200; đã xác minh bốn SKU trên máy ảo license tester và giới hạn 3/30/100 OCR; còn delivery/lifecycle và ca thất bại theo báo cáo code 22 |
 | Nội dung học cloud | VI/EN biên tập 2 đã có trong code 20; còn review độc lập/pilot và quyết định publish. Cloud hiện không có bài published |
 | Cloud grading trả phí | Hoãn ngoài MVP. Không bật AI cá nhân hoặc truyền câu trả lời local lên cloud chỉ để đóng checklist |
 | Diện mạo túi cloud | Tùy chỉnh đã lưu owner-local; chưa đồng bộ appearance qua cloud |
@@ -39,10 +39,10 @@ Cập nhật 27/10/2026. [Hiện trạng](PROJECT_STATUS.md) · [Thiết kế du
 
 ## Không còn pending
 
-- Landing giữ APK 1.0.7/code 20; Play Internal hiện 1.0.8/code 21 ARM64+x86_64. Alpha vẫn draft, beta/production chưa mở.
+- Landing giữ APK 1.0.7/code 20; Play Internal hiện 1.0.9/code 22 ARM64+x86_64. Alpha vẫn draft, beta/production chưa mở.
 - Paper mobile, asset, sign-out/updater/guest splits; landing motion/footer/CTA và điều hướng sạch URL đã triển khai theo phản hồi.
 - SMTP đã đổi sang Picket Production `<picketfinance@gmail.com>`, email recovery tới inbox thật đạt.
 - Supabase đã xác minh 49 migration; không cần chạy lại migration chỉ để đồng bộ tài liệu.
 - Dọn output build và hợp nhất design thuộc lượt repository sync hiện tại, theo [báo cáo](migration/REPOSITORY_SYNC_20261027.md).
 
-Checkpoint Billing code 21: máy ảo đã tải giá/mua test Plus tháng/restore cấp PLUS 30, cold restart và server readback đạt. Còn callback tự động sau onboarding Google, ack API độc lập và lifecycle/các SKU khác; xem [báo cáo](migration/PLAY_BILLING_EMULATOR_20261027.md).
+Checkpoint Billing code 22: [bốn SKU verified/acknowledged và quota OCR](migration/BILLING_COMPLETION_20261027.md) đã có bằng chứng; Pro tự phục hồi quyền sau checkout, cold restart đạt, UI Paper sáng/tối/chữ 150% đã xem. Còn Publisher ack API độc lập và lifecycle cancel/refund/revoke/grace/hold/decline/pending/RTDN; không còn liệt kê các SKU chưa mua hoặc lỗi foreground recovery cũ như chưa xử lý.
