@@ -1,10 +1,15 @@
-import { colors } from "@picket/design-tokens";
+import { paperControl , paperShape } from "@/core/theme/paper-foundations";
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { useTranslation } from "react-i18next";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as SecureStore from "expo-secure-store";
 import { withLocalOwnerAccess } from "@/core/sync/offline-cache";
 import { ownerPreferenceKeys } from "@/core/storage/owner-preferences";
 import { createContext, type PropsWithChildren, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { AppState, StyleSheet, Text, View } from "react-native";
+import { AppState, Platform, StyleSheet, View } from "react-native";
+import { biometricOptions, type BiometricCopy } from "./biometric-options";
 
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { useAuth } from "@/features/auth/auth-context";
@@ -19,15 +24,10 @@ const LockContext = createContext<LockContextValue | null>(null);
 const keyFor = (userId: string) => ownerPreferenceKeys(userId).deviceLock;
 const LOCK_AFTER_BACKGROUND_MS = 30_000;
 
-async function authenticate(): Promise<boolean> {
+async function authenticate(copy?:BiometricCopy): Promise<boolean> {
   const level = await LocalAuthentication.getEnrolledLevelAsync();
   if (level === LocalAuthentication.SecurityLevel.NONE) return false;
-  const result = await LocalAuthentication.authenticateAsync({
-    promptMessage: "Mở khóa Picket",
-    promptDescription: "Xác thực bằng sinh trắc học hoặc mã khóa thiết bị.",
-    disableDeviceFallback: false,
-    biometricsSecurityLevel: "strong",
-  });
+  const result = await LocalAuthentication.authenticateAsync(biometricOptions(Number(Platform.Version),copy));
   return result.success;
 }
 
@@ -37,6 +37,9 @@ export function DeviceLockProvider({ children }: PropsWithChildren) {
 }
 
 function DeviceLockSession({ children }: PropsWithChildren) {
+  const { t } = useTranslation("security");
+  const authenticateForLocale=useCallback(()=>authenticate({promptMessage:t("unlock"),promptDescription:t("description"),cancelLabel:t("cancel")}),[t]);
+  const { styles } = useMobileStyles(createStyles);
   const { session } = useAuth();
   const userId = session?.user.id;
   const [enabled, setEnabledState] = useState(false);
@@ -52,7 +55,7 @@ function DeviceLockSession({ children }: PropsWithChildren) {
       if(stored!=="enabled")setLocked(false);
       setMessage(null);
     } catch(error) {
-      setEnabledState(true);setLocked(true);setMessage("Không đọc được cài đặt khóa. Hãy xác thực để tiếp tục.");throw error;
+      setEnabledState(true);setLocked(true);setMessage("lockReadError");throw error;
     }
   },[userId]);
   useEffect(() => {
@@ -63,7 +66,7 @@ function DeviceLockSession({ children }: PropsWithChildren) {
       setEnabledState(value === "enabled");
       setLocked(value === "enabled");
     }).catch(() => {
-      if (active) { setEnabledState(true); setLocked(true); setMessage("Không đọc được cài đặt khóa. Hãy xác thực để tiếp tục."); }
+      if (active) { setEnabledState(true); setLocked(true); setMessage("lockReadError"); }
     }).finally(() => { if (active) setBusy(false); });
     return () => { active = false; };
   }, [userId]);
@@ -82,17 +85,17 @@ function DeviceLockSession({ children }: PropsWithChildren) {
     setBusy(true);
     setMessage(null);
     try {
-      if (await authenticate()) setLocked(false);
-      else setMessage("Chưa xác thực được. Kiểm tra khóa thiết bị và thử lại.");
-    } catch { setMessage("Không mở được trình xác thực trên thiết bị này."); }
+      if (await authenticateForLocale()) setLocked(false);
+      else setMessage("authFailed");
+    } catch { setMessage("authUnavailable"); }
     finally { setBusy(false); }
-  }, []);
+  }, [authenticateForLocale]);
   const value = useMemo<LockContextValue>(() => ({ enabled, busy, refresh:refreshPreference,
     async setEnabled(next) {
       if (!session) return false;
       setBusy(true);
       try {
-        if (!(await authenticate())) return false;
+        if (!(await authenticateForLocale())) return false;
         await withLocalOwnerAccess(session.user.id,async()=>{
           if (next) await SecureStore.setItemAsync(keyFor(session.user.id), "enabled");
           else await SecureStore.deleteItemAsync(keyFor(session.user.id));
@@ -103,14 +106,14 @@ function DeviceLockSession({ children }: PropsWithChildren) {
       } catch { return false; }
       finally { setBusy(false); }
     },
-  }), [enabled, busy, session, refreshPreference]);
+  }), [enabled, busy, session, refreshPreference, authenticateForLocale]);
   return <LockContext.Provider value={value}>
     <View style={{ flex: 1, display: locked ? "none" : "flex" }} importantForAccessibility={locked ? "no-hide-descendants" : "auto"}>{children}</View>
     {session && locked && <View style={styles.root}>
-      <Text accessibilityRole="header" style={styles.heading}>Picket đã khóa</Text>
-      <Text style={styles.copy}>Xác thực trên thiết bị để xem thông tin tài chính của bạn.</Text>
-      {message && <Text accessibilityLiveRegion="polite" style={styles.error}>{message}</Text>}
-      <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy }} disabled={busy} onPress={() => void unlock()} style={styles.button}><Text style={styles.buttonText}>{busy ? "Đang xác thực…" : "Mở khóa"}</Text></Pressable>
+      <Text accessibilityRole="header" style={styles.heading}>{t("locked")}</Text>
+      <Text style={styles.copy}>{t("lockedBody")}</Text>
+      {message && <Text accessibilityLiveRegion="polite" style={styles.error}>{t(message)}</Text>}
+      <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy }} disabled={busy} onPress={() => void unlock()} style={styles.button}><Text style={styles.buttonText}>{busy ? t("authenticating") : t("unlock")}</Text></Pressable>
     </View>}
   </LockContext.Provider>;
 }
@@ -121,4 +124,4 @@ export function useDeviceLock() {
   return value;
 }
 
-const styles = StyleSheet.create({ root:{alignItems:"center",backgroundColor:colors.cream,flex:1,justifyContent:"center",padding:28},heading:{color:colors.ink,fontSize:28,fontWeight:"800"},copy:{color:colors.muted,fontSize:15,lineHeight:22,marginTop:12,textAlign:"center"},error:{color:colors.expense,fontSize:13,marginTop:16,textAlign:"center"},button:{alignItems:"center",backgroundColor:colors.mauve,borderRadius:12,justifyContent:"center",marginTop:28,minHeight:52,minWidth:180},buttonText:{color:colors.white,fontWeight:"800"} });
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({ root:{alignItems:"center",backgroundColor:colors.cream,flex:1,justifyContent:"center",padding:28},heading:{color:colors.ink,fontSize:28,fontWeight:"800"},copy:{color:colors.muted,fontSize:15,lineHeight:22,marginTop:12,textAlign:"center"},error:{color:colors.danger,fontSize:13,marginTop:16,textAlign:"center"},button:{alignItems:"center",backgroundColor:colors.mauve,borderRadius:paperShape.button,justifyContent:"center",marginTop:28,minHeight:paperControl.height,minWidth:180},buttonText:{color:colors.onPrimary,fontWeight:"700"} });
