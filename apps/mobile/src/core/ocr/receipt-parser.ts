@@ -1,7 +1,7 @@
 import { parseReceiptMoney, parseReceiptItemMoney } from "./receipt-money";
-export { parseReceiptMoney } from "./receipt-money";
 import {receiptHasTableColumns,receiptTableRows} from "./receipt-table-layout";
 import { receiptVatSummaryRows } from "./receipt-vat-summary";
+export { parseReceiptMoney } from "./receipt-money";
 
 export type ReceiptTextLine = {
   text: string;

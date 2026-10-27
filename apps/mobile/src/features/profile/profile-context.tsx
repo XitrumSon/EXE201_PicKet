@@ -52,7 +52,7 @@ export function ProfileProvider({ children }: PropsWithChildren) {
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, [session, setProfile]);
 
   useEffect(() => {
     if (!session || !picketApi) return;
@@ -77,7 +77,7 @@ export function ProfileProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [session]);
+  }, [session, setProfile]);
 
   const value = useMemo<ProfileContextValue>(
     () => ({

@@ -15,18 +15,18 @@ export interface PartnerAd {
 export interface StaffOverview {
   total_users: number;
   total_ledgers: number;
-  users: Array<{
+  users: {
     id: string;
     email: string;
     created_at: string;
     banned_until: string | null;
     revision: number | null;
     entry_count: number;
-  }>;
-  ocr: Array<{ day: string; scans: number; successful: number; average_ms: number }>;
+  }[];
+  ocr: { day: string; scans: number; successful: number; average_ms: number }[];
   ads: PartnerAd[];
   settings: { maintenance: boolean; notice: string };
-  audit: Array<{ action: string; target: string | null; created_at: string }>;
+  audit: { action: string; target: string | null; created_at: string }[];
 }
 
 function requireSupabase() {
@@ -53,7 +53,7 @@ export async function loadStaffOverview(page: number): Promise<StaffOverview> {
 export async function loadStaffLedger(userId: string) {
   const { data, error } = await requireSupabase().rpc("admin_ledger", { target_user: userId });
   if (error) throw error;
-  return data as { entries?: Array<{ title?: string; date?: string; category?: string; amount?: number }> } | null;
+  return data as { entries?: { title?: string; date?: string; category?: string; amount?: number }[] } | null;
 }
 
 export async function performStaffAction(token: string, userId: string, request: AdminUserActionRequest) {

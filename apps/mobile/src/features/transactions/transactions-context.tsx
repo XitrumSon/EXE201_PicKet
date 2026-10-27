@@ -100,7 +100,7 @@ export function TransactionsProvider({ children }: PropsWithChildren) {
     } finally {
       setLoading(false);
     }
-  }, [enabled, session]);
+  }, [enabled, session, setCategories, setTransactions]);
 
   useEffect(() => {
     if (!enabled || !session || !picketApi) return;
@@ -128,7 +128,7 @@ export function TransactionsProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [enabled, session]);
+  }, [enabled, session, setCategories, setTransactions]);
 
   const value = useMemo<TransactionsContextValue>(
     () => ({
@@ -378,7 +378,7 @@ export function TransactionsProvider({ children }: PropsWithChildren) {
         }
       },
     }),
-    [categories, error, guest, loading, localMode, refresh, session, transactions],
+    [categories, error, guest, loading, localMode, refresh, session, transactions, setCategories, setTransactions],
   );
 
   return (

@@ -36,7 +36,7 @@ export function BillsProvider({ children }: PropsWithChildren) {
     setLoading(true); setError(null);
     try { setBills((await picketApi.listBills(session.access_token)).bills); }
     catch (caught) { reportApiError("bills.refresh", caught); setError(apiErrorMessage(caught, "Không tải được hóa đơn."));  if (options?.throwOnError) throw caught; } finally { setLoading(false); }
-  }, [session]);
+  }, [session, setBills]);
 
   useEffect(() => {
     if (!session || !picketApi) return;
@@ -46,7 +46,7 @@ export function BillsProvider({ children }: PropsWithChildren) {
       .catch((caught) => { if (active) { reportApiError("bills.load", caught); setError(apiErrorMessage(caught, "Không tải được hóa đơn.")); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [session]);
+  }, [session, setBills]);
 
   const value = useMemo<BillsValue>(() => ({ bills: localMode ? guest.data.bills : bills, loading: localMode ? guest.loading : loading, error: localMode ? guest.error : error, refresh: localMode ? async () => undefined : refresh,
     async create(request) {
@@ -68,7 +68,7 @@ export function BillsProvider({ children }: PropsWithChildren) {
       try { await picketApi.archiveBill(session.access_token, id, expectedVersion); setBills((current) => current.filter((item) => item.id !== id)); }
       catch (caught) { if (!(caught instanceof ApiError) || caught.status !== 0) throw caught; await enqueueMutation({ userId: session.user.id, kind: "bill.archive", entityKey: `bill:${id}`, payload: { id, expectedVersion }, idempotencyKey: null }); setBills((current) => current.filter((item) => item.id !== id)); throw new OfflineQueuedError("bill.archive"); }
     },
-  }), [bills, error, guest, loading, localMode, refresh, session]);
+  }), [bills, error, guest, loading, localMode, refresh, session, setBills]);
 
   return <BillsContext.Provider value={value}>{children}</BillsContext.Provider>;
 }

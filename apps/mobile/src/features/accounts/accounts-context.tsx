@@ -74,7 +74,7 @@ export function AccountsProvider({ children }: PropsWithChildren) {
     } finally {
       setLoading(false);
     }
-  }, [session]);
+  }, [session, setAccounts]);
 
   useEffect(() => {
     if (!session || !picketApi) return;
@@ -99,7 +99,7 @@ export function AccountsProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [session]);
+  }, [session, setAccounts]);
 
   const value = useMemo<AccountsContextValue>(
     () => ({
@@ -187,7 +187,7 @@ export function AccountsProvider({ children }: PropsWithChildren) {
         }
       },
     }),
-    [accounts, error, guest, loading, localMode, refresh, session],
+    [accounts, error, guest, loading, localMode, refresh, session, setAccounts],
   );
 
   return (

@@ -47,7 +47,7 @@ function requireCloud() {
 }
 
 function mediaSlots(payload: FinancePayload) {
-  const slots: Array<{ item: Record<string, unknown>; field: "receiptPath" | "photoPath" }> = [];
+  const slots: { item: Record<string, unknown>; field: "receiptPath" | "photoPath" }[] = [];
   for (const [group, field] of imageFields) {
     for (const item of payload[group]) slots.push({ item:item as unknown as Record<string, unknown>, field });
   }
