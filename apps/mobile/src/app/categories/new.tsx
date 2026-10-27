@@ -1,11 +1,15 @@
+import { paperControl , paperShape } from "@/core/theme/paper-foundations";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { useManagementCopy } from "@/core/i18n/use-management-copy";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { TopAppBar , ChoiceChip, FieldLabel, PicketScreen, PrimaryAction, Surface } from "@/core/ui/picket-ui";
-import { colors, radii } from "@picket/design-tokens";
 import type { Category } from "@picket/domain";
 import { Redirect, router } from "expo-router";
 import { useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
@@ -22,6 +26,7 @@ const swatches = ["#8C6A7D", "#D46A6A", "#4F8A6B", "#C98A3D", "#5577A8"];
 
 export default function NewCategoryScreen() {
   const tx=useManagementCopy();
+  const { colors, styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const { createCategory } = useTransactions();
   const [name, setName] = useState("");
@@ -50,7 +55,7 @@ export default function NewCategoryScreen() {
   }
 
   return <PicketScreen>
-    <TopAppBar title={tx("Danh mục mới")} backDisabled={busy} />
+    <TopAppBar illustration="shopping" title={tx("Danh mục mới")} backDisabled={busy} />
     <Text style={styles.subtitle}>{tx("Tạo nhóm riêng để theo dõi thu chi đúng với thói quen của bạn.")}</Text>
     <Surface>
       <FieldLabel>{tx("Tên danh mục")}</FieldLabel>
@@ -65,14 +70,14 @@ export default function NewCategoryScreen() {
   </PicketScreen>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   appBar: { justifyContent: "center", minHeight: 52 },
-  back: { color: colors.mauve, fontSize: 15, fontWeight: "700" },
-  heading: { color: colors.ink, fontSize: 29, fontWeight: "700", letterSpacing: -0.8, marginTop: 18 },
+  back: { color: colors.link, fontSize: 15, fontWeight: "700" },
+  heading: { color: colors.ink, fontSize: 26, fontWeight: "700", letterSpacing: -0.8, marginTop: 18 },
   subtitle: { color: colors.muted, fontSize: 15, lineHeight: 22, marginBottom: 22, marginTop: 7 },
-  input: { backgroundColor: colors.white, borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: 54, paddingHorizontal: 16 },
+  input: { backgroundColor: colors.white, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 16 },
   choices: { flexDirection: "row", flexWrap: "wrap", gap: 9 },
   swatch: { borderRadius: 22, height: 44, width: 44 },
   swatchSelected: { borderColor: colors.ink, borderWidth: 3 },
-  error: { color: colors.expense, fontSize: 13, fontWeight: "700", lineHeight: 19, marginTop: 14 },
+  error: { color: colors.danger, fontSize: 13, fontWeight: "700", lineHeight: 19, marginTop: 14 },
 });
