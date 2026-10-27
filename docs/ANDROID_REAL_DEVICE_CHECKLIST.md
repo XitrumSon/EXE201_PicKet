@@ -1,6 +1,11 @@
 # Nghiệm thu Picket trên điện thoại Android thật
 
-Ngày lập: 22/10/2026. Đối tượng: bản production **1.0.4 (5)**, package `com.picket.mobile`, ARM64. Không dùng APK có `.qa`, debug, proxy hoặc probe. Trạng thái từng ca bên dưới là **CHỜ NGƯỜI DÙNG TEST**, không phải kết quả máy ảo. Xem [trạng thái hiện hành](PROJECT_STATUS.md).
+<!-- project-status-link -->
+> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+
+Ngày lập: 22/10/2026; phạm vi cập nhật 27/10/2026. Đối tượng: bản **1.0.7/code 20** (Play Internal hoặc APK ARM64 ký cùng khóa), package `com.picket.mobile`, ARM64. Không dùng APK có `.qa`, debug, proxy hoặc probe. Trạng thái từng ca bên dưới là **CHỜ NGƯỜI DÙNG TEST**, không phải kết quả máy ảo. Xem [trạng thái hiện hành](PROJECT_STATUS.md).
+
+**Phân công 27/10:** chủ dự án xác nhận sẽ tự nghiệm thu phần thiết bị thật sau; agent tiếp tục các đầu việc còn lại. Không coi việc phân công này là kết quả kiểm thử.
 
 ## Chuẩn bị và cách ghi kết quả
 
@@ -18,7 +23,7 @@ Ngày lập: 22/10/2026. Đối tượng: bản production **1.0.4 (5)**, packag
 1. Khi app cũ còn cài, vào Cá nhân và ghi phiên bản cũ.
 2. Mở landing HTTPS bằng Chrome, tải APK production mới; không gỡ app cũ.
 3. Nếu Android hỏi quyền cài từ nguồn này, chỉ bật cho trình duyệt/trình cài đang dùng. Xem tên ứng dụng và xác nhận cập nhật; không tắt Play Protect.
-4. Mở app → Cá nhân: phải hiện **1.0.4 (5)**.
+4. Mở app → Cá nhân: phải hiện phiên bản **1.0.7**, mã bản dựng **20**.
 5. So lại phiên đăng nhập, ví, số dư, giao dịch, ảnh và cài đặt với dữ liệu đối chứng. Mở lại app khi mất mạng để kiểm tra cache đã tải.
 6. PASS: cài đè thành công, không yêu cầu gỡ app, không mất/trộn dữ liệu. Nếu báo xung đột chữ ký, dừng và báo lại; không gỡ app để vượt lỗi.
 
