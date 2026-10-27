@@ -1,8 +1,10 @@
-import { colors } from "@picket/design-tokens";
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { formatVnd } from "@picket/domain";
 import { Redirect } from "expo-router";
 import { useMemo, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
 import { routes } from "@/core/navigation/routes";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
@@ -15,6 +17,7 @@ import { useSpendingSplits } from "@/features/transactions/use-spending-splits";
 import { categorySpending } from "@/core/ui/category-spending";
 
 export default function InsightsScreen() {
+  const { styles } = useMobileStyles(createStyles);
   const { session, localMode } = useAuth();
   const { profile } = useProfile();
   const { categories } = useTransactions();
@@ -37,7 +40,7 @@ export default function InsightsScreen() {
   if (!session && !localMode) return <Redirect href={routes.login} />;
   const changeMonth = (offset: number) => setMonth((current) => new Date(current.getFullYear(), current.getMonth() + offset, 1));
   return <PicketScreen>
-    <TopAppBar title="Thống kê" />
+    <TopAppBar illustration="bloom" title="Thống kê" />
     <Text style={styles.subtitle}>Hiểu dòng tiền theo từng tháng và danh mục.</Text>
     <Surface><View style={styles.monthRow}>
       <Pressable accessibilityLabel="Tháng trước" accessibilityRole="button" onPress={() => changeMonth(-1)}><Text style={styles.arrow}>‹</Text></Pressable>
@@ -58,6 +61,6 @@ export default function InsightsScreen() {
   </PicketScreen>;
 }
 
-const styles = StyleSheet.create({
-  back:{color:colors.mauve,fontSize:15,fontWeight:"800",marginBottom:18},heading:{color:colors.ink,fontSize:29,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,marginBottom:22,marginTop:7},monthRow:{alignItems:"center",flexDirection:"row",justifyContent:"space-between"},arrow:{color:colors.mauve,fontSize:30},month:{color:colors.ink,fontSize:16,fontWeight:"800"},warning:{color:colors.expense,fontSize:13,lineHeight:20,marginTop:16},total:{color:colors.ink,fontSize:32,fontWeight:"800"},totals:{gap:8,marginTop:16},label:{color:colors.ink,fontSize:14},stack:{gap:10},categoryRow:{alignItems:"center",flexDirection:"row",gap:12,justifyContent:"space-between"},categoryName:{color:colors.ink,flex:1,fontSize:15,fontWeight:"700"},categoryAmount:{color:colors.expense,fontSize:15,fontWeight:"800"},progressTrack:{backgroundColor:colors.cream,borderRadius:4,height:7,marginTop:12,overflow:"hidden"},progressFill:{backgroundColor:colors.coral,borderRadius:4,height:7},
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
+  back:{color:colors.link,fontSize:15,fontWeight:"700",marginBottom:18},heading:{color:colors.ink,fontSize:26,fontWeight:"800"},subtitle:{color:colors.muted,fontSize:15,marginBottom:22,marginTop:7},monthRow:{alignItems:"center",flexDirection:"row",justifyContent:"space-between"},arrow:{color:colors.link,fontSize:30},month:{color:colors.ink,fontSize:16,fontWeight:"700"},warning:{color:colors.expense,fontSize:13,lineHeight:20,marginTop:16},total:{color:colors.ink,fontSize:32,fontWeight:"800"},totals:{gap:8,marginTop:16},label:{color:colors.ink,fontSize:14},stack:{gap:10},categoryRow:{alignItems:"center",flexDirection:"row",gap:12,justifyContent:"space-between"},categoryName:{color:colors.ink,flex:1,fontSize:15,fontWeight:"700"},categoryAmount:{color:colors.expense,fontSize:15,fontWeight:"700"},progressTrack:{backgroundColor:colors.cream,borderRadius:4,height:7,marginTop:12,overflow:"hidden"},progressFill:{backgroundColor:colors.chart1,borderRadius:4,height:7},
 });
