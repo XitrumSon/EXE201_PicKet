@@ -1,5 +1,9 @@
 # Receipt OCR performance — Android code 13
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 26 October 2026. Code 12 is not accepted: the owner reports 60–120+ second
 scans and upright/inverted failures. This update replaces its repeated full-image
 rotation/OCR pipeline. Redmi acceptance remains pending until code 13 is tested.
