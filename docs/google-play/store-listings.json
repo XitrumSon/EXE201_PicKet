@@ -1,0 +1,17 @@
+{
+  "packageName": "com.picket.mobile",
+  "listings": [
+    {
+      "language": "vi",
+      "title": "PicKet - Quản lý thu chi",
+      "shortDescription": "Ghi thu chi, quét hóa đơn và theo dõi ngân sách trong một ứng dụng.",
+      "fullDescription": "PicKet giúp bạn ghi lại thu chi và xem lại các khoản tiền trong sinh hoạt hằng ngày.\n\nGHI CHÉP THU CHI\nTạo giao dịch thu, chi và chuyển tiền giữa các ví. Phân loại giao dịch, thêm ghi chú và tra cứu lịch sử khi cần.\n\nQUÉT HÓA ĐƠN\nChụp hoặc chọn ảnh hóa đơn để nhận diện thông tin. Kiểm tra và xác nhận kết quả trước khi lưu giao dịch. Khả năng nhận diện phụ thuộc chất lượng ảnh; kết quả có thể cần chỉnh sửa.\n\nVÍ VÀ NGÂN SÁCH\nTheo dõi số dư từng ví, đặt ngân sách và xem tình hình chi tiêu theo danh mục.\n\nHÓA ĐƠN VÀ KHOẢN ĐỊNH KỲ\nGhi nhận các khoản cần thanh toán và khoản chi định kỳ để tiện theo dõi.\n\nLỰA CHỌN CÁCH SỬ DỤNG\nDùng chế độ khách để ghi chép trên thiết bị hoặc đăng nhập để sử dụng chức năng đồng bộ. Một số chức năng cần kết nối Internet.\n\nGÓI SỬ DỤNG\nỨng dụng có chức năng miễn phí và các gói Plus/Pro tùy chọn. Giá, chu kỳ và quyền lợi được hiển thị trước khi thanh toán qua Google Play. Gói tự động gia hạn trừ khi bạn hủy theo điều kiện hiển thị của Google Play. Bạn có thể quản lý hoặc hủy gói trong Google Play.\n\nPicKet là công cụ ghi chép tài chính cá nhân, không kết nối để tự động chuyển tiền ngân hàng và không cung cấp dịch vụ cho vay hay khuyến nghị đầu tư cá nhân."
+    },
+    {
+      "language": "en-US",
+      "title": "PicKet - Expense Tracker",
+      "shortDescription": "Track expenses, scan receipts and review your budgets in one app.",
+      "fullDescription": "PicKet helps you record everyday income and expenses and review your personal finances.\n\nRECORD TRANSACTIONS\nAdd income, expenses and transfers between your wallets. Categorize transactions, add notes and look up your history.\n\nSCAN RECEIPTS\nCapture or select a receipt image to recognize its details. Review and confirm the result before saving a transaction. Recognition depends on image quality and may need corrections.\n\nWALLETS AND BUDGETS\nTrack each wallet balance, set budgets and review spending by category.\n\nBILLS AND RECURRING COSTS\nKeep track of upcoming bills and recurring expenses.\n\nCHOOSE HOW TO USE THE APP\nUse guest mode for records on your device or sign in to use synchronization. Some features require an Internet connection.\n\nOPTIONAL PLANS\nThe app includes free features and optional Plus/Pro subscriptions. Google Play displays the price, billing period and benefits before purchase. Subscriptions renew automatically unless canceled under the terms shown by Google Play. Manage or cancel your subscription in Google Play.\n\nPicKet is a personal finance record-keeping tool. It does not automatically move money between bank accounts, provide loans or offer personalized investment recommendations."
+    }
+  ]
+}
