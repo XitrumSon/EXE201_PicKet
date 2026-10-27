@@ -1,5 +1,9 @@
 # Dọn workspace — 2026-10-18
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Đợt chuẩn bị commit và landing page
 
 - Kết quả cuối đợt: build ARM64 mới ký/kiểm tra thành công rồi xóa thêm `picket-camera-calendar-arm64.apk` cũ. Giữ `picket-production-arm64.apk` (70.016.199 bytes) và `picket-completion-emulator.apk` mới nhất. Gradle clean lần đầu vướng lint JAR đang khóa; dừng daemon và chạy lại `clean --no-daemon` đạt. Workspace sau clean/build landing ~2,33 GiB, gồm bản phân phối ARM64 cần cho landing. Xem [LANDING_RELEASE_TDD.md](LANDING_RELEASE_TDD.md).
