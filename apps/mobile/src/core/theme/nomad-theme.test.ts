@@ -14,7 +14,7 @@ test("Nomad is selectable with complete independent light and dark palettes", ()
   assert.ok(colorSchemeIds.includes("nomad"));
   assert.equal(colorSchemes.nomad.light.canvas, "#FFFDF7");
   assert.equal(colorSchemes.nomad.dark.canvas, "#191814");
-  assert.equal(resolveColorScheme("future-theme"), "nomad");
+  assert.equal(resolveColorScheme("future-theme"), "paper");
 });
 test("all themes keep action text, links, states and controls readable", () => {
   for (const id of colorSchemeIds) for (const mode of ["light", "dark"] as const) {
