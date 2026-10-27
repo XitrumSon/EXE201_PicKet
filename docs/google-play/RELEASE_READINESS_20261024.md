@@ -92,6 +92,8 @@ Landing cũng đã phát hành APK code 19 và được tải lại kiểm check
 
 #### Kết quả kiểm thử Billing sau kích hoạt
 
+**Cập nhật Console sau đăng nhập 27/10:** đã đọc danh sách Internal testing `Picket Internal` gồm 3 tài khoản và chọn chính danh sách hiện có trong Manage account → Play settings → License testing. Đã xác nhận Save, tải lại URL độc lập và thấy `Picket Internal` checked, 3 users, response `RESPOND_NORMALLY`, không còn thay đổi chưa lưu. Không ghi email cá nhân vào Git. Trạng thái này thay thế phần chưa xác minh license tester/browser trong checkpoint dưới; không thay đổi alpha/closed-test hoặc quyền quản trị Console. Mua thử, ack, restore và lifecycle chưa nghiệm thu trên Play Store; runtime mua mới vẫn cần xử lý trong môi trường kiểm thử.
+
 - Mobile Billing: 21/21 tests đạt (purchase validation, readiness, verify-before-finish, restore/refresh, locale, race/unmount/account scope).
 - Dart Billing/entitlements: 7/7 tests đạt (request/response contract, authenticated forwarding, malformed verifier response).
 - Ma trận quyền gói PGlite cô lập: 22 assertions đạt cho 4 product ID, Free/Plus/Pro OCR cloud 3/30/100 mỗi cửa sổ 24 giờ, owner isolation, expiry/revoked/stale verification, strongest tier, client write denied, token hash hidden, replacement replay fence và cross-owner claim rejection. Đây là dữ liệu mô phỏng trong database cô lập, không phải purchase Google thật.
