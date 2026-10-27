@@ -1,5 +1,9 @@
 # Guest planning integrity checkpoint — 25 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Completed this increment:
 - Guest budget spending now shares refund/split calculation with the overview, excludes deleted rows, and uses exact integer proportional refund rounding.
 - Transfers reject negative source limits, invalid limits and destination overflow. Rollover rejects invalid or excessive limits.
