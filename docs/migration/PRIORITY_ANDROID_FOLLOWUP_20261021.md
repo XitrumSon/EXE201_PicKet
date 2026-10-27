@@ -1,5 +1,9 @@
 # Android priorities and budget delivery — 2026-10-21
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Final follow-up decision: [22 October Part 1 emulator acceptance](PART1_ACCEPTANCE_20261022.md) PASS within the named checklist. The failures/open states in this dated report are original checkpoint observations, not current unresolved cases.
 
 Source: `APP_COMPLETION_PLAN.md`, requested parts 1 and 2. This report does not mark either entire part complete. Generated QA owner A/B only, `com.picket.mobile.qa` on `emulator-5556`; no real-user finances changed, backend deployed, push or public APK update.
