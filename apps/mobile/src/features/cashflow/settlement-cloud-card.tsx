@@ -1,5 +1,7 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
+import { paperShape } from "@/core/theme/paper-foundations";
 import {useEffect,useRef,useState} from "react";
-import {AppState,Text,View} from "react-native";
+import { AppState, View } from "react-native";
 import * as Crypto from "expo-crypto";
 import {router} from "expo-router";
 import {useTranslation} from "react-i18next";
@@ -15,7 +17,7 @@ import type {SettlementLink} from "./settlements";
 
 function SettlementButton({label,onPress,disabled=false}:{label:string;onPress:()=>void;disabled?:boolean}){
  const {colors:c}=useAppTheme();
- return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={onPress} style={{minHeight:48,padding:12,borderWidth:1,borderColor:c.border,borderRadius:10}}><Text style={{color:disabled?c.muted:c.primary}}>{label}</Text></Pressable>;
+ return <Pressable accessibilityRole="button" disabled={disabled} accessibilityState={{disabled}} onPress={onPress} style={{minHeight:48,padding:12,borderWidth:1,borderColor:c.border,borderRadius:paperShape.button}}><Text style={{color:disabled?c.muted:c.primary}}>{label}</Text></Pressable>;
 }
 export function SettlementCloudCard({owner,onChange,onBusyChange}:{owner:string;onChange:()=>void;onBusyChange:(busy:boolean)=>void}){
  const {session,localMode}=useAuth(),{colors:c,language}=useAppTheme(),{t}=useTranslation("cashflow");
