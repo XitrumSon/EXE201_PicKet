@@ -1,5 +1,9 @@
 # Web receipt review status — TDD evidence
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Date: 2026-10-16. Source: [FEATURE_PARITY.md](FEATURE_PARITY.md), Accessibility and OCR review/confidence.
 
 Journey: when opening a saved receipt on Next.js, a user should immediately know whether the receipt needs review or has been confirmed, including with a screen reader.
