@@ -1,11 +1,15 @@
+import { PicketText as Text } from "@/core/ui/picket-text";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Image, Text, View } from "react-native";
-import { colors } from "@picket/design-tokens";
+import { ActivityIndicator, Image, View } from "react-native";
+import { useAppTheme } from "@/features/settings/appearance-provider";
+import { useTranslation } from "react-i18next";
 import { loadCloudReceiptImage, type GalleryEntry } from "./cloud-receipt-gallery";
 import { PrimaryAction } from "@/core/ui/picket-ui";
 
 /** Mounted only inside the selected day's sheet. Owner/month changes remount it. */
 export function ReceiptGalleryPhoto({ owner, entry }: { owner?: string; entry: GalleryEntry }) {
+  const { colors } = useAppTheme();
+  const { t } = useTranslation("calendar");
   const [uri, setUri] = useState(entry.uri);
   const [loading, setLoading] = useState(!entry.uri);
   const [retry, setRetry] = useState(0);
@@ -18,7 +22,7 @@ export function ReceiptGalleryPhoto({ owner, entry }: { owner?: string; entry: G
     }).catch(() => { if (active) setUri(undefined); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; controller.abort(); };
   }, [owner, entry.path, entry.uri, retry]);
-  if (loading) return <ActivityIndicator accessibilityLabel="Đang mở ảnh hóa đơn" color={colors.mauve} />;
-  if (uri) return <Image accessibilityLabel={`Ảnh hóa đơn ${entry.title}`} source={{ uri }} onError={() => setUri(undefined)} resizeMode="contain" style={{ height: 320, width: "100%", borderRadius: 16, backgroundColor: colors.cream }} />;
-  return <View><Text style={{ color: colors.muted }}>Chưa mở được ảnh. Kết nối mạng rồi thử lại.</Text><PrimaryAction label="Tải lại ảnh" onPress={() => { setLoading(true); setRetry(value => value + 1); }} /></View>;
+  if (loading) return <ActivityIndicator accessibilityLabel={t("openingReceipt")} color={colors.link} />;
+  if (uri) return <Image accessibilityLabel={t("receiptPhoto",{title:entry.title})} source={{ uri }} onError={() => setUri(undefined)} resizeMode="contain" style={{ height: 320, width: "100%", borderRadius: 16, backgroundColor: colors.canvas }} />;
+  return <View><Text style={{ color: colors.muted }}>{t("photoError")}</Text><PrimaryAction label={t("reloadPhoto")} onPress={() => { setLoading(true); setRetry(value => value + 1); }} /></View>;
 }
