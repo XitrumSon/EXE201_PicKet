@@ -1,4 +1,8 @@
-import { colors } from "@picket/design-tokens";
+import { paperControl , paperShape } from "@/core/theme/paper-foundations";
+import { isLoaded } from "expo-font";
+
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { useLayoutEffect, useRef, useState } from "react";
 import { StyleSheet, TextInput, type TextInputProps } from "react-native";
 import { formatMoneyInput } from "./money-input";
@@ -7,13 +11,14 @@ import { DateField } from "./date-field";
 
 /** Shared focus, selection and disabled styling; screen-specific amount layouts stay intact. */
 export function PicketTextInput({ style, onFocus, onBlur, editable, money = false, date = false, ...props }: TextInputProps & { money?: boolean; date?: boolean }) {
+  const { colors, styles, theme } = useMobileStyles(createStyles);
   const [focused, setFocused] = useState(false);
   const previousDisplay = useRef(formatMoneyInput(props.value ?? ""));
   const changeSelection = useRef<unknown>(undefined);
   const [moneySelection, setMoneySelection] = useState<{ start: number; end: number } | undefined>();
   useLayoutEffect(() => { previousDisplay.current = formatMoneyInput(props.value ?? ""); }, [props.value]);
   if (date) return <DateField label={props.accessibilityLabel ?? "Ngày"} value={props.value ?? ""} onChange={value => props.onChangeText?.(value)} style={style} disabled={editable === false} />;
-  return <TextInput {...props} selection={props.selection ?? (money ? moneySelection : undefined)} onSelectionChange={event => {
+  return <TextInput {...props} keyboardAppearance={props.keyboardAppearance ?? theme} selection={props.selection ?? (money ? moneySelection : undefined)} onSelectionChange={event => {
     if (money && shouldReleaseMoneySelection(event.nativeEvent.selection, moneySelection, changeSelection.current)) setMoneySelection(undefined);
     props.onSelectionChange?.(event);
   }} value={money && props.value !== undefined ? formatMoneyInput(props.value) : props.value} onChange={money ? event => {
@@ -26,7 +31,7 @@ export function PicketTextInput({ style, onFocus, onBlur, editable, money = fals
     setMoneySelection(next.selection);
     props.onChange?.(event);
     props.onChangeText?.(next.raw);
-  } : props.onChange} onChangeText={money ? undefined : props.onChangeText} accessibilityLabel={props.accessibilityLabel} editable={editable} placeholderTextColor={props.placeholderTextColor ?? colors.muted} selectionColor={props.selectionColor ?? colors.mauve} onFocus={(event) => { setFocused(true); onFocus?.(event); }} onBlur={(event) => { setFocused(false); onBlur?.(event); }} style={[styles.input, style, focused && styles.focused, editable === false && styles.disabled]} />;
+  } : props.onChange} onChangeText={money ? undefined : props.onChangeText} accessibilityLabel={props.accessibilityLabel} editable={editable} placeholderTextColor={props.placeholderTextColor ?? colors.muted} selectionColor={props.selectionColor ?? colors.focusRing} onFocus={(event) => { setFocused(true); onFocus?.(event); }} onBlur={(event) => { setFocused(false); onBlur?.(event); }} style={[styles.input, style, focused && styles.focused, editable === false && styles.disabled]} />;
 }
 
-const styles = StyleSheet.create({ input: { minHeight: 56, paddingHorizontal: 16, paddingVertical: 12, color: colors.ink, fontSize: 16, borderRadius: 12 }, focused: { borderColor: colors.mauve, borderWidth: 2 }, disabled: { opacity: 0.6 } });
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({ input: { fontWeight: "400", fontFamily: isLoaded("PicketDisplay") ? "PicketDisplay" : undefined, borderWidth: 1, borderColor: colors.controlBorder, backgroundColor: colors.surface, minHeight: paperControl.height, paddingHorizontal: 16, paddingVertical: 10, color: colors.ink, fontSize: 16, borderRadius: paperShape.input }, focused: { borderColor: colors.focusRing, borderWidth: 2 }, disabled: { backgroundColor: colors.disabledSurface, color: colors.disabledText } });
