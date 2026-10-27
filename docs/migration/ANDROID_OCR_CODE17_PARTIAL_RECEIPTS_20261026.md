@@ -1,5 +1,9 @@
 # Partial invoices and compact scan UI — code 17
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 The owner confirms code 15 clips splash corners, has unwanted draft/advisory UI,
 and still rejects inverted multi-item invoices. Two live Redmi traces isolate the
 failure: 14:56 ICT recognition 8,849ms/persistence 9,123ms; 14:58 recognition
@@ -70,3 +74,9 @@ Local signed backups/manifest retained. APK-15 direct users need one manual
 landing update to enter the repaired APK-17 updater; Play users remain on Play.
 
 Play Internal upload and physical code-17 acceptance are tracked independently.
+
+Play upload completed successfully; a separate live track read confirms Internal
+status `completed`, version code 17, rollout 100%. Production has no release.
+The owner has been asked to update through Play and repeat the inverted multi-item
+receipt test without saving a transaction. Physical acceptance remains pending;
+the prior code-15 failure must not be treated as a code-17 result.
