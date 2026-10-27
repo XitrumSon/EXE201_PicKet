@@ -2,6 +2,7 @@ import type { Href } from "expo-router";
 
 export const routes = {
   home: "/" as Href,
+  receiptCalendar: "/receipt-calendar" as Href,
   login: "/(auth)/login" as Href,
   register: "/(auth)/register" as Href,
   verifyEmail: (email: string) =>
@@ -11,6 +12,7 @@ export const routes = {
   resetPassword: "/auth/reset-password" as Href,
   onboarding: "/onboarding" as Href,
   profile: "/profile" as Href,
+  appearance: "/appearance" as Href,
   admin: "/admin" as Href,
   insights: "/insights" as Href,
   keepsakes: "/keepsakes" as Href,
