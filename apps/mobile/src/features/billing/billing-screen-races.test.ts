@@ -7,6 +7,7 @@ import ts from "typescript";
 type Element={type:unknown;props:Record<string,unknown>};
 function nodes(value:unknown):Element[]{if(Array.isArray(value))return value.flatMap(nodes);if(!value||typeof value!=="object"||!("props" in value))return [];const node=value as Element;return [node,...nodes(node.props.children)];}
 function text(value:unknown):string{if(typeof value==="string")return value;if(Array.isArray(value))return value.map(text).join("");return value&&typeof value==="object"&&"props" in value?text((value as Element).props.children):"";}
+const productIds=["picket_plus_monthly","picket_plus_yearly","picket_pro_monthly","picket_pro_yearly"];
 function harness(){
  const slots:unknown[]=[];let cursor=0,reads=0,verified=0,purchaseRequests=0,catalogReads=0,accessToken="test-token";let release!:(value:unknown[])=>void;
  const pending=new Promise<unknown[]>(done=>{release=done;});
@@ -20,15 +21,16 @@ function harness(){
  const effect=(callback:()=>unknown,deps:unknown[])=>{const index=cursor++;const old=slots[index] as {deps:unknown[];cleanup?:()=>void}|undefined;if(!old||deps.some((value,position)=>!Object.is(value,old.deps[position]))){old?.cleanup?.();slots[index]={deps,cleanup:callback()};}};
  const api={billingAvailability:async()=>({newPurchasesEnabled:true}),currentEntitlements:()=>entitlementRead(),verifyPlayPurchase:async()=>{verified++;return {active:true,tier:"plus"};}};
  const adapters:Record<string,unknown>={
+  "@expo/vector-icons":{MaterialCommunityIcons:"Icon"},
     "@/core/ui/picket-text": { PicketText: "Text" },
     "@/core/ui/picket-scroll-view": { PicketScrollView: "ScrollView" },
     "@/core/theme/paper-foundations": { paperShape, paperSpace },
   react:{useState:state,useRef:ref,useEffect:effect},"react/jsx-runtime":{jsx:(type:unknown,props:unknown)=>({type,props}),jsxs:(type:unknown,props:unknown)=>({type,props})},
   "react-native":{ActivityIndicator:"ActivityIndicator",Platform:{OS:"android"},ScrollView:"ScrollView",Text:"Text",View:"View",StyleSheet:{create:(value:unknown)=>value}},"react-native-safe-area-context":{SafeAreaView:"SafeAreaView"},
   "@/core/theme/use-mobile-styles":{useMobileStyles:()=>({colors:{},styles:{}})},"@/core/ui/mobile-palette":{radii:{}},"@/core/ui/accessible-pressable":{AccessiblePressable:"Pressable"},"react-i18next":{useTranslation:()=>({t:(key:string,params?:{tier?:string})=>key==="current"?`current:${params?.tier}`:key})},
-  "@picket/domain":{PICKET_SUBSCRIPTION_IDS:["picket_plus_monthly"]},"@/core/api/client":{picketApi:api},"@/core/navigation/routes":{routes:{}},
+  "@picket/domain":{PICKET_SUBSCRIPTION_IDS:productIds},"@/core/api/client":{picketApi:api},"@/core/navigation/routes":{routes:{}},
   "expo-crypto":{CryptoDigestAlgorithm:{SHA256:"SHA256"},digestStringAsync:async()=>"synthetic-account-hash"},
-  "@/features/billing/play-billing-provider":{usePlayBilling:()=>({connected:true,subscriptions:[{id:"picket_plus_monthly",platform:"android",productStatusAndroid,subscriptionOffers:[{offerTokenAndroid:"synthetic-offer",displayPrice}]}],fetchProducts,finishTransaction:async()=>{},requestPurchase:async()=>{purchaseRequests++;},revision:0})},
+  "@/features/billing/play-billing-provider":{usePlayBilling:()=>({connected:true,subscriptions:productIds.map(id=>({id,platform:"android",productStatusAndroid,subscriptionOffers:[{offerTokenAndroid:"synthetic-offer",displayPrice}]})),fetchProducts,finishTransaction:async()=>{},requestPurchase:async()=>{purchaseRequests++;},revision:0})},
   "expo-iap":{getAvailablePurchases:()=>{reads++;return pending;},deepLinkToSubscriptions:async()=>{}},
   "@/features/billing/billing-policy":{canStartPlayPurchase:()=>true,isPicketSubscriptionId:()=>true,verifyAndFinishPurchase:async(purchase:unknown,verify:(p:unknown)=>unknown)=>verify(purchase)},
   "@/features/billing/restore-results":{verifyRestoredPurchases:async(purchases:unknown[],verify:(p:unknown)=>Promise<boolean>)=>{let count=0;for(const purchase of purchases)if(await verify(purchase))count++;return {verified:count,failed:purchases.length-count};}},
@@ -39,7 +41,7 @@ function harness(){
  const restore=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="restore");assert.ok(button);return button.props.onPress as ()=>void;};
  const buy=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose");assert.ok(button);return button.props.onPress as ()=>void;};
  const reloadPrices=()=>{const button=nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="reloadPrices");assert.ok(button);(button.props.onPress as ()=>void)();render();};
- return {restore,buy,reloadPrices,setProductStatus:(value:string)=>{productStatusAndroid=value;},setCatalogueRequest:(request:()=>Promise<void>)=>{catalogueRequest=request;},catalogReads:()=>catalogReads,setPrice:(value:string)=>{displayPrice=value;},buyDisabled:()=>nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose")?.props.disabled,viewText:()=>text(render()),setEntitlementRead:(read:()=>Promise<unknown>)=>{entitlementRead=read;},purchases:()=>purchaseRequests,refreshToken:()=>{accessToken="new-test-token";render();},reads:()=>reads,verified:()=>verified,release:()=>release([{productId:"picket_plus_monthly",purchaseToken:"synthetic-token"}]),stop:()=>{for(const slot of slots)(slot as {cleanup?:()=>void})?.cleanup?.();}};
+ return {render,selectYearly:()=>{const button=nodes(render()).find(node=>node.props.accessibilityRole==="tab"&&text(node.props.children)==="yearlyTab");assert.ok(button);(button.props.onPress as ()=>void)();},restore,buy,reloadPrices,setProductStatus:(value:string)=>{productStatusAndroid=value;},setCatalogueRequest:(request:()=>Promise<void>)=>{catalogueRequest=request;},catalogReads:()=>catalogReads,setPrice:(value:string)=>{displayPrice=value;},buyDisabled:()=>nodes(render()).find(node=>node.type==="Pressable"&&text(node.props.children)==="choose")?.props.disabled,viewText:()=>text(render()),setEntitlementRead:(read:()=>Promise<unknown>)=>{entitlementRead=read;},purchases:()=>purchaseRequests,refreshToken:()=>{accessToken="new-test-token";render();},reads:()=>reads,verified:()=>verified,release:()=>release([{productId:"picket_plus_monthly",purchaseToken:"synthetic-token"}]),stop:()=>{for(const slot of slots)(slot as {cleanup?:()=>void})?.cleanup?.();}};
 }
 async function settle(){for(let index=0;index<5;index++)await new Promise(done=>setImmediate(done));}
 test("rapid restore taps query Google Play only once",async()=>{const app=harness();const press=app.restore();press();press();assert.equal(app.reads(),1);app.release();await settle();});
@@ -64,4 +66,22 @@ test("a rejected catalogue load remains retryable",async()=>{const app=harness()
 
 for(const status of ["not-found","no-offers-available","unknown"])test(`unfetched Play product ${status} shows retry instead of an inert purchase card`,async()=>{
  const app=harness();app.setProductStatus(status);app.viewText();await settle();assert.ok(app.viewText().includes("pricesUnavailable"));assert.ok(!app.viewText().includes("choose"));app.reloadPrices();await settle();assert.equal(app.catalogReads(),2);assert.equal(app.purchases(),0);
+});
+
+
+test("billing compares Plus and Pro in the selected billing period",async()=>{
+ const app=harness();app.render();await settle();
+ const periodTexts=()=>nodes(app.render()).filter(n=>n.type==="Text").map(n=>text(n.props.children));
+ assert.equal(periodTexts().filter(t=>t==="monthly").length,2);
+ assert.equal(periodTexts().filter(t=>t==="yearly").length,0);
+ app.selectYearly();
+ assert.equal(periodTexts().filter(t=>t==="monthly").length,0);
+ assert.equal(periodTexts().filter(t=>t==="yearly").length,2);
+ assert.equal(periodTexts().filter(t=>t==="choose").length,2);
+ app.stop();
+});
+
+test("exhausted cloud quota keeps on-device scan guidance visible",async()=>{
+ const app=harness();app.setEntitlementRead(async()=>({tier:"pro",ocrFallbackRemaining:0,ocrFallbackDailyLimit:100}));app.render();await settle();
+ assert.ok(app.viewText().includes("exhausted"));assert.ok(app.viewText().includes("localIncluded"));app.stop();
 });
