@@ -1,5 +1,9 @@
 # Keepsake retirement — 25 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Account deletion additionally validates and erases the exact owned `keepsakes`
 and `keepsake-cloud-cache` directories, then transactionally deletes the owner's
 keepsake outbox and photo-cleanup journal. Payloads/photo references are not
