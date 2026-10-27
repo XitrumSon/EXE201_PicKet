@@ -1,5 +1,9 @@
 # Receipt capture restart/retry — 2026-10-21
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Scope: Android Expo capture and receipt submission. No API/database-server deployment or real-account financial mutation. This report is not a declaration that the entire camera fault matrix passed.
 
 ## Problems reproduced
