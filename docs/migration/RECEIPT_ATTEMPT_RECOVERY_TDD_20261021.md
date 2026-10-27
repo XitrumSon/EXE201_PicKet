@@ -1,5 +1,9 @@
 # Receipt transaction attempt recovery — 21 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Scope: safely edit a pinned receipt request after authoritative rejection, including a prior ambiguous response. A local reset or an absent-key SELECT alone is insufficient: an old request can still arrive later.
 
 ## Guarantee and implementation
