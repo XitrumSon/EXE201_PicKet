@@ -128,7 +128,7 @@ jobs:
           cache: npm
           cache-dependency-path: supabase/tests/package-lock.json
       - run: npm ci --prefix supabase/tests
-      - run: node supabase/tests/validate.mjs
+      - run: npm run test:db
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x

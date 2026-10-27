@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npm run test:landing && npm run test:mobile && npm run test:web && npm run test:api",
+    "test": "npm run test:landing && npm run test:mobile && npm run test:web && npm run test:api && npm run test:db",
+    "test:db": "npm test --prefix supabase/tests",
     "test:landing": "npm test --prefix apps/landing",
     "test:mobile": "cd apps/mobile && node --import tsx --test \"src/**/*.test.ts\"",
     "test:web": "npm run test:auth --prefix web && npm run lint --prefix web && npm run typecheck --prefix web",
