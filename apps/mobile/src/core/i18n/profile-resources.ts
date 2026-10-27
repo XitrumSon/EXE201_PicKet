@@ -1,4 +1,9 @@
 export const profileVi = {
+  signOutClean: "Bạn có muốn đăng xuất khỏi tài khoản trên thiết bị này?",
+  signOutPending: "Một số thay đổi chưa đồng bộ. Chúng được giữ trên thiết bị này và sẽ tiếp tục đồng bộ khi bạn đăng nhập lại cùng tài khoản.",
+  "Không kiểm tra được đồng bộ. Hãy thử lại.": "Không kiểm tra được đồng bộ. Hãy thử lại.",
+  "Giao diện": "Giao diện",
+  "Bảng màu và chế độ sáng/tối": "Bảng màu và chế độ sáng/tối",
   "Đi làm": "Đi làm",
   "Sinh viên": "Sinh viên",
   "Tự do": "Tự do",
@@ -75,6 +80,11 @@ export const profileVi = {
   "ocrRemaining": "Còn {{remaining}}/{{limit}} lượt nhận diện nâng cao trong 24 giờ."
 } as const;
 export const profileEn:Record<keyof typeof profileVi,string> = {
+  signOutClean: "Sign out of your account on this device?",
+  signOutPending: "Some changes have not synced yet. They stay on this device and will sync when you sign in to the same account again.",
+  "Không kiểm tra được đồng bộ. Hãy thử lại.": "Unable to check sync. Please try again.",
+  "Giao diện": "Appearance",
+  "Bảng màu và chế độ sáng/tối": "Color palette and light/dark mode",
   "Đi làm": "Working",
   "Sinh viên": "Student",
   "Tự do": "Freelance",
