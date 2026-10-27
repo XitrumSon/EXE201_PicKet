@@ -1,3 +1,4 @@
+import { paperShape, paperSpace } from "../../core/theme/paper-foundations";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
@@ -14,6 +15,9 @@ function harness(){
  const effect=(fn:()=>unknown,deps:unknown[]=[])=>{const i=cursor++,old=slots[i] as {deps:unknown[];cleanup?:()=>void}|undefined;if(!old||deps.some((d,j)=>!Object.is(d,old.deps[j]))){old?.cleanup?.();slots[i]={deps,cleanup:fn()};}};
  const useCallback=(fn:unknown,deps:unknown[])=>{const i=cursor++,old=slots[i] as {deps:unknown[];fn:unknown}|undefined;if(!old||deps.some((d,j)=>!Object.is(d,old.deps[j])))slots[i]={deps,fn};return (slots[i] as {fn:unknown}).fn;};
  const adapters:Record<string,unknown>={
+    "@/core/ui/picket-text": { PicketText: "Text" },
+    "@/core/ui/picket-scroll-view": { PicketScrollView: "ScrollView" },
+    "@/core/theme/paper-foundations": { paperShape, paperSpace },
  "@/features/notifications/use-reminder-calendar":{useReminderCalendar:()=>({month:"2026-10",day:"2026-10-25",offset:-420,now:Date.now()})},
  react:{useState:state,useRef:ref,useEffect:effect,useLayoutEffect:effect,useMemo:(fn:()=>unknown)=>fn(),useCallback},
  "react/jsx-runtime":{jsx:(type:unknown,props:unknown)=>({type,props}),jsxs:(type:unknown,props:unknown)=>({type,props})},
@@ -21,7 +25,7 @@ function harness(){
  "expo-router":{useFocusEffect:(fn:()=>unknown)=>effect(fn,[fn])},
  "react-native":{Switch:"Switch",Text:"Text",StyleSheet:{create:(v:unknown)=>v}},
  "@/features/settings/appearance-provider":{useAppTheme:()=>({language:"vi"})},
- "@/core/theme/use-mobile-styles":{useMobileStyles:()=>({styles:{}})},
+ "@/core/theme/use-mobile-styles":{useMobileStyles:()=>({styles:{},colors:{onPrimary:"#fff",muted:"#756774",border:"#e9ded5",primary:"#79396f"}})},
  "@/features/auth/auth-context":{useAuth:()=>({session:{user:{id:owner},access_token:owner},localMode:false})},
  "@/features/bills/bills-context":{useBills:()=>({bills:[]})},"@/features/budgets/budgets-context":{useBudgets:()=>({budgets:[]})},"@/features/subscriptions/subscriptions-context":{useSubscriptions:()=>({subscriptions:[]})},
  "@/features/transactions/use-transaction-history":{useTransactionHistory:()=>({transactions:[],loading:false})},"@/features/transactions/use-spending-splits":{useSpendingSplits:()=>({splits:[]})},"@/features/notifications/use-reminder-periods":{useReminderPeriods:()=>({periodsReady:true})},
