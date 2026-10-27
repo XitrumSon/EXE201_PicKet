@@ -1,5 +1,7 @@
 # Picket — Giáo trình tài chính tiếng Việt v1
 
+> [Trạng thái hiện hành](../PROJECT_STATUS.md). Bản biên tập 2 bổ sung ngày 27/10/2026: 12 bài tự kiểm tra hư cấu và lời giải VI/EN; giữ ID bài và đáp án quiz.
+
 Biên soạn và đối chiếu nguồn ngày 2026-10-23. **authored-not-independent-review**: chưa được người độc lập duyệt; chưa đủ điều kiện phát hành nội dung published.
 
 12 bài / 6 chương, dành cho người lớn từ 18 tuổi. Nội dung và tình huống VND do Picket biên soạn mới, không sao chép giáo trình nguồn. Nguồn quốc tế chỉ dùng cho khái niệm, không áp dụng quyền hoặc luật nước ngoài cho Việt Nam. Không khẳng định nguồn đã duyệt hoặc chứng thực Picket.
@@ -34,10 +36,37 @@ Trong Picket, hãy rà ví nguồn, ví đích, số tiền và phí trước kh
 
 600.000 + 1.400.000 = 2.000.000; sau chuyển: 800.000 + 1.200.000 = 2.000.000. Phí 3.000 nếu có làm tổng còn 1.997.000.
 
+#### Ghi nhớ
+
+- Xác định những ví nào đang nằm trong phạm vi báo cáo trước khi cộng số dư.
+- Chuyển giữa hai ví của chính mình chỉ đổi nơi giữ tiền; phí phải được ghi riêng.
+- Đối chiếu đủ hai phía để tránh ghi một lần rút tiền thành hai khoản chi.
+
+#### Hiểu lầm thường gặp
+
+Thấy tiền ra khỏi ngân hàng rồi kết luận toàn bộ số đó đã được tiêu.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+An có 900.000đ ở ngân hàng và 100.000đ tiền mặt. An rút 150.000đ; ngân hàng thu thêm 5.000đ phí. Tính số dư mỗi ví, tổng tiền và khoản chi thực sự.
+
+#### Gợi ý giải từng bước
+
+1. Ngân hàng còn 900.000 − 150.000 − 5.000 = 745.000đ.
+2. Tiền mặt tăng thành 100.000 + 150.000 = 250.000đ.
+3. Tổng còn 995.000đ; chỉ 5.000đ phí rời khỏi phạm vi hai ví.
+
+#### Kết luận
+
+Khoản chuyển là 150.000đ; khoản chi là 5.000đ. Không ghi 155.000đ thành chi tiêu toàn bộ.
+
 - `600000+1400000 = 2000000`
 - `600000+200000 = 800000`
 - `1400000-200000 = 1200000`
 - `2000000-3000 = 1997000`
+- `900000-150000-5000 = 745000`
+- `100000+150000 = 250000`
+- `745000+250000 = 995000`
 
 ### Tình huống thực hành
 
@@ -88,8 +117,34 @@ Cuối một khoảng thời gian, hãy so danh sách với số dư hoặc ch�
 
 45.000 + 25.000 + 30.000 = 100.000đ; ảnh bữa trưa đính kèm không tạo khoản chi 45.000đ thứ hai.
 
+#### Ghi nhớ
+
+- Ghi số tiền, ngày, ví và loại giao dịch trước khi cân nhắc danh mục.
+- Ảnh hóa đơn đính kèm không phải một khoản chi mới.
+- Ngày chưa ghi đủ cần được nhận diện là thiếu dữ liệu, không tự đổi thành chi bằng không.
+
+#### Hiểu lầm thường gặp
+
+Quét lại ảnh hoặc tải lại màn hình là lý do để tạo thêm một giao dịch giống hệt.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+Bình đã ghi bữa trưa 40.000đ và tiền xe 30.000đ. Bình quét lại hóa đơn bữa trưa và thấy một bản nháp 40.000đ. Tổng chi thực tế là bao nhiêu, và nên kiểm tra gì trước khi lưu?
+
+#### Gợi ý giải từng bước
+
+1. Cộng hai khoản đã xảy ra: 40.000 + 30.000 = 70.000đ.
+2. Đối chiếu ngày, số tiền và ví của bản nháp với giao dịch bữa trưa đã có.
+3. Nếu cùng một lần thanh toán, không lưu thêm bản ghi; nếu là hai lần mua thật thì cần bằng chứng phân biệt.
+
+#### Kết luận
+
+Tổng theo dữ kiện là 70.000đ. Không tự nâng thành 110.000đ chỉ vì có thêm một ảnh hoặc bản nháp.
+
 - `45000+25000+30000 = 100000`
 - `100000+45000 = 145000`
+- `40000+30000 = 70000`
+- `70000+40000 = 110000`
 
 ### Tình huống thực hành
 
@@ -140,8 +195,35 @@ Bạn có thể đặt một khoản linh hoạt cho sở thích theo khả năn
 
 1.500.000 − 900.000 − 400.000 = 200.000đ; 350.000 − 200.000 = 150.000đ còn thiếu cho lựa chọn này.
 
+#### Ghi nhớ
+
+- Phân loại nhu cầu và mong muốn theo mục đích, hoàn cảnh và thời điểm.
+- Một món đồ có thể phục vụ nhiều mục đích; tên cửa hàng chưa đủ để kết luận.
+- So lựa chọn với số tiền và ưu tiên của tình huống, không dùng danh mục để đánh giá con người.
+
+#### Hiểu lầm thường gặp
+
+Cho rằng một loại hàng luôn là mong muốn với tất cả mọi người.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+Chi có 150.000đ. Gói kết nối 100.000đ cần cho bài thi trực tuyến ngày mai; gói giải trí 60.000đ có thể mua tuần sau. Hãy lập một phương án trong số tiền hiện có và giải thích bằng bối cảnh.
+
+#### Gợi ý giải từng bước
+
+1. Trong tình huống này, kết nối cho bài thi có thời hạn cụ thể và khó trì hoãn.
+2. Sau gói kết nối, Chi còn 150.000 − 100.000 = 50.000đ.
+3. Mua cả hai cần 160.000đ, vượt 10.000đ; có thể hoãn gói giải trí thay vì giả định có thêm thu nhập.
+
+#### Kết luận
+
+Một phương án phù hợp dữ kiện là mua gói cần cho bài thi và hoãn gói giải trí. Đây không phải quy tắc cấm giải trí cho mọi người.
+
 - `1500000-900000-400000 = 200000`
 - `350000-200000 = 150000`
+- `150000-100000 = 50000`
+- `100000+60000 = 160000`
+- `160000-150000 = 10000`
 
 ### Tình huống thực hành
 
@@ -192,8 +274,34 @@ Trong Picket, xem lịch các ngày trước kỳ thu nhập tiếp theo giúp b
 
 1.200.000 − 800.000 − 300.000 = 100.000đ; thêm chi 200.000đ trước tiền về tạo mức −100.000đ.
 
+#### Ghi nhớ
+
+- Xếp khoản thu và khoản phải trả theo ngày, không chỉ nhìn tổng tháng.
+- Tiền dự kiến về sau ngày đến hạn chưa giải quyết được thiếu hụt trước hạn.
+- Chỉ sửa lịch thật khi thay đổi ngoài ứng dụng đã được xác nhận.
+
+#### Hiểu lầm thường gặp
+
+Tháng kết thúc còn dư thì mọi ngày trong tháng đều có đủ tiền thanh toán.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+Dũng có 150.000đ ngày 5. Hóa đơn 200.000đ đến hạn ngày 7; thu nhập 500.000đ dự kiến về ngày 10. Nếu chưa có khoản nào khác, ngày nào thiếu và còn điều gì phải xác minh?
+
+#### Gợi ý giải từng bước
+
+1. Trước thu nhập, 150.000 − 200.000 = −50.000đ vào ngày 7.
+2. Nếu khoản thu đến đúng ngày 10, phép tính sau đó là −50.000 + 500.000 = 450.000đ.
+3. Số cuối kỳ dương không xóa khoảng thiếu trước hạn; cần kiểm ngày nhận tiền và phương án xử lý thực sự với bên liên quan.
+
+#### Kết luận
+
+Thiếu 50.000đ ở thời điểm ngày 7. Lịch trong Picket chỉ giúp nhìn ra vấn đề, không tự dời hạn hoặc tạo thêm tiền.
+
 - `1200000-800000-300000 = 100000`
 - `100000-200000 = -100000`
+- `150000-200000 = -50000`
+- `-50000+500000 = 450000`
 
 ### Tình huống thực hành
 
@@ -245,8 +353,34 @@ Hãy cân nhắc nơi giữ tiền mà bạn hiểu phí, khả năng rút và m
 
 2.000.000 − 1.200.000 = 800.000đ; 800.000 − 500.000 = 300.000đ.
 
+#### Ghi nhớ
+
+- Tách khoản đã biết trước khỏi chi phí bất ngờ.
+- Mức dự phòng phù hợp phụ thuộc hoàn cảnh; ví dụ trong bài không phải mức bắt buộc.
+- Gắn nhãn để dành giúp theo dõi, nhưng không tự chuyển tiền hoặc bảo đảm số dư.
+
+#### Hiểu lầm thường gặp
+
+Mọi khoản lớn đều là khẩn cấp, hoặc gắn nhãn quỹ dự phòng là đã có thêm tiền.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+Hà biết cần bảo dưỡng xe 240.000đ sau 4 tuần. Hà còn quỹ cho việc bất ngờ 90.000đ; một hỏng hóc không dự kiến vừa dùng 40.000đ. Tách hai mục tiêu và tính các số còn lại.
+
+#### Gợi ý giải từng bước
+
+1. Bảo dưỡng đã biết trước có thể lập mục tiêu 240.000 ÷ 4 = 60.000đ mỗi tuần theo giả định chia đều.
+2. Khoản hỏng bất ngờ dùng 40.000đ từ quỹ 90.000đ, nên quỹ còn 50.000đ.
+3. Hai khoản có mục đích khác nhau; đừng tính nhãn quỹ như một nguồn thu mới hoặc buộc phải dành mức vượt khả năng.
+
+#### Kết luận
+
+Mục tiêu bảo dưỡng là 60.000đ mỗi tuần nếu khả thi; quỹ bất ngờ còn 50.000đ. Có thể điều chỉnh kế hoạch theo thu nhập thực tế.
+
 - `2000000-1200000 = 800000`
 - `800000-500000 = 300000`
+- `240000/4 = 60000`
+- `90000-40000 = 50000`
 
 ### Tình huống thực hành
 
@@ -297,9 +431,37 @@ Trong Picket, có thể chọn thực hành xem lại mục tiêu có sẵn ho�
 
 (3.000.000 − 600.000) / 6 = 400.000đ/kỳ; 2.400.000 / 300.000 = 8 kỳ.
 
+#### Ghi nhớ
+
+- Mô tả mục tiêu bằng số tiền còn thiếu và mốc thời gian có thể xem lại.
+- Tính lại từ số đã có khi thu nhập hoặc ưu tiên thay đổi.
+- Điều chỉnh thời hạn hay quy mô là một lựa chọn, không phải thất bại cá nhân.
+
+#### Hiểu lầm thường gặp
+
+Đã đặt mục tiêu thì phải giữ mức góp cũ dù không còn đủ cho khoản thiết yếu.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+Khoa muốn có 900.000đ, hiện đã có 300.000đ và dự định góp 100.000đ mỗi tuần trong 6 tuần. Hai tuần đầu thực góp 100.000đ và 40.000đ. Còn 4 tuần, Khoa chỉ có thể dành 80.000đ mỗi tuần. Kế hoạch cũ còn khớp không?
+
+#### Gợi ý giải từng bước
+
+1. Sau hai tuần, số đã có là 300.000 + 100.000 + 40.000 = 440.000đ.
+2. Còn thiếu 900.000 − 440.000 = 460.000đ; nếu giữ 4 tuần thì cần 115.000đ mỗi tuần.
+3. Khả năng 80.000đ không đáp ứng mức đó; có thể dời mốc, giảm mục tiêu hoặc xem lại một phương án khả thi, không giả định phần thiếu đã tồn tại.
+
+#### Kết luận
+
+Kế hoạch cũ không còn khớp. Với mức 80.000đ, thêm 6 tuần tạo được 480.000đ trước chi phí khác; đó là một kịch bản để cân nhắc, không phải cam kết.
+
 - `3000000-600000 = 2400000`
 - `2400000/6 = 400000`
 - `2400000/300000 = 8`
+- `300000+100000+40000 = 440000`
+- `900000-440000 = 460000`
+- `460000/4 = 115000`
+- `6*80000 = 480000`
 
 ### Tình huống thực hành
 
@@ -351,7 +513,33 @@ Con số 1.300.000đ vẫn phụ thuộc vào danh sách đã đủ chưa. Vy c�
 
 4.000.000 − 1.500.000 − 700.000 − 500.000 = 1.300.000đ theo đầu vào đã nêu.
 
+#### Ghi nhớ
+
+- Tách số dư đang có khỏi phần đã dành cho nghĩa vụ và chi thiết yếu.
+- Giữ cùng phạm vi ví và đơn vị tiền khi tính phần chưa phân bổ.
+- Đánh dấu khoản đã trả để tránh trừ nghĩa vụ đó lần thứ hai.
+
+#### Hiểu lầm thường gặp
+
+Toàn bộ số dư hiện trên màn hình đều sẵn để mua một món mới.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+Lan có 1.200.000đ trong phạm vi ví đang xem. Trước kỳ thu tiếp theo, Lan dành 800.000đ tiền nhà, 250.000đ sinh hoạt và 100.000đ cho khoản dự phòng đã chọn. Theo các giả định này còn bao nhiêu chưa phân bổ?
+
+#### Gợi ý giải từng bước
+
+1. Các phần đã dự định dùng là 800.000 + 250.000 + 100.000 = 1.150.000đ.
+2. Phần chưa phân bổ theo dữ kiện là 1.200.000 − 1.150.000 = 50.000đ.
+3. Kiểm tra khoản nào đã trả, còn thiếu hoặc nằm ngoài phạm vi; kết quả này chưa phải đánh giá chắc chắn về khả năng mua của một người thật.
+
+#### Kết luận
+
+Còn 50.000đ chưa phân bổ theo ví dụ. Số dư 1.200.000đ không đồng nghĩa toàn bộ số tiền đó còn tự do sử dụng.
+
 - `4000000-1500000-700000-500000 = 1300000`
+- `800000+250000+100000 = 1150000`
+- `1200000-1150000 = 50000`
 
 ### Tình huống thực hành
 
@@ -402,9 +590,36 @@ Trong Picket, thử một lựa chọn không nên tự tạo giao dịch hoặc
 
 Không mua: 2.000.000 + 1.000.000 − 1.500.000 = 1.500.000đ. Mua: 1.500.000 − 600.000 = 900.000đ.
 
+#### Ghi nhớ
+
+- Tách dữ kiện đã xác nhận khỏi giả định khi tạo kịch bản.
+- So các phương án trên cùng mốc thời gian, phạm vi ví và đơn vị tiền.
+- Một kết quả mô phỏng không phải lời hứa hay giao dịch đã xảy ra.
+
+#### Hiểu lầm thường gặp
+
+Chọn kịch bản đẹp nhất rồi coi khoản thu chưa chắc chắn là tiền đã có.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+Minh có 400.000đ, còn khoản phải trả đã xác nhận 150.000đ. Minh cân nhắc món đồ 300.000đ và có thể nhận thêm 200.000đ nhưng chưa chắc ngày nhận. So phương án không có và có khoản thu giả định.
+
+#### Gợi ý giải từng bước
+
+1. Sau khoản phải trả, còn 400.000 − 150.000 = 250.000đ theo dữ kiện.
+2. Nếu mua món đồ mà chưa có khoản thu thêm, kịch bản còn 250.000 − 300.000 = −50.000đ.
+3. Nếu giả định 200.000đ đến đúng lúc, kết quả là 150.000đ; phải ghi rõ giả định này, không xóa cảnh báo ở phương án cơ sở.
+
+#### Kết luận
+
+Phương án cơ sở thiếu 50.000đ nếu mua. Kết quả 150.000đ chỉ thuộc kịch bản có khoản thu đúng lúc, không phải tiền được bảo đảm.
+
 - `2000000+1000000-1500000 = 1500000`
 - `1500000-600000 = 900000`
 - `1500000-900000 = 600000`
+- `400000-150000 = 250000`
+- `250000-300000 = -50000`
+- `-50000+200000 = 150000`
 
 ### Tình huống thực hành
 
@@ -456,10 +671,38 @@ Trước quyết định thật, bạn cần thông tin hợp đồng áp dụng
 
 A: 3 × 1.080.000 + 60.000 = 3.300.000đ, chi phí 300.000đ. B: 3 × 1.110.000 = 3.330.000đ; chênh 30.000đ.
 
+#### Ghi nhớ
+
+- So tổng tiền, số kỳ, tiền thực nhận và mọi phí đã biết trước khi so khoản trả mỗi kỳ.
+- Khoản trả nhỏ hơn có thể đi kèm nhiều kỳ hơn và tổng tiền lớn hơn.
+- Không biến phép tính tổng tiền đơn giản thành lãi suất năm hoặc kết luận pháp lý.
+
+#### Hiểu lầm thường gặp
+
+Khoản trả mỗi kỳ thấp nhất chắc chắn là phương án rẻ nhất.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+Hai hợp đồng giả lập đều cho nhận đủ 2.000.000đ. A có hai kỳ 1.050.000đ và phí 30.000đ trả riêng. B có ba kỳ 720.000đ, không phí khác. Tính tổng, chi phí vượt tiền nhận và điểm còn phải xem trước khi quyết định.
+
+#### Gợi ý giải từng bước
+
+1. A trả 2 × 1.050.000 + 30.000 = 2.130.000đ; phần vượt tiền nhận là 130.000đ.
+2. B trả 3 × 720.000 = 2.160.000đ; tổng cao hơn A 30.000đ dù mỗi kỳ thấp hơn.
+3. Kỳ hạn và thời điểm khác nhau vẫn cần được xem; kiểm điều kiện chậm trả, trả trước và thông tin hợp đồng, không suy ra APR từ các tổng này.
+
+#### Kết luận
+
+A có tổng thấp hơn 30.000đ theo đúng phí đã nêu. Đây chỉ là so sánh số học của hợp đồng hư cấu, không phải giới thiệu một khoản vay.
+
 - `3*1080000+60000 = 3300000`
 - `3300000-3000000 = 300000`
 - `3*1110000 = 3330000`
 - `3330000-3300000 = 30000`
+- `2*1050000+30000 = 2130000`
+- `2130000-2000000 = 130000`
+- `3*720000 = 2160000`
+- `2160000-2130000 = 30000`
 
 ### Tình huống thực hành
 
@@ -511,8 +754,34 @@ Trong Picket, lịch nhắc chỉ giúp nhớ; dấu hoàn thành phải khớp 
 
 Trước thu: 900.000 − 700.000 − 300.000 = −100.000đ. Sau thu: −100.000 + 1.200.000 = 1.100.000đ.
 
+#### Ghi nhớ
+
+- Đọc ngày trả và ngày thu bên cạnh tổng chi phí.
+- Thiếu tiền trước hạn cần được nhận diện riêng, kể cả khi cuối kỳ còn dư.
+- Một thay đổi lịch chỉ có thật khi bên liên quan đã đồng ý và điều kiện được xác nhận.
+
+#### Hiểu lầm thường gặp
+
+Sửa ngày trên ứng dụng là đã thay đổi nghĩa vụ với bên cho vay.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+Nam có 120.000đ, khoản trả 200.000đ đến hạn ngày 18; thu nhập 500.000đ dự kiến ngày 25 và chi sinh hoạt 100.000đ ngày 27. Chỉ ra khoảng thiếu và hai việc cần kiểm tra trước khi sửa lịch.
+
+#### Gợi ý giải từng bước
+
+1. Ngày 18 thiếu 200.000 − 120.000 = 80.000đ.
+2. Nếu tất cả khoản sau đó xảy ra đúng giả định, cuối kỳ là 120.000 − 200.000 + 500.000 − 100.000 = 320.000đ.
+3. Cần kiểm ngày thu thực tế và liên hệ kênh chính thức để hỏi phương án, phí và điều kiện; chỉ cập nhật lịch khi có xác nhận, không mặc nhiên vay mới để bù.
+
+#### Kết luận
+
+Cuối kỳ dự kiến còn 320.000đ nhưng trước hạn vẫn thiếu 80.000đ. Picket không tự thương lượng hoặc gia hạn thay bạn.
+
 - `900000-700000-300000 = -100000`
 - `-100000+1200000 = 1100000`
+- `200000-120000 = 80000`
+- `120000-200000+500000-100000 = 320000`
 
 ### Tình huống thực hành
 
@@ -564,6 +833,30 @@ Trong Picket, bài thực hành dùng tình huống mô phỏng. Ứng dụng kh
 ### Ví dụ và số học
 
 1.000.000 − 50.000 = 950.000đ; 250.000đ được hứa chưa phải thu nhập đã nhận. Giả định nhận và chuyển mới cho 1.200.000đ, không dùng để đánh giá độ tin cậy.
+
+#### Ghi nhớ
+
+- Biết đúng thông tin đơn hàng không chứng minh người gọi là nhân viên thật.
+- Không cung cấp OTP, mật khẩu hoặc quyền điều khiển máy theo yêu cầu hoàn tiền lạ.
+- Dừng trao đổi và tự tìm kênh chính thức để xác minh; giữ bằng chứng nếu nghi bị lừa.
+
+#### Hiểu lầm thường gặp
+
+Người gọi đọc đúng tên hàng và số tiền thì có thể tin mọi hướng dẫn sau đó.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+Một người gọi nói sẽ hoàn 350.000đ, đọc đúng tên món hàng rồi yêu cầu OTP và cài ứng dụng điều khiển máy để nhận tiền. Bạn chưa thực hiện bước nào. Hãy nêu ba hành động an toàn và giải thích vì sao số tiền hứa hoàn chưa được ghi là thu nhập.
+
+#### Gợi ý giải từng bước
+
+1. Dừng thao tác; không đọc OTP, nhập bí mật vào đường dẫn lạ hay cấp quyền điều khiển máy.
+2. Mở ứng dụng hoặc kênh liên hệ chính thức mà bạn tự xác định để kiểm tra yêu cầu, không dùng riêng số liên lạc người gọi gửi.
+3. Giữ nội dung liên hệ cần thiết; nếu đã lộ thông tin hoặc thấy giao dịch lạ, liên hệ ngay ngân hàng/kênh chức năng chính thức để được hướng dẫn, không hứa chắc thu hồi tiền.
+
+#### Kết luận
+
+350.000đ mới là lời hứa của người gọi. Chưa có khoản nhận tiền được xác nhận thì không ghi thành thu nhập thật.
 
 - `1000000-50000 = 950000`
 - `1000000-50000+250000 = 1200000`
@@ -618,9 +911,36 @@ Trong Picket, đánh dấu một khoản định kỳ cần xem lại không có
 
 79.000 + 49.000 = 128.000đ/tháng; 128.000 × 12 = 1.536.000đ/năm theo giả định; 450.000 / 6 = 75.000đ/lần dự kiến.
 
+#### Ghi nhớ
+
+- Đọc giá sau dùng thử, ngày thu tiếp theo và cách hủy trước khi quyết định.
+- Xóa ứng dụng hoặc đánh dấu xem lại trong Picket không tự hủy thuê bao bên ngoài.
+- Quy đổi chi phí về cùng khoảng thời gian và ghi rõ giả định về giá, số kỳ.
+
+#### Hiểu lầm thường gặp
+
+Dịch vụ ít dùng hoặc đã gỡ ứng dụng thì chắc chắn không bị thu tiền nữa.
+
+#### Tự kiểm tra — tình huống hư cấu
+
+Một gói sẽ thu 59.000đ mỗi tháng sau dùng thử; gói khác đang là 89.000đ mỗi tháng. Nếu cả hai giữ nguyên giá suốt 12 tháng, tổng là bao nhiêu? Với giới hạn tự chọn 120.000đ mỗi tháng, điều gì cần xem lại trước ngày gia hạn?
+
+#### Gợi ý giải từng bước
+
+1. Tổng mỗi tháng là 59.000 + 89.000 = 148.000đ, vượt mức tự chọn 28.000đ.
+2. Nếu giữ nguyên cả hai đủ 12 tháng, tổng là 148.000 × 12 = 1.776.000đ; giá thay đổi hoặc hủy giữa kỳ sẽ làm giả định khác đi.
+3. Rà nhu cầu, điều kiện và thời điểm hủy qua kênh chính thức; kiểm trạng thái xác nhận trước khi sửa lịch, không đăng ký thêm chỉ để thực hành.
+
+#### Kết luận
+
+Tổng giả định là 148.000đ mỗi tháng và 1.776.000đ cho 12 tháng. Một nhắc việc trong Picket chưa chứng minh dịch vụ đã dừng thu.
+
 - `79000+49000 = 128000`
 - `128000*12 = 1536000`
 - `450000/6 = 75000`
+- `59000+89000 = 148000`
+- `148000-120000 = 28000`
+- `148000*12 = 1776000`
 
 ### Tình huống thực hành
 
@@ -656,7 +976,7 @@ Rà giá/ngày gia hạn trên một ví dụ hoặc gói có sẵn; có thể b
 ## Kiểm tra bản biên soạn
 
 - Đủ 12 bài, 36 câu hỏi, 108 lựa chọn có lời giải riêng.
-- 30 phép tính được chạy và so giá trị mong đợi bằng script đi kèm.
+- 60 phép tính được chạy và so giá trị mong đợi bằng script đi kèm.
 - Tất cả ID duy nhất; mọi chỉ số đáp án thuộc 0–2.
 - Nguồn được mở đọc ngày 2026-10-23; URL được lưu để kiểm tra lại trước phát hành. Không phải cam kết URL tồn tại vĩnh viễn.
 - Chưa có người duyệt độc lập, người học pilot, nghiệm thu nội dung tiếng Anh hoặc xác nhận hiệu quả giáo dục thực tế.

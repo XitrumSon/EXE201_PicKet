@@ -3,6 +3,7 @@ import copy
 import json
 import re
 from pathlib import Path
+from study_support import apply_study_support, markdown_example, write_app_copy
 
 ROOT = Path(__file__).parent
 translations = []
@@ -225,12 +226,15 @@ def main():
         assert not re.findall(r'\{\{[^}]+\}\}',l['body'])
         numbers=lambda s: [re.sub('[.,]','',n.rstrip('.,')) for n in re.findall(r'[0-9][0-9.,]*',s)]
         assert numbers(original['body'])==numbers(l['body']), ('body numeric sequence',l['lessonId'])
+    apply_study_support(en['lessons'], 'en', append_checks=False)
     assert en['publicationGate']['publishable'] is False
     assert source_path.read_bytes()==source_bytes
     (ROOT/'PICKET_FINANCIAL_CURRICULUM_EN_V1.json').write_text(json.dumps(en,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    write_app_copy(en, 'en')
     lines=['# Picket — Financial education curriculum, English v1','','Editorial translation of the full Vietnamese v1 curriculum, authored 2026-10-23. **authored-not-independent-review**. This is not independently approved or publishable content.','','Translation locale: `en-US`; translation version: `1`; source locale: `vi-VN`. Lesson IDs intentionally remain identical to the Vietnamese source, including their `.vi.` segment: identify a localized lesson by `(lessonId, locale, version)`, not the ID alone.','','`correctIndex` is zero-based. Every choice includes its own explanation. `reviewedAt` means author source/arithmetic review, not independent financial or translation approval. All money remains VND; English does not imply conversion to USD.','','## Publication gates','']+['- '+x for x in en['publicationGate']['required']]+['','The source curriculum was designed for adults and the Vietnamese context. No foreign legal right, cancellation period, regulatory approval or educational effectiveness is asserted. Timing and comprehension need learner testing.','']
+    lines[2:2] = ['> [Current project status](../PROJECT_STATUS.md). Editorial revision 2, 27 October 2026: 12 fictional self-checks and worked solutions in VI/EN; existing lesson IDs and quiz answer ordering are preserved.', '']
     for l in en['lessons']:
-        lines += [f"## {l['lessonId']} — {l['title']}",'',f"**Chapter:** {l['chapterId']} · **Competency:** {l['competencyId']}  ",f"**Objective:** {l['objective']}  ",'**Status:** authored-not-independent-review · locale: en-US · translationVersion: 1','',l['body'],'','### Worked example','',l['workedExample']['description'],'']
+        lines += [f"## {l['lessonId']} — {l['title']}",'',f"**Chapter:** {l['chapterId']} · **Competency:** {l['competencyId']}  ",f"**Objective:** {l['objective']}  ",'**Status:** authored-not-independent-review · locale: en-US · translationVersion: 1','',l['body'],'','### Worked example','',markdown_example(l['workedExample']['description'], 'en'),'']
         lines += [f"- `{c['expression']} = {c['expected']}`" for c in l['workedExample']['arithmeticChecks']]
         lines += ['','### Practice scenarios','']
         for i,qv in enumerate(l['questions'],1):

@@ -11,7 +11,7 @@ const read = (locale: string) => JSON.parse(readFileSync(
 const answerKeys = [[1,1,2],[0,1,2],[1,0,2],[1,2,0],[1,0,2],[1,2,0],
   [1,0,2],[0,1,2],[1,0,2],[1,2,0],[1,0,2],[1,1,2]];
 
-test("every VI/EN lesson has original takeaways and a fully worked fictional practice", () => {
+test("every VI/EN lesson has complete takeaways and a fully worked fictional practice", () => {
   for (const locale of ["vi", "en"]) {
     const course = read(locale);
     assert.equal(course.editorialRevision, 2);

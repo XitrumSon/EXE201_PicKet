@@ -1,5 +1,6 @@
 import json, re
 from pathlib import Path
+from study_support import apply_study_support, editorial_metadata, markdown_example, write_app_copy
 
 ROOT=Path(__file__).parent
 DATE='2026-10-23'
@@ -183,6 +184,7 @@ Q('Hai gói giữ nguyên giá trong 12 tháng như ví dụ. Tổng?', ['128.00
 Q('Picket đánh dấu cần xem lại gói B. Có thể coi đã ngừng tính phí chưa?', ['Có ngay khi đánh dấu','Có sau một ngày chờ bất kỳ','Chưa, phải hủy và xác nhận ở nhà cung cấp/kênh quản lý'],2,['Ghi chú trong Picket không điều khiển dịch vụ bên ngoài.','Khoảng chờ tự chọn không làm thay đổi hợp đồng.','Đúng: chỉ cập nhật lịch khi biết kết quả thực tế.'])], 'Rà giá/ngày gia hạn trên một ví dụ hoặc gói có sẵn; có thể bỏ qua, không đăng ký thêm.', ['trial'])
 
 if __name__=='__main__':
+    apply_study_support(lessons, 'vi')
     for l in lessons:
         for check in l['workedExample']['arithmeticChecks']:
             assert re.fullmatch(r'[0-9+*/(). -]+',check['expression'])
@@ -191,10 +193,13 @@ if __name__=='__main__':
         assert all(len(q['choices'])==3 and 0<=q['correctIndex']<3 and all(c['explanation'] for c in q['choices']) for q in l['questions'])
     payload={'schemaVersion':1,'curriculumId':'picket.financial.vi.v1','locale':'vi-VN','authoredAt':DATE,'status':'authored-not-independent-review','reviewedAtSemantics':'Author source-check date, not external or independent approval.','audience':'Adults 18+, original educational examples; no individualized financial advice.','sourceUse':'Source concepts inform the objectives. All scenarios, arithmetic, explanations and Picket interactions are original; no quotations, no imported US/EU legal rights.','publicationGate':{'publishable':False,'required':['Independent financial-content review','Vietnamese editorial and accessibility review','Vietnam-relevant legal/safety review for borrowing and digital safety','Pilot comprehension and Android font/TalkBack/offline checks','Approved English translation before claiming bilingual curriculum']},'sourceRegistry':[{'id':k,'url':v,'accessedAt':DATE,'validation':'Opened and read as primary source; educational concepts only.'} for k,v in SOURCES.items()],'lessons':lessons}
     p=ROOT/'PICKET_FINANCIAL_CURRICULUM_VI_V1.json'
+    editorial_metadata(payload)
     p.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+    write_app_copy(payload, 'vi')
     lines=['# Picket — Giáo trình tài chính tiếng Việt v1','',f'Biên soạn và đối chiếu nguồn ngày {DATE}. **authored-not-independent-review**: chưa được người độc lập duyệt; chưa đủ điều kiện phát hành nội dung published.','', '12 bài / 6 chương, dành cho người lớn từ 18 tuổi. Nội dung và tình huống VND do Picket biên soạn mới, không sao chép giáo trình nguồn. Nguồn quốc tế chỉ dùng cho khái niệm, không áp dụng quyền hoặc luật nước ngoài cho Việt Nam. Không khẳng định nguồn đã duyệt hoặc chứng thực Picket.','', 'JSON cùng tên là dữ liệu chuẩn của bản này. `correctIndex` bắt đầu từ 0; `reviewedAt` chỉ là ngày tác giả rà nguồn và số học, không phải ngày phê duyệt độc lập. `workedExample.arithmeticChecks` là dữ liệu kiểm tra số học, không thực thi biểu thức trong ứng dụng.','', '## Cửa kiểm duyệt trước phát hành','', *['- '+x for x in payload['publicationGate']['required']], '', 'Thời lượng 3–5 phút chỉ là mục tiêu UX của kế hoạch, chưa có đo thử. Số từ dưới đây đếm theo khoảng trắng tiếng Việt, không tương đương số từ vựng ngôn ngữ học. Không hứa hoàn thành bài trong thời lượng đó trước pilot.','']
+    lines[2:2] = ['> [Trạng thái hiện hành](../PROJECT_STATUS.md). Bản biên tập 2 bổ sung ngày 27/10/2026: 12 bài tự kiểm tra hư cấu và lời giải VI/EN; giữ ID bài và đáp án quiz.', '']
     for l in lessons:
-        lines += [f"## {l['lessonId']} — Chương {l['chapterId'][-2:]}: {l['title']}",'',f"**Năng lực:** {l['competencyId']}  ",f"**Mục tiêu:** {l['objective']}  ",f"**Trạng thái:** {l['status']} · reviewedAt: {l['reviewedAt']} · {len(l['body'].split())} đơn vị cách trắng trong thân bài",'',l['body'],'','### Ví dụ và số học','',l['workedExample']['description'],'']
+        lines += [f"## {l['lessonId']} — Chương {l['chapterId'][-2:]}: {l['title']}",'',f"**Năng lực:** {l['competencyId']}  ",f"**Mục tiêu:** {l['objective']}  ",f"**Trạng thái:** {l['status']} · reviewedAt: {l['reviewedAt']} · {len(l['body'].split())} đơn vị cách trắng trong thân bài",'',l['body'],'','### Ví dụ và số học','',markdown_example(l['workedExample']['description'], 'vi'),'']
         for check in l['workedExample']['arithmeticChecks']: lines += [f"- `{check['expression']} = {check['expected']}`"]
         lines += ['','### Tình huống thực hành','']
         for i,q in enumerate(l['questions'],1):

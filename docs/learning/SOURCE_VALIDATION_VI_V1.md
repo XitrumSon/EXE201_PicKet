@@ -1,5 +1,8 @@
 # Kiểm nguồn và số học cho giáo trình VI v1
 
+<!-- project-status-link -->
+> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](../PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+
 Ngày đối chiếu: 2026-10-23. Người biên soạn: Codex theo yêu cầu triển khai kế hoạch. **Không phải phê duyệt chuyên môn độc lập.**
 
 Các URL đầy đủ được lưu trong `PICKET_FINANCIAL_CURRICULUM_VI_V1.json`, trường `sourceRegistry`. Đã mở và đọc nội dung nguồn, không chỉ dùng kết quả tìm kiếm. Các PDF CFPB được đọc qua bản trích xuất văn bản; không sao chép bảng, ảnh, câu hỏi hay ví dụ tiền USD. Bản thảo dùng tình huống VND tự soạn và hướng dẫn thao tác Picket do dự án thiết kế.
@@ -38,3 +41,7 @@ Chạy `python docs/learning/build_curriculum.py` để tái tạo Markdown/JSON
 Cần người độc lập có chuyên môn kiểm nội dung tài chính và bối cảnh Việt Nam; kiểm ngôn ngữ, accessibility; kiểm pháp lý/an toàn phù hợp cho bài vay và OTP; pilot mức hiểu và thời lượng; kiểm chữ lớn/TalkBack/offline trên Android. Chưa có bản dịch tiếng Anh được duyệt. Không có chứng thực của CFPB, OECD, FTC hoặc cơ quan Việt Nam cho giáo trình Picket. `reviewedAt` chỉ là ngày rà nguồn/số học của tác giả.
 
 Đây là bản biên soạn đầy đủ dùng cho review/prototype. `publicationGate.publishable=false` phải được giữ cho tới khi có bằng chứng qua các cửa tương ứng; việc kiểm số học đạt không thay thế phê duyệt nội dung.
+
+## Bản biên tập 2 — 27/10/2026
+
+Đã bổ sung 12 bài tự kiểm tra hư cấu có lời giải, 36 điểm ghi nhớ và 12 hiểu lầm thường gặp. Tổng kiểm số học nay là 60 (30 cũ + 30 mới), cùng dữ liệu kiểm ở VI/EN. Generator tự đồng bộ app JSON; danh tính bài và đáp án quiz không đổi. [Hồ sơ biên tập và nguồn kiểm lại](CONTENT_PACK_EDITORIAL_20261027.md).

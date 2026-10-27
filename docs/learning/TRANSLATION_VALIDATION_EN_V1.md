@@ -1,5 +1,8 @@
 # English curriculum v1 — translation consistency record
 
+<!-- project-status-link -->
+> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](../PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+
 Date: 2026-10-23. Status: **authored-not-independent-review**. This is an editorial translation of `PICKET_FINANCIAL_CURRICULUM_VI_V1.json`, not independent financial-content approval, an official translation of the references, or endorsement by their publishers.
 
 ## Output
@@ -29,3 +32,7 @@ The translation retains distinctions between transfers and expenses, uncertain a
 No actual bank details, OTP, account data, API keys or provider calls were used. Examples remain fictional, optional actions require no spending and can be skipped.
 
 Independent bilingual terminology review, independent financial/safety review, Vietnamese-context legal checks where relevant, learner comprehension/time testing and Android accessibility/offline verification remain necessary before published status. These checks should be evidence-based; this file does not assert they have happened.
+
+## Editorial revision 2 — 27 October 2026
+
+Added complete English counterparts for 12 fictional self-checks, 36 takeaways, 12 misconceptions and step-by-step solutions. There are now 60 aligned arithmetic checks, including the 30 original checks. Both app JSON files match their canonical documents. Existing lesson IDs, quiz versions and correct-answer ordering are unchanged. [Editorial evidence](CONTENT_PACK_EDITORIAL_20261027.md).

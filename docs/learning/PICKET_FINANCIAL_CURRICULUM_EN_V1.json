@@ -121,7 +121,7 @@
       "body": "Your money may be held in several places: cash, a bank account or an electronic wallet. Moving money between places you own changes where you keep it. To understand how much you have spent, ask whether money has left the entire scope you are tracking to pay for something. The name of a bank app's transfer button is not enough to answer this: transferring to a shop is a payment, while transferring to another account of your own may be a wallet transfer.\n\nConsider an illustrative example. Hòa has 600,000 VND in cash and 1,400,000 VND in the bank. Hòa withdraws 200,000 VND without a fee. Cash becomes 800,000 VND and the bank balance becomes 1,200,000 VND. The total is 2,000,000 VND both before and after. Recording the withdrawal as spending, then recording purchases paid in cash, would count spending twice. If the bank charges a further 3,000 VND withdrawal fee, only that 3,000 VND fee is spending in this example; the 200,000 VND has merely changed location.\n\nScope explains the apparent contradiction. Looking only at the bank wallet, 200,000 VND has indeed left it. Looking at both wallets, the outgoing and incoming sides cancel. A wallet cash-flow report can therefore differ from an overall spending report. You do not need to decide that one is wrong; read its label and check which wallets it includes. A wallet outside the scope also needs a clear note rather than an assumption that every outflow is a purchase.\n\nIn Picket, check the source wallet, destination wallet, amount and fee before confirming. Giving money a savings-goal label does not make it disappear either. One real transfer should be recorded once, with linked sides. If you entered separate income and expense records by mistake, check before editing so you do not delete a real purchase made on the same day. You can learn entirely with the example numbers; no real withdrawal or transfer is required to demonstrate understanding. The key is that the same money can move while the total stays unchanged.",
       "workedExample": {
         "currency": "VND",
-        "description": "600,000 + 1,400,000 = 2,000,000 VND; after the transfer: 800,000 + 1,200,000 = 2,000,000 VND. A 3,000 VND fee, if charged, leaves a total of 1,997,000 VND.",
+        "description": "600,000 + 1,400,000 = 2,000,000 VND; after the transfer: 800,000 + 1,200,000 = 2,000,000 VND. A 3,000 VND fee, if charged, leaves a total of 1,997,000 VND.\n\nRemember\n• Identify which wallets are inside the report before adding their balances.\n• Moving money between your own wallets changes its location; record any fee separately.\n• Check both sides so a cash withdrawal is not counted again as spending.\n\nCommon misconception\nAssuming every amount leaving a bank account is money already spent.\n\nSelf-check — fictional scenario\nAn has 900,000 VND in a bank account and 100,000 VND in cash. An withdraws 150,000 VND and pays a separate 5,000 VND fee. Find both balances, the total and the actual expense.\n\nStep-by-step reasoning\n1. The bank balance becomes 900,000 − 150,000 − 5,000 = 745,000 VND.\n2. Cash increases to 100,000 + 150,000 = 250,000 VND.\n3. The combined total is 995,000 VND; only the 5,000 VND fee leaves the two-wallet scope.\n\nConclusion\nThe transfer is 150,000 VND and the expense is 5,000 VND. Do not classify all 155,000 VND as overall spending.",
         "arithmeticChecks": [
           {
             "expression": "600000+1400000",
@@ -138,6 +138,18 @@
           {
             "expression": "2000000-3000",
             "expected": 1997000
+          },
+          {
+            "expression": "900000-150000-5000",
+            "expected": 745000
+          },
+          {
+            "expression": "100000+150000",
+            "expected": 250000
+          },
+          {
+            "expression": "745000+250000",
+            "expected": 995000
           }
         ]
       },
@@ -210,6 +222,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Identify which wallets are inside the report before adding their balances.",
+          "Moving money between your own wallets changes its location; record any fee separately.",
+          "Check both sides so a cash withdrawal is not counted again as spending."
+        ],
+        "misconception": "Assuming every amount leaving a bank account is money already spent.",
+        "practicePrompt": "An has 900,000 VND in a bank account and 100,000 VND in cash. An withdraws 150,000 VND and pays a separate 5,000 VND fee. Find both balances, the total and the actual expense.",
+        "solutionSteps": [
+          "The bank balance becomes 900,000 − 150,000 − 5,000 = 745,000 VND.",
+          "Cash increases to 100,000 + 150,000 = 250,000 VND.",
+          "The combined total is 995,000 VND; only the 5,000 VND fee leaves the two-wallet scope."
+        ],
+        "answer": "The transfer is 150,000 VND and the expense is 5,000 VND. Do not classify all 155,000 VND as overall spending."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -227,7 +255,7 @@
       "body": "A useful transaction list should reflect what actually happened. Start with the date, amount, wallet and whether money came in or went out. Categories help you find and compare records, but an attractive category name cannot fix a wrong amount. When scanning a receipt, treat the result as a draft to check. A machine may misread separators, the total line or cash tendered by the customer. A landscape photograph is not evidence of a transaction; do not guess an amount from it.\n\nMai has checked three expenses: lunch at 45,000 VND, transport at 25,000 VND and notebooks at 30,000 VND. They total 100,000 VND. Mai attaches the lunch receipt to that existing transaction; the total remains 100,000 VND, not 145,000 VND. If the photo uploads slowly, a photo-processing status is different from a saved-transaction status. On returning, check which record already exists before saving again. An attachment and an expense are different kinds of information, not two amounts of money.\n\nCategorization should serve your question. A notebook for school may belong under education; the same notebook bought for someone else may be a gift. Do not infer its purpose solely from the shop's name. You can leave an unclear expense for later review and add context when you remember it. When several people share a payment, record your share or use a consistent split rule. Avoid sometimes recording the whole bill and sometimes just your portion without a note.\n\nAt the end of a period, compare the list with balances or evidence you still have. If you forgot two days of entries, mark the gap instead of declaring zero spending on those days. An unexplained difference does not automatically become income. It is fine to acknowledge incomplete data and review it when convenient. In Picket, use only confirmed transactions for lessons based on real data; choose an illustrative example if you prefer not to use personal information. Recording should make decisions clearer, rather than produce a perfect table or require you to remember every detail immediately.",
       "workedExample": {
         "currency": "VND",
-        "description": "45,000 + 25,000 + 30,000 = 100,000 VND; attaching the lunch photo does not create a second 45,000 VND expense.",
+        "description": "45,000 + 25,000 + 30,000 = 100,000 VND; attaching the lunch photo does not create a second 45,000 VND expense.\n\nRemember\n• Record amount, date, wallet and transaction direction before choosing a category.\n• An attached receipt image is not an additional expense.\n• A day with missing records is incomplete; it does not automatically mean zero spending.\n\nCommon misconception\nTreating a rescan or screen refresh as a reason to create an identical transaction.\n\nSelf-check — fictional scenario\nBình recorded lunch costing 40,000 VND and transport costing 30,000 VND. Rescanning the lunch receipt creates a 40,000 VND draft. What is the actual total, and what should be checked before saving?\n\nStep-by-step reasoning\n1. Add the two known purchases: 40,000 + 30,000 = 70,000 VND.\n2. Compare the draft date, amount and wallet with the recorded lunch transaction.\n3. If it is the same payment, do not save another transaction; two genuine purchases need distinguishing evidence.\n\nConclusion\nThe stated total is 70,000 VND. Another image or draft alone does not increase it to 110,000 VND.",
         "arithmeticChecks": [
           {
             "expression": "45000+25000+30000",
@@ -236,6 +264,14 @@
           {
             "expression": "100000+45000",
             "expected": 145000
+          },
+          {
+            "expression": "40000+30000",
+            "expected": 70000
+          },
+          {
+            "expression": "70000+40000",
+            "expected": 110000
           }
         ]
       },
@@ -308,6 +344,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Record amount, date, wallet and transaction direction before choosing a category.",
+          "An attached receipt image is not an additional expense.",
+          "A day with missing records is incomplete; it does not automatically mean zero spending."
+        ],
+        "misconception": "Treating a rescan or screen refresh as a reason to create an identical transaction.",
+        "practicePrompt": "Bình recorded lunch costing 40,000 VND and transport costing 30,000 VND. Rescanning the lunch receipt creates a 40,000 VND draft. What is the actual total, and what should be checked before saving?",
+        "solutionSteps": [
+          "Add the two known purchases: 40,000 + 30,000 = 70,000 VND.",
+          "Compare the draft date, amount and wallet with the recorded lunch transaction.",
+          "If it is the same payment, do not save another transaction; two genuine purchases need distinguishing evidence."
+        ],
+        "answer": "The stated total is 70,000 VND. Another image or draft alone does not increase it to 110,000 VND."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -325,7 +377,7 @@
       "body": "Needs often relate to daily living, health, education or responsibilities you must meet. Wants tend to have more flexibility. The boundary depends on context, not a fixed label attached to an item. Internet access may support online classes or be an extra entertainment service. A ride-hailing trip may help an injured person travel safely. This lesson therefore does not judge someone as good or bad from a purchase, or require giving up every source of enjoyment.\n\nTry three questions: what happens if I postpone it, when must the need be met, and is there another suitable option? A cheaper option is an alternative only when it actually meets the need. Walking cannot always replace transport on a rainy night or an unsafe route. A cheaper service is not useful if it lacks a feature required for work. A purchase may contain both an essential part and an upgrade; you can explain that distinction rather than choose one label for everything.\n\nIn an imaginary situation, Phương has 1,500,000 VND left before the next income payment. Phương plans to keep 900,000 VND for housing and 400,000 VND for food, leaving 200,000 VND. New headphones priced at 350,000 VND would exceed that remainder by 150,000 VND unless something else changes. The calculation does not call Phương undisciplined; it identifies a need to postpone, choose another option or confirm another source of money. If the old headphones are broken and immediately needed for work, the context changes, but the shortfall still needs addressing.\n\nYou may choose a flexible allowance for interests that fits your circumstances. No single budget percentage suits everybody. Someone supporting family or facing high health costs may have fewer choices; calling this a personal weakness does not create money. In Picket, priority labels support reflection; they do not block saving a transaction or decide for you. When context is missing, asking for more information is a good answer. Try writing a brief reason for your choice. You can change that reason as responsibilities, health or timing change.",
       "workedExample": {
         "currency": "VND",
-        "description": "1,500,000 − 900,000 − 400,000 = 200,000 VND; 350,000 − 200,000 = a 150,000 VND shortfall for this choice.",
+        "description": "1,500,000 − 900,000 − 400,000 = 200,000 VND; 350,000 − 200,000 = a 150,000 VND shortfall for this choice.\n\nRemember\n• Classify needs and wants using purpose, circumstances and timing.\n• One item can serve several purposes; a merchant name alone is not enough.\n• Compare options with the stated resources and priorities rather than judging a person by a category.\n\nCommon misconception\nAssuming a product is always a want for everyone.\n\nSelf-check — fictional scenario\nChi has 150,000 VND. A 100,000 VND connection plan is needed for an online exam tomorrow; a 60,000 VND entertainment plan can wait until next week. Suggest an affordable option and explain the context.\n\nStep-by-step reasoning\n1. In this case, the exam connection has a specific deadline and is difficult to postpone.\n2. After paying for that connection, Chi has 150,000 − 100,000 = 50,000 VND left.\n3. Both plans cost 160,000 VND, exceeding the available money by 10,000 VND; entertainment can wait without assuming new income.\n\nConclusion\nOne option supported by the facts is to buy the exam connection and postpone entertainment. This is not a universal ban on entertainment.",
         "arithmeticChecks": [
           {
             "expression": "1500000-900000-400000",
@@ -334,6 +386,18 @@
           {
             "expression": "350000-200000",
             "expected": 150000
+          },
+          {
+            "expression": "150000-100000",
+            "expected": 50000
+          },
+          {
+            "expression": "100000+60000",
+            "expected": 160000
+          },
+          {
+            "expression": "160000-150000",
+            "expected": 10000
           }
         ]
       },
@@ -406,6 +470,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Classify needs and wants using purpose, circumstances and timing.",
+          "One item can serve several purposes; a merchant name alone is not enough.",
+          "Compare options with the stated resources and priorities rather than judging a person by a category."
+        ],
+        "misconception": "Assuming a product is always a want for everyone.",
+        "practicePrompt": "Chi has 150,000 VND. A 100,000 VND connection plan is needed for an online exam tomorrow; a 60,000 VND entertainment plan can wait until next week. Suggest an affordable option and explain the context.",
+        "solutionSteps": [
+          "In this case, the exam connection has a specific deadline and is difficult to postpone.",
+          "After paying for that connection, Chi has 150,000 − 100,000 = 50,000 VND left.",
+          "Both plans cost 160,000 VND, exceeding the available money by 10,000 VND; entertainment can wait without assuming new income."
+        ],
+        "answer": "One option supported by the facts is to buy the exam connection and postpone entertainment. This is not a universal ban on entertainment."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -423,7 +503,7 @@
       "body": "A monthly income total does not tell the whole story. Money arriving after rent is due cannot pay it on the day before arrival. Freelancers, small sellers and people receiving support in installments may need to plan around each incoming payment. Begin with money available now, then add income whose date and amount are confirmed. Money merely promised or dependent on unfinished work belongs separately as an assumption, rather than being treated as already in the wallet.\n\nNam has 1,200,000 VND at the start of the week. Rent of 800,000 VND is due on Wednesday, and food is expected to require 300,000 VND on Friday. A customer has promised 1,000,000 VND on Sunday but has not confirmed it. Before that income, Nam has only 100,000 VND left after the two expenses. An additional 200,000 VND cost on Saturday creates a 100,000 VND shortfall in the scenario with no further income. Placing the promised payment at the start of the week would hide this gap, even though the end-of-week total might appear positive.\n\nA budget in this situation can have a confirmed part and a part conditional on money actually received. Do not divide your best annual income across weeks and assume every week will deliver that amount. Looking across periods can reveal variability, but an average is not a guarantee. If income falls short, review flexible expenses and proactively ask payees about options that really exist. Do not assume a later due date has been agreed. Nor should you omit food or health needs just to make the table look balanced.\n\nIn Picket, reviewing the days before the next income payment can help you choose a more suitable limit than a general monthly label. Mark and reconcile paid bills so they are not subtracted again. If the plan needs revision, revise future assumptions; transactions that already happened retain their actual dates. You do not need to disclose your salary to study this lesson: use Nam's example. A useful outcome is knowing which date needs attention, what is confirmed and what must be verified, rather than making irregular income look regular on screen.",
       "workedExample": {
         "currency": "VND",
-        "description": "1,200,000 − 800,000 − 300,000 = 100,000 VND; an additional 200,000 VND expense before income arrives produces −100,000 VND.",
+        "description": "1,200,000 − 800,000 − 300,000 = 100,000 VND; an additional 200,000 VND expense before income arrives produces −100,000 VND.\n\nRemember\n• Place income and obligations on a timeline rather than relying only on monthly totals.\n• Money expected after a due date does not remove the earlier shortfall.\n• Change a real schedule only after the external change is confirmed.\n\nCommon misconception\nBelieving a positive month-end balance means every earlier payment is affordable.\n\nSelf-check — fictional scenario\nDũng has 150,000 VND on day 5. A 200,000 VND bill is due on day 7, while 500,000 VND of income is expected on day 10. With no other flows, identify the shortfall and what still needs verification.\n\nStep-by-step reasoning\n1. Before the income, the day-7 calculation is 150,000 − 200,000 = −50,000 VND.\n2. If the income arrives on day 10, the later calculation is −50,000 + 500,000 = 450,000 VND.\n3. A positive ending value does not remove the earlier gap; verify the income date and any actual arrangement with the relevant party.\n\nConclusion\nThe day-7 shortfall is 50,000 VND. A Picket schedule makes it visible; it does not move a due date or create money.",
         "arithmeticChecks": [
           {
             "expression": "1200000-800000-300000",
@@ -432,6 +512,14 @@
           {
             "expression": "100000-200000",
             "expected": -100000
+          },
+          {
+            "expression": "150000-200000",
+            "expected": -50000
+          },
+          {
+            "expression": "-50000+500000",
+            "expected": 450000
           }
         ]
       },
@@ -505,6 +593,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Place income and obligations on a timeline rather than relying only on monthly totals.",
+          "Money expected after a due date does not remove the earlier shortfall.",
+          "Change a real schedule only after the external change is confirmed."
+        ],
+        "misconception": "Believing a positive month-end balance means every earlier payment is affordable.",
+        "practicePrompt": "Dũng has 150,000 VND on day 5. A 200,000 VND bill is due on day 7, while 500,000 VND of income is expected on day 10. With no other flows, identify the shortfall and what still needs verification.",
+        "solutionSteps": [
+          "Before the income, the day-7 calculation is 150,000 − 200,000 = −50,000 VND.",
+          "If the income arrives on day 10, the later calculation is −50,000 + 500,000 = 450,000 VND.",
+          "A positive ending value does not remove the earlier gap; verify the income date and any actual arrangement with the relevant party."
+        ],
+        "answer": "The day-7 shortfall is 50,000 VND. A Picket schedule makes it visible; it does not move a due date or create money."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -522,7 +626,7 @@
       "body": "Emergency money gives you more options when something unexpected happens, such as essential equipment breaking or income being interrupted. Money for a known cost, such as next term's tuition or an annual renewal, serves a different purpose: preparation for a schedule. Both are useful. Distinguishing them helps avoid feeling that you constantly face emergencies when an annual bill simply was not planned. There is no need for blame when allocated money must be used; look at what actually happened.\n\nDung has 2,000,000 VND, including 1,200,000 VND allocated to tuition and 800,000 VND to emergencies. Tuition of 1,200,000 VND becomes due; paying it leaves 800,000 VND. If essential study equipment then unexpectedly needs a 500,000 VND repair, 300,000 VND remains. Under this allocation, tuition was not a withdrawal from the emergency reserve. The reserve is not extra money beyond the 2,000,000 VND either; it is part of the existing total. Labeling the same money as belonging to two funds does not let it pay twice.\n\nA suitable reserve depends on needs, dependants, income stability and support you can actually access. A modest starting goal may be more manageable than a large target that makes you give up. This lesson does not require everybody to hold the same number of months of expenses, or promise that reaching a number protects against every disruption. If nothing remains after basic needs, acknowledge that limit. You do not need to borrow simply to create a balance labeled as an emergency fund.\n\nConsider keeping money somewhere whose fees, withdrawal access and availability when needed you understand, rather than chasing a promised return. Do not put all money needed soon into something you do not understand or cannot access in time. In Picket, review goal labels and balances separately to avoid confusion. After using a reserve, rebuild the plan when circumstances allow; do not punish yourself by dropping essential costs. A learning step can simply be listing known costs and unexpected events, without depositing money or buying a financial product.",
       "workedExample": {
         "currency": "VND",
-        "description": "2,000,000 − 1,200,000 = 800,000 VND; 800,000 − 500,000 = 300,000 VND.",
+        "description": "2,000,000 − 1,200,000 = 800,000 VND; 800,000 − 500,000 = 300,000 VND.\n\nRemember\n• Separate known future costs from unexpected expenses.\n• An appropriate reserve depends on circumstances; the examples are not mandatory targets.\n• An earmark helps tracking but does not move money or guarantee a balance.\n\nCommon misconception\nTreating every large cost as an emergency, or treating a reserve label as new money.\n\nSelf-check — fictional scenario\nHà expects a 240,000 VND vehicle service in 4 weeks. A separate unexpected-expense reserve held 90,000 VND before an unplanned repair used 40,000 VND. Separate the purposes and calculate the remaining amounts.\n\nStep-by-step reasoning\n1. The known service cost gives an even target of 240,000 ÷ 4 = 60,000 VND per week under the stated assumption.\n2. The unexpected repair leaves 90,000 − 40,000 = 50,000 VND in the reserve.\n3. The purposes differ; neither label creates income, and contributions should not be forced beyond actual capacity.\n\nConclusion\nThe service target is 60,000 VND weekly if feasible, and the unexpected-expense reserve has 50,000 VND left. Adjust the plan when real income changes.",
         "arithmeticChecks": [
           {
             "expression": "2000000-1200000",
@@ -531,6 +635,14 @@
           {
             "expression": "800000-500000",
             "expected": 300000
+          },
+          {
+            "expression": "240000/4",
+            "expected": 60000
+          },
+          {
+            "expression": "90000-40000",
+            "expected": 50000
           }
         ]
       },
@@ -603,6 +715,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Separate known future costs from unexpected expenses.",
+          "An appropriate reserve depends on circumstances; the examples are not mandatory targets.",
+          "An earmark helps tracking but does not move money or guarantee a balance."
+        ],
+        "misconception": "Treating every large cost as an emergency, or treating a reserve label as new money.",
+        "practicePrompt": "Hà expects a 240,000 VND vehicle service in 4 weeks. A separate unexpected-expense reserve held 90,000 VND before an unplanned repair used 40,000 VND. Separate the purposes and calculate the remaining amounts.",
+        "solutionSteps": [
+          "The known service cost gives an even target of 240,000 ÷ 4 = 60,000 VND per week under the stated assumption.",
+          "The unexpected repair leaves 90,000 − 40,000 = 50,000 VND in the reserve.",
+          "The purposes differ; neither label creates income, and contributions should not be forced beyond actual capacity."
+        ],
+        "answer": "The service target is 60,000 VND weekly if feasible, and the unexpected-expense reserve has 50,000 VND left. Adjust the plan when real income changes."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -620,7 +748,7 @@
       "body": "A clear goal often has an amount, a reason and a date you would like to reach it. It remains an adjustable plan. If prices change or income falls, revising a deadline does not erase the steps already taken. Before calculating, check how much money is genuinely allocated to this goal. Money reserved for rent should not simultaneously count toward buying a computer, unless you deliberately reallocate it and understand the consequences for rent.\n\nTú wants to set aside 3,000,000 VND for a course after six income periods. There is already 600,000 VND allocated to it. The remaining amount is 2,400,000 VND, or 400,000 VND in each of six equal periods. This division explains the pace; it is not a command to contribute regardless of circumstances. If only 300,000 VND per period is feasible, it takes eight periods to cover the remainder, assuming unchanged prices and no interest. Do not add uncertain future returns merely to make the deadline appear achievable.\n\nWhen another need takes priority in a period, recalculate using the money actually available. Avoid adding both an intended contribution and the contribution already transferred. Moving money into your own savings wallet is still a wallet transfer across the total scope; a goal expresses what you intend to use it for. If you update a progress bar without corresponding money, distinguish a plan from a data adjustment. A full bar does not prove you can pay when other expenses need the same balance.\n\nIn Picket, practice can mean reviewing an existing goal or just solving the example. You do not need to open a real savings product to finish, or prove progress with an account screenshot. An optional reminder may help you revisit a plan, but skipping it does not remove what you have learned. When comparing options, identify what changes: the time, the amount per period or the goal's scope. Avoid concluding that faster completion means better money management; people have different resources and responsibilities. A small step helps when you understand it and can still meet important current needs.",
       "workedExample": {
         "currency": "VND",
-        "description": "(3,000,000 − 600,000) / 6 = 400,000 VND per period; 2,400,000 / 300,000 = 8 periods.",
+        "description": "(3,000,000 − 600,000) / 6 = 400,000 VND per period; 2,400,000 / 300,000 = 8 periods.\n\nRemember\n• Describe a goal using the remaining amount and a reviewable deadline.\n• Recalculate from actual progress when income or priorities change.\n• Changing the deadline or goal size is an option, not a personal failure.\n\nCommon misconception\nInsisting on an old contribution even when it would leave essential costs uncovered.\n\nSelf-check — fictional scenario\nKhoa wants 900,000 VND, already has 300,000 VND and planned to add 100,000 VND weekly for 6 weeks. The first two contributions were 100,000 and 40,000 VND. With 4 weeks left, only 80,000 VND per week is affordable. Does the old plan still fit?\n\nStep-by-step reasoning\n1. After two weeks, the amount held is 300,000 + 100,000 + 40,000 = 440,000 VND.\n2. The remaining 460,000 VND would require 115,000 VND each week over the next 4 weeks.\n3. That exceeds the stated 80,000 VND capacity; consider a later date, smaller goal or another feasible option instead of inventing the difference.\n\nConclusion\nThe original plan no longer fits. Six more weeks at 80,000 VND would add 480,000 VND before other costs; that is a scenario to consider, not a promise.",
         "arithmeticChecks": [
           {
             "expression": "3000000-600000",
@@ -633,6 +761,22 @@
           {
             "expression": "2400000/300000",
             "expected": 8
+          },
+          {
+            "expression": "300000+100000+40000",
+            "expected": 440000
+          },
+          {
+            "expression": "900000-440000",
+            "expected": 460000
+          },
+          {
+            "expression": "460000/4",
+            "expected": 115000
+          },
+          {
+            "expression": "6*80000",
+            "expected": 480000
           }
         ]
       },
@@ -706,6 +850,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Describe a goal using the remaining amount and a reviewable deadline.",
+          "Recalculate from actual progress when income or priorities change.",
+          "Changing the deadline or goal size is an option, not a personal failure."
+        ],
+        "misconception": "Insisting on an old contribution even when it would leave essential costs uncovered.",
+        "practicePrompt": "Khoa wants 900,000 VND, already has 300,000 VND and planned to add 100,000 VND weekly for 6 weeks. The first two contributions were 100,000 and 40,000 VND. With 4 weeks left, only 80,000 VND per week is affordable. Does the old plan still fit?",
+        "solutionSteps": [
+          "After two weeks, the amount held is 300,000 + 100,000 + 40,000 = 440,000 VND.",
+          "The remaining 460,000 VND would require 115,000 VND each week over the next 4 weeks.",
+          "That exceeds the stated 80,000 VND capacity; consider a later date, smaller goal or another feasible option instead of inventing the difference."
+        ],
+        "answer": "The original plan no longer fits. Six more weeks at 80,000 VND would add 480,000 VND before other costs; that is a scenario to consider, not a promise."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -723,11 +883,19 @@
       "body": "A balance tells you how much money you have within the scope being viewed. It does not automatically tell you how much can be allocated to a new decision. Some upcoming payments have not yet left the wallet. You may also want to keep part of the money for surprises. When reading a number, look for its date, included wallets and expenses already included or still outstanding. If a foreign-currency wallet has no suitable exchange rate, do not add its numeric amount directly to VND.\n\nVy has 4,000,000 VND in the VND wallets under consideration. Before the next income payment, Vy has confirmed rent of 1,500,000 VND and expected food costs of 700,000 VND. Vy wants to retain 500,000 VND as a reserve. Given these exact inputs, the remainder after obligations and the reserve is 1,300,000 VND. This does not say the bank balance has already fallen to 1,300,000 VND. It distinguishes current money from the portion being considered for a new decision. The reserve is an allocation within the same balance, not spending already completed.\n\nIf rent has already been paid and that transaction has already reduced the 4,000,000 VND balance, do not subtract it again. Reconcile the bill's status and the payment record before reviewing the schedule. Likewise, an unconfirmed receipt photo should not automatically create another obligation in addition to an existing record. Moving money between two wallets in scope does not increase the total available to allocate. These rules prevent overly optimistic or pessimistic reports caused by counting something more than once.\n\nThe 1,300,000 VND still depends on whether the list is complete. Vy might have omitted transport or have uncertain income. Treat the result as conditional, with things still to check. In Picket, when a schedule is unconfirmed, it is better to acknowledge insufficient data than declare that you are allowed to spend a particular amount. You can change assumptions and view results, but the app does not decide for you. Practice means checking whether one obligation has been paid; it does not require giving bank account information to a new service.",
       "workedExample": {
         "currency": "VND",
-        "description": "4,000,000 − 1,500,000 − 700,000 − 500,000 = 1,300,000 VND under the stated inputs.",
+        "description": "4,000,000 − 1,500,000 − 700,000 − 500,000 = 1,300,000 VND under the stated inputs.\n\nRemember\n• Distinguish the displayed balance from money already planned for obligations and essentials.\n• Use the same wallet scope and currency when calculating unallocated money.\n• Mark paid obligations so they are not subtracted a second time.\n\nCommon misconception\nAssuming the entire displayed balance is available for a new purchase.\n\nSelf-check — fictional scenario\nLan has 1,200,000 VND in the selected wallets. Before the next income, Lan has allocated 800,000 VND to rent, 250,000 VND to living costs and 100,000 VND to a chosen reserve. Under these assumptions, what remains unallocated?\n\nStep-by-step reasoning\n1. The planned allocations total 800,000 + 250,000 + 100,000 = 1,150,000 VND.\n2. The stated unallocated amount is 1,200,000 − 1,150,000 = 50,000 VND.\n3. Check what is paid, missing or outside the scope; this calculation is not a certain assessment of a real person’s affordability.\n\nConclusion\nThere is 50,000 VND unallocated in this example. A 1,200,000 VND balance does not mean that the full amount is free to spend.",
         "arithmeticChecks": [
           {
             "expression": "4000000-1500000-700000-500000",
             "expected": 1300000
+          },
+          {
+            "expression": "800000+250000+100000",
+            "expected": 1150000
+          },
+          {
+            "expression": "1200000-1150000",
+            "expected": 50000
           }
         ]
       },
@@ -800,6 +968,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Distinguish the displayed balance from money already planned for obligations and essentials.",
+          "Use the same wallet scope and currency when calculating unallocated money.",
+          "Mark paid obligations so they are not subtracted a second time."
+        ],
+        "misconception": "Assuming the entire displayed balance is available for a new purchase.",
+        "practicePrompt": "Lan has 1,200,000 VND in the selected wallets. Before the next income, Lan has allocated 800,000 VND to rent, 250,000 VND to living costs and 100,000 VND to a chosen reserve. Under these assumptions, what remains unallocated?",
+        "solutionSteps": [
+          "The planned allocations total 800,000 + 250,000 + 100,000 = 1,150,000 VND.",
+          "The stated unallocated amount is 1,200,000 − 1,150,000 = 50,000 VND.",
+          "Check what is paid, missing or outside the scope; this calculation is not a certain assessment of a real person’s affordability."
+        ],
+        "answer": "There is 50,000 VND unallocated in this example. A 1,200,000 VND balance does not mean that the full amount is free to spend."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -817,7 +1001,7 @@
       "body": "A scenario asks how money changes if specified things happen. A forecast tries to estimate what may happen using particular data and a method. Both have limits, but the terms should not be interchangeable merely to sound certain. Entering the price of something you might buy and viewing the difference is first a conditional calculation. It proves neither that you will buy it nor that every other future income and expense is known.\n\nAn has 2,000,000 VND. Over seven days, An confirms income of 1,000,000 VND and obligations of 1,500,000 VND. With no other transactions, the closing balance is 1,500,000 VND. Buying an item for 600,000 VND during the period, with everything else unchanged, leaves 900,000 VND. The difference is 600,000 VND. This does not assert that An will have exactly 900,000 VND next week. If income arrives late or expenses are missing, reality differs. Daily balances also matter, not just the final day.\n\nSparse records can create a misleading story. Three days without entries do not mean three days of zero spending. Tracking only one wallet also leaves other wallets unknown. A complex model cannot turn those gaps into facts by itself. Useful responses include asking how complete records are, showing the last synchronization time and allowing known schedules to be corrected. Low and high numbers produced by changing assumptions are scenarios; do not call them validated confidence probabilities without appropriate measurement and calibration.\n\nIn Picket, trying a choice should not create an actual transaction or edit a real budget. Use the appropriate recording flow only when you actively confirm something that happened. With limited history, illustrative data can still explain the calculation without inventing a date when money will run out. You can defer a conclusion and add inputs later. Good practice is to state the condition before the result: if the schedule is correct and nothing else occurs, what remains? That sentence helps you test a decision and identify what is still unknown.",
       "workedExample": {
         "currency": "VND",
-        "description": "Without purchase: 2,000,000 + 1,000,000 − 1,500,000 = 1,500,000 VND. With purchase: 1,500,000 − 600,000 = 900,000 VND.",
+        "description": "Without purchase: 2,000,000 + 1,000,000 − 1,500,000 = 1,500,000 VND. With purchase: 1,500,000 − 600,000 = 900,000 VND.\n\nRemember\n• Separate confirmed facts from assumptions when building a scenario.\n• Compare options over the same time window, wallet scope and currency.\n• A simulated result is neither a promise nor an executed transaction.\n\nCommon misconception\nChoosing the most optimistic scenario and treating uncertain income as money already held.\n\nSelf-check — fictional scenario\nMinh has 400,000 VND and a confirmed upcoming 150,000 VND payment. Minh is considering a 300,000 VND item and might receive another 200,000 VND at an uncertain time. Compare the purchase without and with that assumed income.\n\nStep-by-step reasoning\n1. After the confirmed payment, the facts give 400,000 − 150,000 = 250,000 VND.\n2. Buying before any extra income gives a scenario balance of 250,000 − 300,000 = −50,000 VND.\n3. Assuming 200,000 VND arrives in time gives 150,000 VND; label that assumption rather than removing the base-case warning.\n\nConclusion\nThe base case has a 50,000 VND shortfall if the item is bought. The 150,000 VND result belongs only to the timely-income scenario and is not guaranteed.",
         "arithmeticChecks": [
           {
             "expression": "2000000+1000000-1500000",
@@ -830,6 +1014,18 @@
           {
             "expression": "1500000-900000",
             "expected": 600000
+          },
+          {
+            "expression": "400000-150000",
+            "expected": 250000
+          },
+          {
+            "expression": "250000-300000",
+            "expected": -50000
+          },
+          {
+            "expression": "-50000+200000",
+            "expected": 150000
           }
         ]
       },
@@ -903,6 +1099,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Separate confirmed facts from assumptions when building a scenario.",
+          "Compare options over the same time window, wallet scope and currency.",
+          "A simulated result is neither a promise nor an executed transaction."
+        ],
+        "misconception": "Choosing the most optimistic scenario and treating uncertain income as money already held.",
+        "practicePrompt": "Minh has 400,000 VND and a confirmed upcoming 150,000 VND payment. Minh is considering a 300,000 VND item and might receive another 200,000 VND at an uncertain time. Compare the purchase without and with that assumed income.",
+        "solutionSteps": [
+          "After the confirmed payment, the facts give 400,000 − 150,000 = 250,000 VND.",
+          "Buying before any extra income gives a scenario balance of 250,000 − 300,000 = −50,000 VND.",
+          "Assuming 200,000 VND arrives in time gives 150,000 VND; label that assumption rather than removing the base-case warning."
+        ],
+        "answer": "The base case has a 50,000 VND shortfall if the item is bought. The 150,000 VND result belongs only to the timely-income scenario and is not guaranteed."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -920,7 +1132,7 @@
       "body": "A loan involves more than principal. Understand the money actually received, payment schedule, interest and any fees that may arise. A small installment does not by itself prove a loan is cheaper. To compare choices, understand the usable amount, number of payments, dates and conditions. If information is missing, the appropriate answer may be that comparison is not yet possible, rather than choosing the lowest percentage on an advertisement.\n\nIn fictional contract A, Linh receives 3,000,000 VND and makes three payments of 1,080,000 VND. There is also a 60,000 VND fee paid separately at the start. Total payments are 3,300,000 VND, or 300,000 VND above the amount received. Fictional contract B also provides the full 3,000,000 VND, requires three payments of 1,110,000 VND and has no other fees: the total is 3,330,000 VND. Under those exact conditions, A costs 30,000 VND less in total payments. This is arithmetic, not a lender recommendation or a conclusion about the legality of any product.\n\nCheck whether a fee is deducted from the initial proceeds or paid separately. The usable amount may differ even when both are called a 3,000,000 VND loan. Also check late fees, early-repayment conditions and bundled services. Do not infer an annual rate through simple division when payment dates and outstanding principal change across periods. Nor should a foreign financial indicator be attached to a calculation that does not meet its definition. Here we calculate only the total amounts explicitly stated.\n\nFor a real decision, you need contract information applicable in Vietnam and may consult an appropriately qualified person about unclear terms. The international sources support thinking about costs; they do not replace Vietnamese law or create legal rights or deadlines here. You do not need to enter an actual loan or apply to complete the lesson. In Picket, distinguish simulations from existing obligations and record a real schedule only after checking. If pressured to sign with unanswered questions, pausing to verify helps preserve your choice.",
       "workedExample": {
         "currency": "VND",
-        "description": "A: 3 × 1,080,000 + 60,000 = 3,300,000 VND, with a cost of 300,000 VND. B: 3 × 1,110,000 = 3,330,000 VND; difference: 30,000 VND.",
+        "description": "A: 3 × 1,080,000 + 60,000 = 3,300,000 VND, with a cost of 300,000 VND. B: 3 × 1,110,000 = 3,330,000 VND; difference: 30,000 VND.\n\nRemember\n• Compare total payments, term, actual proceeds and known fees before comparing instalment size.\n• A smaller instalment can come with more instalments and a higher total.\n• A simple total-cost calculation is not an annual interest rate or legal conclusion.\n\nCommon misconception\nAssuming the smallest instalment is automatically the cheapest option.\n\nSelf-check — fictional scenario\nTwo fictional contracts each provide the full 2,000,000 VND. A requires two 1,050,000 VND instalments and a separate 30,000 VND fee. B requires three 720,000 VND instalments and no other fee. Compare the totals and identify what else needs checking.\n\nStep-by-step reasoning\n1. A totals 2 × 1,050,000 + 30,000 = 2,130,000 VND, exceeding the proceeds by 130,000 VND.\n2. B totals 3 × 720,000 = 2,160,000 VND, which is 30,000 VND more despite smaller instalments.\n3. The terms and timing still differ; check late-payment and early-repayment conditions and do not infer an APR from these totals.\n\nConclusion\nA has a 30,000 VND lower total under the stated fees. This is arithmetic for fictional contracts, not a recommendation of a loan.",
         "arithmeticChecks": [
           {
             "expression": "3*1080000+60000",
@@ -936,6 +1148,22 @@
           },
           {
             "expression": "3330000-3300000",
+            "expected": 30000
+          },
+          {
+            "expression": "2*1050000+30000",
+            "expected": 2130000
+          },
+          {
+            "expression": "2130000-2000000",
+            "expected": 130000
+          },
+          {
+            "expression": "3*720000",
+            "expected": 2160000
+          },
+          {
+            "expression": "2160000-2130000",
             "expected": 30000
           }
         ]
@@ -1010,6 +1238,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Compare total payments, term, actual proceeds and known fees before comparing instalment size.",
+          "A smaller instalment can come with more instalments and a higher total.",
+          "A simple total-cost calculation is not an annual interest rate or legal conclusion."
+        ],
+        "misconception": "Assuming the smallest instalment is automatically the cheapest option.",
+        "practicePrompt": "Two fictional contracts each provide the full 2,000,000 VND. A requires two 1,050,000 VND instalments and a separate 30,000 VND fee. B requires three 720,000 VND instalments and no other fee. Compare the totals and identify what else needs checking.",
+        "solutionSteps": [
+          "A totals 2 × 1,050,000 + 30,000 = 2,130,000 VND, exceeding the proceeds by 130,000 VND.",
+          "B totals 3 × 720,000 = 2,160,000 VND, which is 30,000 VND more despite smaller instalments.",
+          "The terms and timing still differ; check late-payment and early-repayment conditions and do not infer an APR from these totals."
+        ],
+        "answer": "A has a 30,000 VND lower total under the stated fees. This is arithmetic for fictional contracts, not a recommendation of a loan."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -1027,7 +1271,7 @@
       "body": "After understanding total cost, place every payment on a calendar alongside income and living needs. A contract with a lower total can still create pressure if its dates do not match when money is available. That does not automatically make another option better; it adds a criterion to check. A positive end-of-month balance does not ensure enough money every day. With project-based income in particular, the date a customer promises and the date money arrives can differ.\n\nBình begins with 900,000 VND. A contractual payment of 700,000 VND is due on the tenth. Before the fifteenth, 300,000 VND is needed for essentials. Income of 1,200,000 VND is expected on the fifteenth. Before it arrives, the calculation is 900,000 − 700,000 − 300,000 = negative 100,000 VND. After the full payment arrives, with nothing else changing, the balance is 1,100,000 VND. Looking only at the closing amount hides the earlier 100,000 VND gap. Changing a date in an app does not change the contract's due date.\n\nIf a gap appears, verify the income date and ask the relevant parties about real options before the deadline. Any schedule change needs confirmation, including its fees and consequences. Paying an extension fee does not necessarily reduce principal; read how that contract allocates payments. New borrowing to cover an old installment can add obligations, so consider the combined schedule rather than just the urgent payment. This lesson neither selects a loan product nor advises abandoning essential needs to pay at any cost.\n\nIn Picket, reminders help you remember; completion should correspond to a real, confirmed payment. If that amount already appears in a transaction, do not enter it again from a reminder. You may note unclear information and return later. When an alert appears, you should be able to inspect its calculation and scope instead of accepting an absolute conclusion. Practice only requires marking a shortfall date in the example and considering a question to verify. No contract number, identity document or actual payment is needed to learn how to read the schedule.",
       "workedExample": {
         "currency": "VND",
-        "description": "Before income: 900,000 − 700,000 − 300,000 = −100,000 VND. After income: −100,000 + 1,200,000 = 1,100,000 VND.",
+        "description": "Before income: 900,000 − 700,000 − 300,000 = −100,000 VND. After income: −100,000 + 1,200,000 = 1,100,000 VND.\n\nRemember\n• Read repayment and income dates alongside total cost.\n• Identify a pre-due-date shortfall separately even if the ending balance is positive.\n• A schedule change is real only when the relevant party agrees and the terms are confirmed.\n\nCommon misconception\nBelieving an edited date in an app changes an external repayment obligation.\n\nSelf-check — fictional scenario\nNam has 120,000 VND. A 200,000 VND repayment is due on day 18, income of 500,000 VND is expected on day 25 and living costs of 100,000 VND on day 27. Identify the gap and two checks needed before changing the schedule.\n\nStep-by-step reasoning\n1. The day-18 shortfall is 200,000 − 120,000 = 80,000 VND.\n2. If every later assumption holds, the ending value is 120,000 − 200,000 + 500,000 − 100,000 = 320,000 VND.\n3. Verify the income date and ask through the official channel about feasible arrangements, fees and conditions; update only after confirmation rather than automatically borrowing again.\n\nConclusion\nThe projected ending value is 320,000 VND, but the earlier shortfall is still 80,000 VND. Picket does not negotiate or extend obligations for you.",
         "arithmeticChecks": [
           {
             "expression": "900000-700000-300000",
@@ -1036,6 +1280,14 @@
           {
             "expression": "-100000+1200000",
             "expected": 1100000
+          },
+          {
+            "expression": "200000-120000",
+            "expected": 80000
+          },
+          {
+            "expression": "120000-200000+500000-100000",
+            "expected": 320000
           }
         ]
       },
@@ -1110,6 +1362,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Read repayment and income dates alongside total cost.",
+          "Identify a pre-due-date shortfall separately even if the ending balance is positive.",
+          "A schedule change is real only when the relevant party agrees and the terms are confirmed."
+        ],
+        "misconception": "Believing an edited date in an app changes an external repayment obligation.",
+        "practicePrompt": "Nam has 120,000 VND. A 200,000 VND repayment is due on day 18, income of 500,000 VND is expected on day 25 and living costs of 100,000 VND on day 27. Identify the gap and two checks needed before changing the schedule.",
+        "solutionSteps": [
+          "The day-18 shortfall is 200,000 − 120,000 = 80,000 VND.",
+          "If every later assumption holds, the ending value is 120,000 − 200,000 + 500,000 − 100,000 = 320,000 VND.",
+          "Verify the income date and ask through the official channel about feasible arrangements, fees and conditions; update only after confirmation rather than automatically borrowing again."
+        ],
+        "answer": "The projected ending value is 320,000 VND, but the earlier shortfall is still 80,000 VND. Picket does not negotiate or extend obligations for you."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -1127,7 +1395,7 @@
       "body": "Knowing your name or order details does not prove someone is entitled to ask you to operate an account. An impersonator may use correct information to create urgency: verify now, claim a refund or avoid being locked out. Pause when a story pushes you to skip checks. A brand name in a message or a familiar logo is not sufficient evidence of authenticity. This lesson focuses on handling requests; it does not require you to recognize every trick by appearance.\n\nIn an entirely fictional example, a caller offers Hà a 250,000 VND refund but demands a 50,000 VND transfer first and asks Hà to read out an OTP. Hà has 1,000,000 VND. Sending 50,000 VND leaves 950,000 VND, not 1,200,000 VND, because the promised 250,000 VND refund has not arrived. No calculation establishes the caller's trustworthiness. The safe response in this situation is to stop and independently open the known official app or support channel to check. Do not simply follow a link or callback number provided by the caller.\n\nDo not give callers or message senders OTPs, passwords or login details. Use an authentication code only for an action you initiated on a verified official channel, after understanding what you are authorizing. Do not install an app, grant device-control access or scan an unfamiliar code under refund instructions. If you have acted and suspect fraud, stop the transaction, contact the bank through its official channel for protective steps, preserve evidence and report to the police. Recovery of the money cannot be guaranteed.\n\nPicket practice uses simulated situations. The app does not need a bank OTP, card photo or password to assess an answer. Do not enter a real code into a learning field or share screenshots containing secrets. For an urgent request, ask who initiated contact, what you are authorizing and how to verify independently. Pausing to ask is not a mistake. If you have been deceived, focus on protection and support; do not let embarrassment delay contacting an organization that can respond.",
       "workedExample": {
         "currency": "VND",
-        "description": "1,000,000 − 50,000 = 950,000 VND; the promised 250,000 VND is not received income. Only assuming both receipt and transfer gives 1,200,000 VND; that assumption cannot establish trust.",
+        "description": "1,000,000 − 50,000 = 950,000 VND; the promised 250,000 VND is not received income. Only assuming both receipt and transfer gives 1,200,000 VND; that assumption cannot establish trust.\n\nRemember\n• Knowing order details does not prove a caller is a genuine employee.\n• Do not share an OTP, password or remote-control access in response to an unexpected refund request.\n• Stop and independently find an official verification channel; preserve relevant evidence if fraud is suspected.\n\nCommon misconception\nTrusting every instruction because the caller knows the product name and amount.\n\nSelf-check — fictional scenario\nA caller promises a 350,000 VND refund, names the correct item and asks for an OTP and a remote-control app to receive it. You have not taken those steps. Give three safer actions and explain why the promised refund is not yet recorded income.\n\nStep-by-step reasoning\n1. Stop the process; do not share the OTP, enter secrets through an unfamiliar link or grant remote-control access.\n2. Use an official app or contact channel you identify independently to verify the request, not only contact details supplied by the caller.\n3. Preserve relevant communications; if information was exposed or an unfamiliar transaction appears, promptly contact the official bank or competent channel for guidance without assuming recovery is guaranteed.\n\nConclusion\nThe 350,000 VND is only the caller’s promise. Without a confirmed receipt of money, it is not actual income.",
         "arithmeticChecks": [
           {
             "expression": "1000000-50000",
@@ -1209,6 +1477,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Knowing order details does not prove a caller is a genuine employee.",
+          "Do not share an OTP, password or remote-control access in response to an unexpected refund request.",
+          "Stop and independently find an official verification channel; preserve relevant evidence if fraud is suspected."
+        ],
+        "misconception": "Trusting every instruction because the caller knows the product name and amount.",
+        "practicePrompt": "A caller promises a 350,000 VND refund, names the correct item and asks for an OTP and a remote-control app to receive it. You have not taken those steps. Give three safer actions and explain why the promised refund is not yet recorded income.",
+        "solutionSteps": [
+          "Stop the process; do not share the OTP, enter secrets through an unfamiliar link or grant remote-control access.",
+          "Use an official app or contact channel you identify independently to verify the request, not only contact details supplied by the caller.",
+          "Preserve relevant communications; if information was exposed or an unfamiliar transaction appears, promptly contact the official bank or competent channel for guidance without assuming recovery is guaranteed."
+        ],
+        "answer": "The 350,000 VND is only the caller’s promise. Without a confirmed receipt of money, it is not actual income."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -1226,7 +1510,7 @@
       "body": "A free trial may become a paid subscription unless you cancel according to the agreed terms. Before starting, look for the post-trial price, billing cycle, renewal date and actual cancellation method. A free label does not explain every condition. You can choose not to sign up if you do not understand. Similarly, removing an app icon from your phone does not prove a subscription is canceled. Check its status where the subscription is managed and retain confirmation when available.\n\nIn a fictional example, Yến pays 79,000 VND monthly for service A and 49,000 VND for service B, totaling 128,000 VND per month. If both prices stay unchanged, both remain active for twelve months and there are no other fees, the total is 1,536,000 VND. Yến is also considering a 450,000 VND item expected to be used six times. Dividing price by anticipated uses gives 75,000 VND per use, but does not prove all six uses will happen. The numbers expose scale and assumptions; they do not decide for Yến.\n\nA self-chosen pause before a flexible purchase may allow time to compare plans, read conditions and reconsider the need. You can note the item and return at a time you choose. This is a reflection technique, not a guaranteed legal cancellation period, and it should not be rigidly imposed on medicine or urgent needs. Buying or not buying after the pause can both be reasonable, depending on circumstances. You do not need a streak of avoiding purchases to prove money-management knowledge.\n\nIn Picket, flagging a recurring expense for review does not cancel an external service. To cancel, use the official channel and confirm the outcome before editing the future schedule. A payment already charged still needs an accurate record; an unapproved refund request is not received money. Renewal reminders should be opt-in and avoid duplicates. Practice can simply mean reviewing the examples or writing a question about trial conditions. No subscription, purchase or card information is required to finish; the aim is to make your choices clear.",
       "workedExample": {
         "currency": "VND",
-        "description": "79,000 + 49,000 = 128,000 VND per month; 128,000 × 12 = 1,536,000 VND per year under the assumptions; 450,000 / 6 = 75,000 VND per anticipated use.",
+        "description": "79,000 + 49,000 = 128,000 VND per month; 128,000 × 12 = 1,536,000 VND per year under the assumptions; 450,000 / 6 = 75,000 VND per anticipated use.\n\nRemember\n• Check the post-trial price, next charge date and cancellation method before deciding.\n• Deleting an app or flagging a service in Picket does not cancel an external subscription.\n• Compare costs over the same period and state price and duration assumptions.\n\nCommon misconception\nAssuming an unused or uninstalled service can no longer charge.\n\nSelf-check — fictional scenario\nOne plan will cost 59,000 VND monthly after its trial; another currently costs 89,000 VND monthly. If both prices stay unchanged for 12 months, what is the total? With a self-chosen monthly limit of 120,000 VND, what should be reviewed before renewal?\n\nStep-by-step reasoning\n1. Together they cost 59,000 + 89,000 = 148,000 VND monthly, which is 28,000 VND above the chosen limit.\n2. Keeping both for 12 unchanged-price months totals 148,000 × 12 = 1,776,000 VND; price changes or mid-period cancellation change that assumption.\n3. Review use, terms and the official cancellation process; confirm the result before changing the schedule and do not subscribe just to practise.\n\nConclusion\nThe assumed total is 148,000 VND per month and 1,776,000 VND for 12 months. A Picket reminder does not prove that charging has stopped.",
         "arithmeticChecks": [
           {
             "expression": "79000+49000",
@@ -1239,6 +1523,18 @@
           {
             "expression": "450000/6",
             "expected": 75000
+          },
+          {
+            "expression": "59000+89000",
+            "expected": 148000
+          },
+          {
+            "expression": "148000-120000",
+            "expected": 28000
+          },
+          {
+            "expression": "148000*12",
+            "expected": 1776000
           }
         ]
       },
@@ -1311,6 +1607,22 @@
       "reviewType": "author-source-and-arithmetic-check",
       "independentReviewedAt": null,
       "status": "authored-not-independent-review",
+      "studySupport": {
+        "synthetic": true,
+        "keyTakeaways": [
+          "Check the post-trial price, next charge date and cancellation method before deciding.",
+          "Deleting an app or flagging a service in Picket does not cancel an external subscription.",
+          "Compare costs over the same period and state price and duration assumptions."
+        ],
+        "misconception": "Assuming an unused or uninstalled service can no longer charge.",
+        "practicePrompt": "One plan will cost 59,000 VND monthly after its trial; another currently costs 89,000 VND monthly. If both prices stay unchanged for 12 months, what is the total? With a self-chosen monthly limit of 120,000 VND, what should be reviewed before renewal?",
+        "solutionSteps": [
+          "Together they cost 59,000 + 89,000 = 148,000 VND monthly, which is 28,000 VND above the chosen limit.",
+          "Keeping both for 12 unchanged-price months totals 148,000 × 12 = 1,776,000 VND; price changes or mid-period cancellation change that assumption.",
+          "Review use, terms and the official cancellation process; confirm the result before changing the schedule and do not subscribe just to practise."
+        ],
+        "answer": "The assumed total is 148,000 VND per month and 1,776,000 VND for 12 months. A Picket reminder does not prove that charging has stopped."
+      },
       "translationLocale": "en-US",
       "translationVersion": 1,
       "translationStatus": "authored-not-independent-review",
@@ -1318,6 +1630,9 @@
       "translationIndependentReviewedAt": null
     }
   ],
+  "editorialRevision": 2,
+  "supplementAuthoredAt": "2026-10-27",
+  "supplementReviewType": "author-source-and-arithmetic-check-not-independent-review",
   "translationLocale": "en-US",
   "translationVersion": 1,
   "translationStatus": "authored-not-independent-review",
