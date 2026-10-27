@@ -1,5 +1,9 @@
 # Direct APK update channel — code 16
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 The owner asks where direct-APK users can update. Inspection found that the
 code-15 landing APK was built with PICKET_PLAY_BUILD=1 and therefore had the
 Play-only update adapter and no native direct installer module. That packaging
