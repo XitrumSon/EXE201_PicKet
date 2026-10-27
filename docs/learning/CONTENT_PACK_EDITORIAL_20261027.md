@@ -42,4 +42,4 @@ Các PDF được đọc bằng trích xuất văn bản; không sao chép bản
 
 Có thể dùng ngay các bản Markdown để đọc, tự giải và góp ý. Source mobile dùng ví dụ mở rộng trong phần ví dụ hiện có của màn learning preview; không thêm luồng mua hoặc gọi AI.
 
-Bản code 18 đã upload trước lượt biên tập nên chưa chứa phần bổ sung. Lượt này hoàn thiện nội dung/source và bộ kiểm tra, không tự bật route học production hoặc công bố đáp án cloud. Closed test giữ draft theo lựa chọn của chủ dự án.
+Bản code 18 đã upload trước lượt biên tập nên chưa chứa phần bổ sung. APK/AAB code 19 được build từ source có bản biên tập 2. Không tự bật route học production hoặc công bố đáp án cloud. Closed test giữ draft theo lựa chọn của chủ dự án.
