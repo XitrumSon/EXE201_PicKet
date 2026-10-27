@@ -1,5 +1,8 @@
 # Picket Android — Expo/React Native
 
+<!-- project-status-link -->
+> Đồng bộ tài liệu 27/10/2026: [Trạng thái hiện hành](PROJECT_STATUS.md). Trạng thái triển khai, phiên bản và các điều kiện nghiệm thu được quản lý tại tài liệu trạng thái chung.
+
 Trạng thái hiện hành: [PROJECT_STATUS.md](PROJECT_STATUS.md). Public APK là **1.0.4 (5) ARM64**; máy ảo x86_64 dùng APK đúng ABI/package, cài đè bằng `adb install -r`, không gỡ hoặc xóa dữ liệu. [Checklist điện thoại thật](ANDROID_REAL_DEVICE_CHECKLIST.md), [Play sandbox](GOOGLE_PLAY_SANDBOX_TO_PRODUCTION.md). Các đường dẫn artifact ngày 20/10 bên dưới là lịch sử, không phải chỉ dẫn chọn APK mới nhất.
 
 Picket Android được triển khai tại `apps/mobile` bằng Expo SDK 57 và React
