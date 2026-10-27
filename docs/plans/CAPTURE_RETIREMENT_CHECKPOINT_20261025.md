@@ -1,5 +1,9 @@
 # Attributed capture erasure — 25 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Account deletion now additionally erases the selected owner's encrypted capture
 directory and decrypted preview directory, then transactionally removes capture
 drafts, OCR intents and picker interruption markers. All absolute directory
