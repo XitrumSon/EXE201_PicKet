@@ -1,4 +1,14 @@
 export const billingVi = {
+  eyebrow: "THÊM DƯ ĐỊA CHO HÓA ĐƠN", intro: "Chọn nhịp dùng của bạn.",
+  compare: "Chọn hạn mức phù hợp", monthlyTab: "Theo tháng", yearlyTab: "Theo năm",
+  quotaAmount: "{{count}} lượt OCR cloud", quotaWindow: "trong 24 giờ gần nhất",
+  localIncluded: "Quét trên máy không trừ lượt cloud", cloudIncluded: "Dùng cloud khi cần đọc lại hóa đơn",
+  allIncluded: "Thu chi, ví, ngân sách và đồng bộ vẫn có ở Free.",
+  freePlan: "Free để bắt đầu", freeAllowance: "3 lượt cloud / 24 giờ", included: "Luôn có sẵn",
+  currentBadge: "CÙNG CẤP GÓI HIỆN TẠI", billedMonthly: "Tự gia hạn mỗi tháng", billedYearly: "Tự gia hạn mỗi năm",
+  remainingLabel: "Lượt cloud còn lại", exhausted: "Đã dùng hết lượt cloud trong 24 giờ. Bạn vẫn có thể quét trên máy hoặc nhập tay.",
+  storeTools: "Giao dịch của bạn", cancelNote: "Xem giá, chu kỳ và hủy gia hạn trong Google Play.",
+
   reloadPrices: "Tải lại bảng giá", loadingPrices: "Đang tải bảng giá…",
   priceUnavailable: "Chưa có giá từ Google Play",
   refreshError: "Giao dịch đã được xác minh nhưng chưa tải lại được trạng thái gói. Hãy kiểm tra kết nối và mở lại màn gói; không cần mua lại.",
@@ -9,6 +19,16 @@ export const billingVi = {
   current: "Gói hiện tại: {{tier}}", quota: "OCR cloud còn {{remaining}}/{{limit}} lượt trong 24 giờ.", androidOnly: "Thanh toán trong ứng dụng hiện chỉ hỗ trợ Android.", connecting: "Đang kết nối Google Play…", pricesUnavailable: "Chưa tải được bảng giá. Hãy kiểm tra kết nối và dùng bản cài từ Google Play để mua hoặc khôi phục gói.", chooseLabel: "Chọn {{name}} {{cadence}}", buyingLabel: "Đang mua {{name}} {{cadence}}", choose: "Chọn gói", restoring: "Đang khôi phục giao dịch Google Play", restore: "Khôi phục giao dịch", manage: "Quản lý hoặc hủy gói trên Google Play", footnote: "Không nhập thông tin thẻ vào Picket. Hoàn tiền và hủy gia hạn được xử lý theo chính sách Google Play.",
 } as const;
 export const billingEn: Record<keyof typeof billingVi, string> = {
+  eyebrow: "MORE ROOM FOR RECEIPTS", intro: "Find your everyday rhythm.",
+  compare: "Choose your allowance", monthlyTab: "Monthly", yearlyTab: "Yearly",
+  quotaAmount: "{{count}} cloud OCR scans", quotaWindow: "in a rolling 24-hour window",
+  localIncluded: "On-device scans do not use cloud credits", cloudIncluded: "Cloud reading when a receipt needs another look",
+  allIncluded: "Transactions, wallets, budgets and sync are included in Free.",
+  freePlan: "Start with Free", freeAllowance: "3 cloud scans / 24 hours", included: "Always included",
+  currentBadge: "YOUR CURRENT TIER", billedMonthly: "Renews every month", billedYearly: "Renews every year",
+  remainingLabel: "Cloud scans remaining", exhausted: "Your cloud allowance is used up for this 24-hour window. You can still scan on-device or enter details manually.",
+  storeTools: "Your purchases", cancelNote: "Review prices, billing periods and cancel renewals in Google Play.",
+
   reloadPrices: "Reload prices", loadingPrices: "Loading prices…",
   priceUnavailable: "Google Play price unavailable",
   refreshError: "Your purchase was verified, but the plan status could not be refreshed. Check your connection and reopen this screen; you do not need to buy again.",
