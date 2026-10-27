@@ -75,8 +75,8 @@ Thêm migration `20261027052550_restrict_internal_trigger_execution.sql`: thu h�
 | --- | --- |
 | Android thật — chủ dự án tự nghiệm thu | Theo chỉ đạo 27/10, chủ dự án sẽ tự test camera/OCR thực, sinh trắc, độ mượt và cập nhật giữ dữ liệu sau. Không chặn việc tiếp tục các phần kỹ thuật khác; chưa đánh dấu PASS |
 | Mobile cloud CRUD/offline/owner switch | **PASS trên Pixel 5/code 18** với hai fixture: tạo/sửa/xóa offline qua restart, A→B→A, server đúng một bản ghi và soft-delete; đã cleanup. Conflict editor và cloud receipt media không nằm trong lượt này |
-| Billing | Bốn base plan ACTIVE tại VN. License testing đã lưu và tải lại xác nhận danh sách Picket Internal (3 tài khoản), RESPOND_NORMALLY. 21 mobile + 7 Dart tests, 22 assertions quyền gói cô lập và production negative checks đạt. Runtime mua mới=false; còn RTDN và S01–S14 bằng Play thật |
-| Play Console | Xác minh RTDN Send Test Message, Finance category và các khai báo Console; API đã xác nhận 7 phoneScreenshots VI. Chrome connector không khả dụng; mở Console trên Pixel 5 bị automatic approval chặn |
+| Billing | Bốn base plan ACTIVE tại VN. License testing đã lưu và tải lại xác nhận danh sách Picket Internal (3 tài khoản), RESPOND_NORMALLY. 21 mobile + 7 Dart tests, 22 assertions quyền gói cô lập và production negative checks đạt. Runtime mua mới=true đã postflight; RTDN topic persisted/Send Test HTTP 200. Còn delivery/lifecycle và S01–S14 bằng Play thật |
+| Play Console | Browser MCP đã kết nối; license testers và RTDN topic/Send Test đã cấu hình. Còn Finance category, các khai báo/review hiện hành và delivery/lifecycle. API đã xác nhận 7 phoneScreenshots VI |
 | Closed test — giữ draft theo chỉ đạo | Chủ dự án xác nhận chưa có nhóm/tester và yêu cầu giữ draft; không tự mở cohort hoặc chuyển alpha thành completed |
 | Nội dung học | Đã hoàn thiện [giáo trình VI/EN bản biên tập 2](learning/README.md): 12 bài, 36 quiz, 12 bài tự kiểm tra và 60 phép tính. Đã soạn/rà nguồn; chưa gắn phê duyệt độc lập hoặc publish cloud |
 | Dự báo | Dữ liệu lịch sử được phép dùng, đủ nhãn completeness và backtest 7/30 ngày; không dùng dữ liệu tổng hợp để tuyên bố độ chính xác thực |
