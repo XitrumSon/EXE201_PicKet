@@ -1,5 +1,9 @@
 # Real recovery redirect, cold Android bootstrap — 21 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Environment: `Picket_QA_35`, Android 35, `emulator-5556`, isolated `com.picket.mobile.qa`; generated QA A only. No real-user password, session or data was changed.
 
 The harness `.artifacts/native-cold-recovery-callback.py` requests a real Supabase recovery link for the generated user, consumes it through the real HTTPS verification endpoint and keeps the returned custom-scheme token fragment only in RAM. It force-stops the QA app, verifies no QA PID exists, then dispatches the exact real redirect explicitly to the QA package.
