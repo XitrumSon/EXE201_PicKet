@@ -1,12 +1,16 @@
+import { paperControl , paperShape, paperSpace } from "@/core/theme/paper-foundations";
+import { PicketText as Text } from "@/core/ui/picket-text";
+
 import { useTranslation } from "react-i18next";
 import { deleteAccountWithLocalRetirement } from "@/features/auth/account-delete-flow";
 import { retireAccountLocalData } from "@/features/auth/account-local-retirement";
 import { useOwnerCacheRecovery } from "@/features/auth/owner-cache-boundary";
-import { colors, radii } from "@picket/design-tokens";
+import { useMobileStyles } from "@/core/theme/use-mobile-styles";
+import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { Redirect, router } from "expo-router";
 import { useState,useEffect,useRef } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { picketApi } from "@/core/api/client";
@@ -15,6 +19,7 @@ import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable
 import { useAuth } from "@/features/auth/auth-context";
 
 export default function DeleteAccountScreen() {
+  const { colors, styles } = useMobileStyles(createStyles);
   const { session, signOut } = useAuth();
   const {t}=useTranslation("accountDeletion");
   const requestOwnerRecovery=useOwnerCacheRecovery();
@@ -59,12 +64,12 @@ export default function DeleteAccountScreen() {
         <Text style={styles.label}>{t("confirmation")}</Text>
         <TextInput accessibilityLabel={t("confirmationLabel")} editable={!busy&&!remoteDeleted} autoCapitalize="characters" autoComplete="off" onChangeText={setConfirmation} style={styles.input} value={confirmation} />
         {message && <Text accessibilityLiveRegion="polite" style={styles.error}>{t(message)}</Text>}
-        <Pressable accessibilityRole="button" disabled={busy || (!remoteDeleted&&confirmation !== "DELETE")} onPress={() => void remove()} style={[styles.deleteButton, !remoteDeleted&&confirmation !== "DELETE" && styles.disabled]}>{busy ? <ActivityIndicator accessibilityLabel={t(remoteDeleted?"signingOut":"deleting")} color={colors.white} /> : <Text style={styles.deleteText}>{t(remoteDeleted?"finishSignOut":"remove")}</Text>}</Pressable>
+        <Pressable accessibilityRole="button" disabled={busy || (!remoteDeleted&&confirmation !== "DELETE")} onPress={() => void remove()} style={[styles.deleteButton, !remoteDeleted&&confirmation !== "DELETE" && styles.disabled]}>{busy ? <ActivityIndicator accessibilityLabel={t(remoteDeleted?"signingOut":"deleting")} color={colors.onPrimary} /> : <Text style={styles.deleteText}>{t(remoteDeleted?"finishSignOut":"remove")}</Text>}</Pressable>
       </View>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { backgroundColor: colors.cream, flex: 1 }, content: { flex: 1, gap: 18, justifyContent: "center", padding: 26 }, back: { color: colors.mauve, fontSize: 15, fontWeight: "700" }, title: { color: colors.ink, fontSize: 34, fontWeight: "700" }, description: { color: colors.muted, fontSize: 15, lineHeight: 24 }, label: { color: colors.ink, fontSize: 14, fontWeight: "700" }, input: { backgroundColor: colors.white, borderColor: colors.expense, borderRadius: radii.small, borderWidth: 1, color: colors.ink, fontSize: 17, minHeight: 54, paddingHorizontal: 16 }, error: { color: colors.expense, fontSize: 14, lineHeight: 20 }, deleteButton: { alignItems: "center", backgroundColor: colors.expense, borderRadius: radii.small, justifyContent: "center", minHeight: 54 }, disabled: { opacity: 0.45 }, deleteText: { color: colors.white, fontSize: 15, fontWeight: "700" },
+const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
+  safeArea: { backgroundColor: colors.cream, flex: 1 }, content: { maxWidth: 720, width: "100%", alignSelf: "center", flex: 1, gap: 18, justifyContent: "center", padding: paperSpace.screen }, back: { color: colors.link, fontSize: 15, fontWeight: "700" }, title: { color: colors.ink, fontSize: 34, fontWeight: "700" }, description: { color: colors.muted, fontSize: 15, lineHeight: 24 }, label: { color: colors.ink, fontSize: 14, fontWeight: "700" }, input: { backgroundColor: colors.white, borderColor: colors.expense, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 17, minHeight: paperControl.height, paddingHorizontal: 16 }, error: { color: colors.danger, fontSize: 14, lineHeight: 20 }, deleteButton: { alignItems: "center", backgroundColor: colors.expense, borderRadius: paperShape.button, justifyContent: "center", minHeight: paperControl.height }, disabled: { opacity: 0.45 }, deleteText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" },
 });
