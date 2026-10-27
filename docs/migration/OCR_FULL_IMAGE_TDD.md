@@ -1,5 +1,9 @@
 # OCR full-image picker TDD evidence
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Source and user journey
 
 This fix was derived from the Android emulator receipt test on 2026-10-14.
