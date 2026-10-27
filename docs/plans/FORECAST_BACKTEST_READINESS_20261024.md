@@ -1,5 +1,9 @@
 # Forecast evaluation checkpoint — 24 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 This delivers offline evaluation code and synthetic verification. It does **not**
 establish forecast quality on real users, activate F1, or complete release acceptance.
 
