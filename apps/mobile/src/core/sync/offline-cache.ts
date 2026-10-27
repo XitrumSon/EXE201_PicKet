@@ -6,7 +6,7 @@ import { cacheCipher } from "./cache-cipher";
 import { createOwnerCacheLifecycle } from "./owner-cache-lifecycle";
 import { createOwnerCacheDatabaseDriver, ownerCacheRetirementSchema } from "./owner-cache-database";
 
-export type CachedResource = "learning-assessment" | "forecast-observations" | "cashflow-settlements" | "cashflow-schedules" | "learning-weekly" | "learning-attempts" | "learning-draft" | "learning-progress" | "profile" | "accounts" | "categories" | "transactions" | "budgets" | "bills" | "subscriptions" | "keepsakes" | "guest-finance" | "receipt-gallery" | "receipt-images" | "receipt-thumbnails" | "reconciliation-requests" | "spending-splits";
+export type CachedResource = "pocket-appearance" | "learning-assessment" | "forecast-observations" | "cashflow-settlements" | "cashflow-schedules" | "learning-weekly" | "learning-attempts" | "learning-draft" | "learning-progress" | "profile" | "accounts" | "categories" | "transactions" | "budgets" | "bills" | "subscriptions" | "keepsakes" | "guest-finance" | "receipt-gallery" | "receipt-images" | "receipt-thumbnails" | "reconciliation-requests" | "spending-splits";
 type CacheRow = { nonce: string; ciphertext: string; updated_at: string };
 const keyName = "picket_offline_cache_key_v1";
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
