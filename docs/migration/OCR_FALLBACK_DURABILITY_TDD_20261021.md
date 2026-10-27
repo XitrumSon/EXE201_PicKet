@@ -1,5 +1,9 @@
 # OCR fallback durability — 2026-10-21
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Status: core Android lost-response/restart and manual-edit/consent cases PASS; expanded fault branches remain OPEN. This report is not a completion certificate for parts 1–2.
 
 ## Reproduced source defects
