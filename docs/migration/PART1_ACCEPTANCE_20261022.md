@@ -1,5 +1,9 @@
 # Part 1 acceptance — 22 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Subsequent authorized publication: [production 1.0.4/code5](ANDROID_RELEASE_1_0_4_20261022.md) now contains the accepted source follow-up. Statements about the unchanged 1.0.3 public APK below describe the acceptance checkpoint before that separate release, not current landing metadata.
 
 ## Decision and scope
