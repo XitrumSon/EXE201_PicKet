@@ -1,5 +1,9 @@
 # Staff/admin acceptance — 22 October 2026
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 ## Scope and authorization
 
 User authorized new test staff/admin accounts and testing without changing other accounts. Existing schema has **one staff role**, `public.staff_members` checked by `is_staff()`, not separate staff and super-admin permission tiers. No role redesign or permanent privileged account was introduced.
