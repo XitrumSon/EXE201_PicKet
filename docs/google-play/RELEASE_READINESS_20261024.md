@@ -136,3 +136,7 @@ Evidence local: `.artifacts/billing-acceptance-20261027/` gồm mobile-tests.log
 Theo yêu cầu chủ dự án, bốn base plan đã được kích hoạt và đọc lại độc lập bằng Android Publisher API: Plus tháng 19.000đ, Plus năm 199.000đ, Pro tháng 49.000đ, Pro năm 499.000đ. Tất cả ACTIVE, auto-renew, chỉ VN; giữ nguyên ID monthly/yearly và không thêm trial/offer. Trạng thái này thay thế DRAFT trong các checkpoint trước. Không thay release track hoặc bật runtime Billing trong lượt cấu hình danh mục. License tester, S01–S14 và RTDN vẫn cần nghiệm thu; ACTIVE không phải bằng chứng mua/verify/ack thành công.
 
 Play Internal đã đọc lại completed với code 20; alpha vẫn code 6 draft, beta/production chưa có release. APK trên landing cùng version/code, AAB Play không có quyền cài APK. Các gate Console, Billing, thiết bị thật và nội dung cloud không tự đóng bởi upload thành công. Xem [báo cáo code 20](../migration/ANDROID_RELEASE_1_0_7_20261027.md) và [backlog hiện hành](../BACKLOG.md).
+
+## Play Internal code 21 và giao dịch thử thật qua Play
+
+Internal đã cập nhật 1.0.8/code 21 (ARM64+x86_64); alpha/beta/production không đổi. Máy ảo CH Play tải được đủ bốn giá, mua Plus tháng bằng Test card thành công, restore cấp PLUS/30; server và cold restart xác nhận quyền. Callback sau onboarding Google chưa tự cập nhật đúng; chưa nghiệm thu ack API/lifecycle và các SKU khác. [Báo cáo có giới hạn và bằng chứng](../migration/PLAY_BILLING_EMULATOR_20261027.md). Landing vẫn APK 1.0.7/code 20.
