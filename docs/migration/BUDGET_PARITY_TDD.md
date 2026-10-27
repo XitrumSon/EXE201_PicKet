@@ -1,5 +1,9 @@
 # Expo Android — ngân sách theo kỳ và hoàn tiền guest (2026-10-17)
 
+<!-- canonical-design -->
+> Chuẩn thiết kế duy nhất: [PICKET-DESIGN.md](../../PICKET-DESIGN.md). Tài liệu này là checkpoint/nghiên cứu theo ngày; hiện trạng và backlog nằm tại [PROJECT_STATUS](../PROJECT_STATUS.md) và [BACKLOG](../BACKLOG.md).
+
+
 Nguồn: khoảng thiếu trong `FLUTTER_EXPO_GAP.md`. Phạm vi lát này là màn Ngân sách dùng hạn mức tháng từ Kế hoạch, cùng cách trừ hoàn tiền của giao dịch chia danh mục ở chế độ guest. Không sửa Next.js.
 
 | Hành vi | RED | GREEN | Giới hạn |
