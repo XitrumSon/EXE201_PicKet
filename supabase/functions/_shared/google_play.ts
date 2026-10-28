@@ -84,6 +84,7 @@ export async function verifyPlayPurchase(
       : null,
   });
   if (error) throw new Error("Purchase record failed");
+  let acknowledgementState = purchase.acknowledgementState;
   if (
     active && purchase.acknowledgementState === "ACKNOWLEDGEMENT_STATE_PENDING"
   ) {
@@ -102,7 +103,16 @@ export async function verifyPlayPurchase(
       },
     );
     if (!ack.ok) throw new Error("Acknowledgement failed");
+    acknowledgementState = "ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED";
   }
+  const { error: metadataError } = await admin().rpc("record_play_purchase_metadata", {
+    p_hash: await sha256(purchaseToken),
+    p_user: userId,
+    p_is_test: purchase.testPurchase !== undefined && purchase.testPurchase !== null,
+    p_state: purchase.subscriptionState,
+    p_ack: acknowledgementState,
+  });
+  if (metadataError) throw new Error("Purchase metadata record failed");
   return {
     verified: true,
     active,

@@ -5,6 +5,7 @@ const testDirectory = new URL("./", import.meta.url);
 const legacyCheckpoint = "202610210004";
 const cronMigration = "20261024013825_learning_ai_scheduled_cleanup.sql";
 const suites = [
+  "admin-platform",
   "appearance-preferences",
   "appearance-backup",
   "wallet-currency-backup",

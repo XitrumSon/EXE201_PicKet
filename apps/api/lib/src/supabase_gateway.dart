@@ -414,6 +414,73 @@ class SupabaseGateway {
     return AdminOverviewResource.fromDatabase(jsonDecode(response.body));
   }
 
+  Future<Map<String, dynamic>> accountAccess(String token) =>
+      adminRpc(token, 'account_access', {});
+
+  Future<void> collectEvent(String token, Map<String, dynamic> event) async {
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/collect_app_event'),
+          headers: _headers(token),
+          body: jsonEncode({'p_event': event}),
+        )
+        .timeout(const Duration(seconds: 10));
+    _ensureSuccess(response);
+  }
+
+  Future<Map<String, dynamic>> adminPortal(
+    String token,
+    String section,
+    Map<String, dynamic> filters,
+  ) => adminRpc(token, 'admin_portal', {
+    'p_section': section,
+    'p_filters': filters,
+  });
+
+  Future<Map<String, dynamic>> adminMutate(
+    String token,
+    Map<String, dynamic> input,
+  ) => adminRpc(token, 'admin_mutate', {
+    'p_action': input['action'],
+    'p_body': input['body'],
+    'p_reason': input['reason'],
+    'p_request_id': input['requestId'],
+  });
+
+  Future<Map<String, dynamic>> adminRpc(
+    String token,
+    String function,
+    Map<String, dynamic> body,
+  ) async {
+    if (!{
+      'account_access',
+      'admin_portal',
+      'admin_mutate',
+      'admin_prepare_auth',
+      'admin_exports',
+    }.contains(function)) {
+      throw const FormatException('Unknown administrative operation.');
+    }
+    await authenticate(token);
+    final response = await _client
+        .post(
+          _uri('/rest/v1/rpc/$function'),
+          headers: _headers(token),
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 20));
+    _ensureSuccess(response);
+    final value = jsonDecode(response.body);
+    if (value is! Map<String, dynamic>) {
+      throw const GatewayException(
+        HttpStatus.badGateway,
+        'Invalid administrative response.',
+      );
+    }
+    return value;
+  }
+
   Future<void> adminUserAction(
     String accessToken,
     String targetUser,
@@ -2002,6 +2069,13 @@ class SupabaseGateway {
   void _ensureSuccess(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) return;
     try {
+      final conflict = jsonDecode(response.body);
+      if (conflict is Map && conflict['code'] == '40001') {
+        throw const GatewayException(
+          HttpStatus.conflict,
+          'Record changed; reload before saving.',
+        );
+      }
       final body = jsonDecode(response.body);
       if (body is Map && body['code'] == '40001') {
         throw const GatewayException(

@@ -13,6 +13,18 @@ export async function requireUser(request: Request) {
   if (!token) throw new Error("Unauthorized");
   const { data, error } = await admin().auth.getUser(token);
   if (error || !data.user) throw new Error("Unauthorized");
+  // Consumer Edge endpoints must obey the same fresh session/staff policy as
+  // Dart. getUser alone does not prove that a JWT session was not revoked.
+  const caller = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false } },
+  );
+  const { data: access, error: accessError } = await caller.rpc("account_access");
+  if (accessError || access?.staff !== false || access?.mobileAllowed !== true) {
+    throw new Error("Unauthorized");
+  }
   return data.user;
 }
 export async function sha256(value: string) {

@@ -42,82 +42,141 @@ paths:
         '401': {$ref: '#/components/responses/Unauthorized'}
         '409': {description: Existing idempotency resource is unavailable}
         '504': {description: Resolution timed out; retry the same key before editing}
-  /v1/admin/overview:
+  /v1/account/access:
     get:
-      operationId: getAdminOverview
-      summary: Get an audited, paginated overview for active staff members
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: page
-          in: query
-          required: false
-          schema: {type: integer, minimum: 0, maximum: 100000, default: 0}
+      operationId: getAccountAccess
+      summary: Fresh account policy; staff accounts are web-admin only
+      security: [{bearerAuth: []}]
       responses:
         '200':
-          description: Staff overview
+          description: Verified active account policy
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/AdminOverview'}
-        '400': {description: Invalid page}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '403': {description: Active staff membership is required}
-  /v1/admin/users/{id}/actions:
-    post:
-      operationId: performAdminUserAction
-      summary: Perform a confirmed, audited action on a user
-      security:
-        - bearerAuth: []
+              schema:
+                type: object
+                required: [staff, mobileAllowed, mfaVerified]
+                properties:
+                  staff: {type: boolean}
+                  role: {type: [string, 'null'], enum: [owner, operations, support, analyst, content, null]}
+                  mobileAllowed: {type: boolean}
+                  mfaVerified: {type: boolean}
+        '401': {description: Invalid or expired session}
+        '403': {description: Inactive, revoked or unverified account}
+  /v1/admin/portal:
+    get:
+      operationId: getAdminPortal
+      summary: Bounded administrative views with fresh role authorization
+      security: [{bearerAuth: []}]
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema: {type: string, format: uuid}
+        - {name: section, in: query, schema: {type: string, enum: [overview, users, acquisition, engagement, billing, ocr, health, incidents, releases, content, tickets, partners, integrations, audit, staff, settings]}}
+        - {name: page, in: query, schema: {type: integer, minimum: 0, maximum: 10000}}
+        - {name: days, in: query, schema: {type: integer, enum: [7, 30, 90]}}
+        - {name: search, in: query, schema: {type: string, maxLength: 160}}
+        - {name: status, in: query, schema: {type: string}}
+        - {name: userId, in: query, schema: {type: string, format: uuid}}
+        - {name: sort, in: query, schema: {type: string, enum: [newest, oldest, email]}}
+        - {name: tier, in: query, schema: {type: string, enum: [free, plus, pro]}}
+        - {name: version, in: query, schema: {type: string, maxLength: 40}}
+        - {name: createdFrom, in: query, schema: {type: string, format: date}}
+        - {name: createdTo, in: query, schema: {type: string, format: date}}
+      responses:
+        '200': {description: Section-specific allowlisted metadata and aggregates, source timestamps and timezone}
+        '400': {description: Invalid filters}
+        '401': {description: Invalid session}
+        '403': {description: Fresh role does not permit this section}
+    post:
+      operationId: mutateAdminPortal
+      summary: Transactional role/MFA guarded mutation, idempotency and redacted before/after audit
+      security: [{bearerAuth: []}]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              oneOf:
-                - type: object
-                  additionalProperties: false
-                  required: [action, confirmation]
-                  properties:
-                    action: {type: string, enum: [suspend]}
-                    confirmation: {type: string, enum: [SUSPEND]}
-                - type: object
-                  additionalProperties: false
-                  required: [action, confirmation]
-                  properties:
-                    action: {type: string, enum: [restore]}
-                    confirmation: {type: string, enum: [RESTORE]}
-                - type: object
-                  additionalProperties: false
-                  required: [action, confirmation]
-                  properties:
-                    action: {type: string, enum: [reset_password]}
-                    confirmation: {type: string, enum: [RESET]}
-                - type: object
-                  additionalProperties: false
-                  required: [action, confirmation, tier]
-                  properties:
-                    action: {type: string, enum: [grant_plan]}
-                    confirmation: {type: string, enum: [GRANT]}
-                    tier: {type: string, enum: [free, plus, pro]}
+              type: object
+              required: [action, body, reason, requestId]
+              properties:
+                action: {type: string, enum: [ticket, comment, incident, release, content, review_content, staff, settings, partner, grant, revoke_sessions]}
+                body: {type: object, description: 'Typed by action; edits require id and expectedVersion; details never contain credentials.'}
+                reason: {type: string, minLength: 5, maxLength: 500}
+                requestId: {type: string, format: uuid}
       responses:
-        '200':
-          description: Action completed and audited
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [updated]
-                properties:
-                  updated: {type: boolean, enum: [true]}
-        '400': {description: Invalid action or confirmation}
-        '401': {$ref: '#/components/responses/Unauthorized'}
-        '403': {description: Active staff membership is required}
-        '404': {description: Target user not found}
+        '200': {description: Applied or exact idempotent replay}
+        '400': {description: Validation or idempotency mismatch}
+        '403': {description: Insufficient role or aal2 MFA required}
+        '409': {description: Record version changed; reload before retry}
+        '413': {description: Body exceeds 24000 bytes}
+  /v1/admin/account-action:
+    post:
+      operationId: performAuditedAccountAction
+      summary: Change Auth state using server-only credentials after fresh role/MFA and audit preparation
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, userId, reason, requestId]
+              properties:
+                action: {type: string, enum: [suspend, restore, reset_password]}
+                userId: {type: string, format: uuid}
+                reason: {type: string, minLength: 5, maxLength: 500}
+                requestId: {type: string, format: uuid}
+      responses:
+        '200': {description: Applied and audited; reset delivery acceptance is separate}
+        '403': {description: Forbidden role, MFA or staff target}
+        '409': {description: Same request is still in progress}
+  /v1/admin/exports:
+    get:
+      operationId: getAdminExports
+      summary: List own jobs or retrieve own unexpired result with fresh role and MFA
+      security: [{bearerAuth: []}]
+      parameters:
+        - {name: id, in: query, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: Own job metadata or ready result; maximum 25000 detail rows}
+        '403': {description: Owner, capability or MFA check failed}
+    post:
+      operationId: requestAdminExport
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [section, filters, reason, requestId]
+              properties:
+                section: {type: string, enum: [users, billing, ocr, audit, tickets, acquisition, engagement]}
+                filters: {type: object}
+                reason: {type: string, minLength: 5, maxLength: 500}
+                requestId: {type: string, format: uuid}
+      responses:
+        '200': {description: Queued idempotently; worker rechecks role, ready result expires after one hour}
+        '403': {description: Missing role or MFA}
+  /v1/telemetry:
+    post:
+      operationId: collectOptionalTelemetry
+      summary: Opt-in metadata only; disabled by default; anonymous events restricted to landing origin
+      responses:
+        '204': {description: Accepted, deduplicated or measurement disabled; never blocks product flow}
+        '400': {description: Invalid allowlisted event shape}
+        '429': {description: Rate limit reached}
+  /v1/admin/overview:
+    get:
+      operationId: retiredAdminOverview
+      deprecated: true
+      responses:
+        '410': {description: Use GET /v1/admin/portal with section=overview}
+  /v1/admin/users/{id}/actions:
+    post:
+      operationId: retiredAdminUserAction
+      deprecated: true
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '410': {description: Use POST /v1/admin/account-action with MFA, reason and requestId}
   /v1/entitlements:
     get:
       operationId: getCurrentEntitlements

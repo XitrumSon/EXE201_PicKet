@@ -837,7 +837,30 @@ export class PicketApiClient {
     });
   }
 
+  accountAccess(accessToken: string): Promise<{staff: boolean; role: string | null; mobileAllowed: boolean; mfaVerified: boolean}> {
+    return this.request('/v1/account/access', {headers: this.authHeaders(accessToken)});
+  }
+
+  adminAccountAction(accessToken: string,input:{action:string;userId:string;reason:string;requestId:string}):Promise<{updated:boolean}> {
+    return this.request('/v1/admin/account-action',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(input)});
+  }
+
+  adminExports<T=Record<string,unknown>>(accessToken:string,id?:string):Promise<T>{return this.request(`/v1/admin/exports${id?`?id=${encodeURIComponent(id)}`:''}`,{headers:this.authHeaders(accessToken)});}
+  requestAdminExport(accessToken:string,input:{section:string;filters:Record<string,unknown>;reason:string;requestId:string}):Promise<{id:string;status:string}>{return this.request('/v1/admin/exports',{method:'POST',headers:this.jsonAuthHeaders(accessToken),body:JSON.stringify(input)});}
+
+  adminPortal<T = Record<string, unknown>>(accessToken: string, section: string, filters: Record<string, string | number> = {}): Promise<T> {
+    const query = new URLSearchParams({section});
+    for (const [key, value] of Object.entries(filters)) query.set(key, String(value));
+    return this.request(`/v1/admin/portal?${query}`, {headers: this.authHeaders(accessToken)});
+  }
+
+  adminMutate(accessToken: string, input: {action: string; body: Record<string, unknown>; reason: string; requestId: string}): Promise<{updated: boolean; id: string}> {
+    return this.request('/v1/admin/portal', {method: 'POST', headers: this.jsonAuthHeaders(accessToken), body: JSON.stringify(input)});
+  }
+
   private authHeaders(accessToken: string): HeadersInit {
+    // Administrative endpoints preserve the caller's token; no service secret
+    // is present in this client or in browser/mobile bundles.
     if (!accessToken.trim()) throw new ApiError("Missing access token", 401);
     return { authorization: `Bearer ${accessToken}` };
   }
