@@ -13,6 +13,13 @@ test("metadata does not win merchant selection when the shop name is missing",()
  assert.equal(parsed.lineItems.length,0);
 });
 
+test("merchant labels are removed and a joined business prefix gets a display space",()=>{
+ assert.equal(parseReceiptText('HÓA ĐƠN\nĐơn vị bán hàng: CÔNG TY DEMO\n28/10/2026\nTổng 45000').merchant,'CÔNG TY DEMO');
+ const r=parseReceiptText('CÀ PHÊAN NHIÊN\n28/10/2026\nTổng 45000');
+ assert.equal(r.merchant,'CÀ PHÊ AN NHIÊN');
+ assert.ok(r.rawText.includes('CÀ PHÊAN NHIÊN'));
+});
+
 test("retail product digits and sizes are preserved",()=>{
  const parsed=parseReceiptLineItems([{text:"7UP 330ml 2 x 12000 | 24000"},{text:"Sữa tươi 1L 1 x 30000 | 30000"}]);
  assert.deepEqual(parsed.map(p=>p.name),["7UP 330ml","Sữa tươi 1L"]);
@@ -32,4 +39,25 @@ test("POS aliases and table-border artifacts retain all four product fields",()=
 test("product-looking footer is outside a recognized table",()=>{
  const r=parseReceiptText("PICKET SHOP\nMặt hàng SL Đơn giá Thành tiền\nBánh mì 2 x 20000 | 40000\nTổng 40000\nƯu đãi lần sau 100000\nMã thành viên 12345678");
  assert.deepEqual(r.lineItems.map(i=>i.name),["Bánh mì"]);
+});
+
+test("an implicit quantity of one cannot look like a verified observed quantity",()=>{
+ const r=parseReceiptText("PICKET CAFE\n28/10/2026\nCà phê 45000\nTổng 45000");
+ assert.equal(r.lineItems[0].quantity,1);
+ assert.ok(r.lineItems[0].confidence<.7);
+ assert.equal(r.needsReview,true);
+});
+
+test("stacked POS rows with only quantity and amount headers use observed arithmetic",()=>{
+ const r=parseReceiptLines([cell('PICKET SHOP',20,10,100),cell('SL',20,100,20),cell('CK',150,100,20),cell('T.Tiền',250,100,70),
+  cell('Áo sơ mi',20,140,100),cell('2',20,165,10),cell('450000',80,165,60),cell('900000',250,165,70),cell('Tổng tiền',20,200,100),cell('900000',250,200,70)]);
+ assert.deepEqual(r.lineItems.map(({name,quantity,unitPrice,total})=>({name,quantity,unitPrice,total})),[{name:'Áo sơ mi',quantity:2,unitPrice:450000,total:900000}]);
+});
+
+test("ML Kit merged lines retain column roles through word elements",()=>{
+ const words=(parts:[string,number,number][],top:number)=>parts.map(([text,left,width])=>({...cell(text,left,top,width),left,right:left+width,top,bottom:top+16}));
+ const r=parseReceiptLines([cell('PICKET SHOP',10,10,100),{...cell('Mặt hàng SL Giá T.Tiền',10,100,400),elements:words([['Mặt',10,30],['hàng',45,40],['SL',220,20],['Giá',270,40],['T.Tiền',350,70]],100)},
+ {...cell('Bánh mì 2 20000 40000',10,140,410),elements:words([['Bánh',10,35],['mì',50,20],['2',220,10],['20000',270,50],['40000',350,70]],140)},
+ cell('Tổng 40000',10,200,140)]);
+ assert.deepEqual(r.lineItems.map(({name,quantity,unitPrice,total})=>({name,quantity,unitPrice,total})),[{name:'Bánh mì',quantity:2,unitPrice:20000,total:40000}]);
 });

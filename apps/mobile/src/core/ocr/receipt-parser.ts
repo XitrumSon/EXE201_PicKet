@@ -1,6 +1,8 @@
 import { parseReceiptMoney, parseReceiptItemMoney } from "./receipt-money";
 import {receiptHasTableColumns,receiptTableRows} from "./receipt-table-layout";
 import { receiptVatSummaryRows } from "./receipt-vat-summary";
+import {isReceiptMetadata,isReceiptSummary,isReceiptDocumentLabel,receiptBodyStart,merchantDisplayName} from "./receipt-semantics";
+import {receiptPosRows} from "./receipt-pos-rows";
 export { parseReceiptMoney } from "./receipt-money";
 
 export type ReceiptTextLine = {
@@ -12,6 +14,7 @@ export type ReceiptTextLine = {
   bottom?: number;
   left?: number;
   right?: number;
+  elements?: {text:string;confidence?:number;left:number;right:number;top:number;bottom:number}[];
 };
 
 export type ReceiptDraft = {
@@ -60,10 +63,16 @@ export function parseReceiptLineItems(
   recognizedLines: ReceiptTextLine[],
 ): ReceiptDraftLine[] {
   const items: ReceiptDraftLine[] = [];
-  for (const line of recognizedLines) {
+  const {index:header,top:tableTop}=receiptBodyStart(recognizedLines);
+  const summary = recognizedLines.findIndex((line,index) => index > header && isReceiptSummary(line.text));
+  for (let index=0;index<recognizedLines.length;index++) {
+    const line=recognizedLines[index];
     if (items.length >= 100) break;
     const text = line.text.trim();
     const clean = normalized(text);
+    if (isReceiptMetadata(text)||isReceiptDocumentLabel(text)||isReceiptSummary(text)) continue;
+    if (header >= 0 && (typeof tableTop === "number" && typeof line.top === "number" ? line.top < tableTop : index <= header)) continue;
+    if (summary >= 0 && (typeof recognizedLines[summary].top === "number" && typeof line.top === "number" ? line.top >= recognizedLines[summary].top! : index >= summary)) continue;
     if (!/[A-Za-zÀ-ỹ]/.test(text) || rejectedItemWords.test(clean) || /^(?:so|so hd|ma|no|dt|sdt)\s*[:.#-]/.test(clean)) continue;
     const priceMatch = text.match(
       /(\d{1,3}(?:[.,\s]\d{3})+(?:[.,]\d{2})?|\d{3,}(?:[.,]\d{2})?|0(?:[.,]0{2})?)(?:\s*(?:vnd|đ|d|₫))?\s*$/i,
@@ -94,13 +103,13 @@ export function parseReceiptLineItems(
         continue;
       }
     }
-    if ((total === 0 && !quantityMatch) || name.length < 2 || name.length > 200) continue;
+    if ((total === 0 && !quantityMatch) || name.length < 2 || name.length > 200 || name.replace(/[^A-Za-zÀ-ỹ]/g, "").length < 3 || isReceiptMetadata(name)) continue;
     items.push({
       name,
       quantity,
       unitPrice,
       total,
-      confidence: confidence(line),
+      confidence: quantityMatch ? confidence(line) : Math.min(0.65,confidence(line)),
     });
   }
   return items;
@@ -125,9 +134,9 @@ function spatialTotalCandidates(label:ReceiptTextLine,lines:ReceiptTextLine[]):R
 
 /** Pure parser shared by the future native ML Kit adapter and review UI. */
 export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDraft {
-  const lines = receiptVatSummaryRows(receiptTableRows(recognizedLines
+  const lines = receiptVatSummaryRows(receiptPosRows(receiptTableRows(recognizedLines
     .map((line) => ({ ...line, text: line.text.trim() }))
-    .filter((line) => line.text.length > 0)));
+    .filter((line) => line.text.length > 0))));
   // Preserve an unambiguous visual total row in the text saved to drafts.
   // Re-parsing that text after restart must not depend on lost native frames.
   const joinedTotals=new Map<ReceiptTextLine,ReceiptTextLine>();
@@ -201,9 +210,12 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     }
   }
 
+  const bodyStart=receiptBodyStart(lines);
   const merchants = lines
     .map((line, index) => {
       const clean = normalized(line.text);
+      if(isReceiptMetadata(line.text)||isReceiptDocumentLabel(line.text)||isReceiptSummary(line.text))return null;
+      if(bodyStart.hasTable&&(bodyStart.top!==null&&line.top!==undefined?line.top>=bodyStart.top:index>bodyStart.index))return null;
       const digitCount = (line.text.match(/\d/g) ?? []).length;
       if(/gia\s*tri\s*gia\s*tang|phieu\s*(mua|ban|giao|thu)|ten\s*(san pham|hang hoa)|^sl$|^bh$|don\s*gia|thanh\s*tien|phuong\s*thuc|thong\s*tin|khach\s*hang|website|www\.|https?:|@/i.test(clean))return null;
       if (line.text.length < 3 || !/[A-Za-zÀ-ỹ]/.test(line.text) || /hoa\s*don|bi(?:e)?n\s*lai|cash\s*bill|receipt|invoice|mst|tax|dia\s*chi|address|hotline|tel\b|ngay\b|date\b|tong|subtotal|thanh\s*toan|^no\.?\s*\d|\bjalan\b|\b\d{5}\b/i.test(clean) || digitCount > line.text.length / 3) return null;
@@ -213,7 +225,7 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
         (letter) => letter === letter.toUpperCase(),
       ).length;
       const uppercaseRatio = letters.length > 0 ? uppercaseCount / letters.length : 0;
-      return { value: line.text, score: Math.min(1, confidence(line) * 0.45 + (1 - relativeTop) * 0.35 + 0.1 + (letters.length >= 4 && uppercaseRatio >= 0.7 ? 0.1 : 0)) };
+      return { value: merchantDisplayName(line.text), score: Math.min(1, confidence(line) * 0.45 + (1 - relativeTop) * 0.35 + 0.1 + (letters.length >= 4 && uppercaseRatio >= 0.7 ? 0.1 : 0)) };
     })
     .filter((candidate): candidate is { value: string; score: number } => candidate !== null)
     .sort((left, right) => right.score - left.score);
@@ -230,7 +242,7 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     : lines.some(line => line.reviewIssue === "inconsistent-item")
       ? "Một số dòng sản phẩm có số lượng, đơn giá và thành tiền không khớp nên chưa được đưa vào danh sách. Hãy đối chiếu và bổ sung dòng thiếu."
     : lineItems.some(item => item.confidence < 0.7)
-      ? "Một số dòng hàng có giá trị được tính lại từ các ô đọc được. Hãy đối chiếu từng dòng với hóa đơn."
+      ? "Một số số lượng hoặc đơn giá được suy ra, chưa được xác nhận từ ảnh. Hãy đối chiếu từng dòng với hóa đơn."
     : selectedTotal === null
       ? "Không tìm thấy tổng tiền cần thanh toán."
       : selectedTotal.score < 0.7

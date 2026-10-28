@@ -3,6 +3,12 @@ import { describe, it } from "node:test";
 
 import { parseServerOcrResult } from "./server-result";
 
+it("rejects structured contact metadata as merchant and flags conflicting totals",()=>{
+ const r=parseServerOcrResult({rawText:"PICKET SHOP\n28/10/2026\nTổng 45000",merchant:"SĐT: 0901234567",amount:50000,confidence:.99});
+ assert.equal(r.merchant,"PICKET SHOP");
+ assert.equal(r.needsReview,true);
+});
+
 describe("server OCR result", () => {
   it("derives receipt fields from provider raw text when structured fields are null", () => {
     const result = parseServerOcrResult({

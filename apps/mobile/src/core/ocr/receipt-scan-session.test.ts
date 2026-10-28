@@ -22,6 +22,16 @@ test('upright VAT reads direction thumbnail, full text and at most one detail cr
  assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='direction').length,1);assert.equal(app.events.filter(e=>e==='inspect').length,1);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);
  assert.equal(result.stats.fullReads,1);assert.equal(app.events.filter(e=>e==='crop').length,1);assert.equal(app.events[0],'open');assert.equal(app.events.at(-1),'close');
 });
+
+test('a fully observed table matching payable total skips redundant detail OCR',async()=>{
+ const app=harness();
+ app.native.inspect=async()=>{app.events.push('inspect');return {...vat(),lines:vat().lines.map(line=>line.text==='4.000'?{...line,text:'0'}:line.text==='54.000'?{...line,text:'50.000'}:line)};};
+ const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
+ assert.equal(result.draft.amount,50000);
+ assert.equal(result.draft.lineItems.length,1);
+ assert.equal(result.stats.cropReads,0);
+ assert.equal(app.events.at(-1),'close');
+});
 test('upside-down VAT re-reads only the selected direction before trusting its text',async()=>{
  const app=harness({strongAt:180});const result=await scanReceiptSession('file:///sample.jpg',app.native,app.now);
  assert.equal(result.draft.amount,54000);assert.equal(app.events.filter(e=>e==='direction').length,1);assert.equal(app.events.filter(e=>e==='inspect').length,1);assert.equal(app.events.filter(e=>e.startsWith('preview:')).length,0);assert.ok(app.events.includes('select:180'));assert.equal(result.stats.fullReads,1);

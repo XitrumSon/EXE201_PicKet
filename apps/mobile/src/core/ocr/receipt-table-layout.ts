@@ -1,11 +1,12 @@
 import {parseReceiptItemMoney} from "./receipt-money";
 import type {ReceiptTextLine} from "./receipt-parser";
+import {receiptTableTokens} from "./receipt-table-tokens";
 type PositionedLine=ReceiptTextLine&{left:number;right:number;top:number;bottom:number};
 const clean=(value:string)=>value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/\s+/g," ").replace(/^[|\s]+|[|\s]+$/g,"");
 const namePattern=/^(ten\s*(san pham|hang hoa)(?:,?\s*dich vu)?|san pham|mat hang|item|description)$/;
 const quantityPattern=/^(sl|s\.l\.?|so luong|qty|quantity)$/;
-const unitPattern=/^(don gia|unit price|price)$/;
-const totalPattern=/^(thanh tien|amount|total)$/;
+const unitPattern=/^(don gia|d[.]?g[.]?|gia|unit price|price)$/;
+const totalPattern=/^(thanh tien|t[. ]?tien|t tren|amount|total)$/;
 const optionalPattern=/^(stt|don vi tinh|dvt|thue suat|\(%\)|bh|bao hanh|giam gia)$/;
 function positioned(line:ReceiptTextLine):line is PositionedLine{
  return [line.left,line.right,line.top,line.bottom].every(value=>typeof value==="number"&&Number.isFinite(value))&&line.right!>line.left!&&line.bottom!>line.top!;
@@ -16,6 +17,7 @@ export function receiptHasTableColumns(lines:ReceiptTextLine[]):boolean{
 }
 /** Headers may be centered; match cells by column bounds and header-relative row offset. */
 export function receiptTableRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
+ lines=receiptTableTokens(lines);
  const used=new Set<ReceiptTextLine>(),replacements=new Map<ReceiptTextLine,ReceiptTextLine>();
  const positionedLines=lines.filter(positioned);
  for(const nameHeader of positionedLines.filter(line=>namePattern.test(clean(line.text)))){
@@ -59,7 +61,10 @@ export function receiptTableRows(lines:ReceiptTextLine[]):ReceiptTextLine[]{
     Math.abs(corrected(line,header)-rowY)<=Math.max(line.bottom-line.top,total.bottom-total.top)*0.85);
    const units=cells(unitHeader),quantities=cells(quantityHeader);
    if(units.length>1||quantities.length>1)continue;
-   const numeric=(line:ReceiptTextLine|undefined)=>line&&/^\d[\d.,\s]*(?:vnd|đ|d|₫)?$/i.test(line.text.trim())?parseReceiptItemMoney(line.text):null;
+   const numeric=(line:ReceiptTextLine|undefined)=>{
+    const text=line?.text.replace(/^[|│]+|[|│]+$/g, "").trim();
+    return text&&/^\d[\d.,\s]*(?:vnd|đ|d|₫)?$/i.test(text)?parseReceiptItemMoney(text):null;
+   };
    const amount=numeric(total);let unit=numeric(units[0]);
    let quantity=quantities[0]&&/^\d+(?:[.,]\d+)?$/.test(quantities[0].text.trim())?Number(quantities[0].text.replace(',', '.')):null;
    let inferred=false;
