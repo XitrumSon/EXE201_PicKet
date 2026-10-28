@@ -21,7 +21,7 @@ import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable
 import { AppIcon } from "@/core/ui/app-icon";
 import { ChoiceChip, IconButton, MenuRow, SectionTitle, Surface, TopAppBar } from "@/core/ui/picket-ui";
 import { useAuth } from "@/features/auth/auth-context";
-import { isStaff } from "@/features/admin/admin-mobile";
+import { AnalyticsConsentControl } from "@/features/settings/analytics-consent";
 import { useProfile } from "@/features/profile/profile-context";
 import { useDeviceLock } from "@/features/security/device-lock";
 import { AppUpdateSection, InstalledVersion } from "@/features/updates/app-update-section";
@@ -61,7 +61,6 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [entitlements, setEntitlements] = useState<Entitlements | null>(null);
-  const [staff, setStaff] = useState(false);
   const [backupPassword, setBackupPassword] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
@@ -86,11 +85,6 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
     return () => { active = false; };
   }, [session]);
 
-  useEffect(() => {
-    let active = true;
-    void isStaff().then((value) => { if (active) setStaff(value); }).catch(() => undefined);
-    return () => { active = false; };
-  }, []);
 
   async function save() {
     if (!displayName.trim()) return setMessage("Tên hiển thị không được để trống.");
@@ -220,7 +214,6 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
         <MenuRow icon="cloud-upload-outline" title={t("Sao lưu và xuất dữ liệu")} description={t("Bản sao mã hóa, JSON và CSV")} onPress={() => setShowBackup(!showBackup)} />
         <MenuRow disabled={busy} icon="backup-restore" title={t("Khôi phục từ bản sao")} onPress={() => router.push(routes.restore)} />
         <MenuRow disabled={busy} icon="sync" title={t("Kiểm tra đồng bộ")} onPress={() => router.push(routes.syncConflicts)} />
-        {!localMode && staff && <MenuRow disabled={busy} icon="shield-account-outline" title={t("Quản trị Picket")} onPress={() => router.push(routes.admin)} />}
         </Surface>
         {showBackup && <Surface>
         {!localMode && <MenuRow disabled={busy} icon="file-code-outline" title={t("Xuất dữ liệu JSON")} onPress={() => void exportData()} />}
@@ -236,6 +229,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
           <MenuRow icon="shield-outline" title={t("Chính sách quyền riêng tư")} onPress={() => void Linking.openURL("https://picket.51-79-207-154.sslip.io/privacy.html").catch(() => setMessage("Chưa mở được trang. Hãy kiểm tra kết nối và thử lại."))} />
           <MenuRow icon="help-circle-outline" title={t("Hỗ trợ và yêu cầu xóa dữ liệu")} onPress={() => void Linking.openURL("https://picket.51-79-207-154.sslip.io/account-deletion.html").catch(() => setMessage("Chưa mở được trang. Hãy kiểm tra kết nối và thử lại."))} />
         </Surface>
+        <AnalyticsConsentControl />
         <InstalledVersion />
       </ScrollView>
     </SafeAreaView>

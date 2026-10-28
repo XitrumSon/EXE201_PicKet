@@ -11,6 +11,7 @@ import { ActivityIndicator, View } from "react-native";
 import { canMountSessionRoutes } from "@/features/auth/session-route-policy";
 
 import { AuthProvider, useAuth } from "@/features/auth/auth-context";
+import { MobileAccessBoundary } from "@/features/auth/mobile-access-boundary";
 import { OwnerCacheBoundary } from "@/features/auth/owner-cache-boundary";
 import { AccountsProvider } from "@/features/accounts/accounts-context";
 import { ProfileProvider } from "@/features/profile/profile-context";
@@ -25,6 +26,7 @@ import { GuestFinanceProvider } from "@/core/local/guest-finance-context";
 import { NavigationShell } from "@/core/ui/navigation-shell";
 import { AppAppearanceProvider, useAppTheme } from "@/features/settings/appearance-provider";
 import { AccountAppearance } from "@/features/settings/account-appearance";
+import { AnalyticsConsentProvider } from "@/features/settings/analytics-consent";
 import { LearningSync } from "@/features/learning/learning-sync";
 import { PlayBillingProvider } from "@/features/billing/play-billing-provider";
 import { ScheduleSync } from "@/features/cashflow/schedule-sync";
@@ -54,7 +56,7 @@ function ReadySessionProviders({ children }: { children: React.ReactNode }) {
   const { localMode } = useAuth();
   // This effect runs only after the cache boundary permits the nested Stack.
   useEffect(() => { bootstrapIntentGate.ready(); }, []);
-  return <GuestFinanceProvider key={session?.user.id ?? (localMode ? "device-guest" : "anonymous")}><ProviderTree key={session?.user.id ?? (localMode ? "device-guest" : "anonymous")}>{children}</ProviderTree></GuestFinanceProvider>;
+  return <AnalyticsConsentProvider key={session?.user.id??"guest"}><GuestFinanceProvider key={session?.user.id ?? (localMode ? "device-guest" : "anonymous")}><ProviderTree key={session?.user.id ?? (localMode ? "device-guest" : "anonymous")}>{children}</ProviderTree></GuestFinanceProvider></AnalyticsConsentProvider>;
 }
 
 export default function RootLayout() {
@@ -77,12 +79,12 @@ function SessionReadyTree() {
     <ActivityIndicator accessibilityLabel={t("Đang khôi phục phiên Picket")} color={colors.link} />
   </View>;
   return (
-        <DeviceLockProvider>
+        <MobileAccessBoundary><DeviceLockProvider>
           <SessionProviders>
             <StatusBar style={theme === "dark" ? "light" : "dark"} />
             <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.canvas } }} />
             <NavigationShell />
           </SessionProviders>
-        </DeviceLockProvider>
+        </DeviceLockProvider></MobileAccessBoundary>
   );
 }

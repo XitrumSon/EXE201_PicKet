@@ -16,13 +16,10 @@ test("admin action confirmation switches language while preserving the account I
   assert.equal(i18n.t("grantPlan", { ns: "admin", tier: "PLUS" }), "Grant PLUS for 30 days");
 });
 
-test("admin screen localizes controls and formatting while retaining server authorization and action tokens", () => {
+test("native admin deep links no longer mount management or financial inspection", () => {
   const source = readFileSync("src/app/admin.tsx", "utf8");
-  assert.match(source, /useTranslation\("admin"\)/);
-  assert.match(source, /label=\{t\(label\)\}/);
-  assert.match(source, /\{t\(message\)\}/);
-  assert.match(source, /isStaff\(\)/);
-  for (const token of ["RESTORE", "SUSPEND", "RESET", "GRANT"]) assert.ok(source.includes(`confirmation:"${token}"`));
-  assert.doesNotMatch(source, /"vi-VN"|t\((?:user\.email|item\.title|item\.body|notice|item\.target)\)/);
-  assert.match(source, /\{item\.action\}/);
+  assert.match(source, /Redirect/);
+  assert.doesNotMatch(source, /loadStaffLedger|loadStaffOverview|performStaffAction|saveStaffSettings/);
+  const profile = readFileSync("src/app/profile.tsx", "utf8");
+  assert.doesNotMatch(profile, /routes\.admin|isStaff/);
 });

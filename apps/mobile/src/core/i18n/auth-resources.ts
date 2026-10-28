@@ -1,4 +1,14 @@
 export const authEn = {
+  "Quản trị Picket trên web":"Manage Picket on the web",
+  "Chưa xác minh được quyền truy cập":"Could not verify access",
+  "Đang xác minh tài khoản":"Verifying your account",
+  "Tài khoản quản trị chỉ dùng trên website. Hãy dùng tài khoản cá nhân khác để đăng nhập ứng dụng.":"Administrator accounts are for the website. Use a separate personal account to sign in to the app.",
+  "Kết nối mạng để xác minh tài khoản trước khi mở dữ liệu. Chế độ dùng trên thiết bị vẫn có ở màn bắt đầu.":"Connect to verify your account before opening data. On-device use is still available from the welcome screen.",
+  "Mở trang quản trị web":"Open web administration",
+  "Dùng tài khoản khác":"Use another account",
+  "Thử lại":"Try again",
+  "Về màn đăng nhập":"Back to sign-in",
+
   "Email":"Email",
   "Đang xử lý đăng nhập":"Completing sign-in",
   "Đăng nhập chưa sẵn sàng. Bạn vẫn có thể sử dụng trên thiết bị.":"Sign-in is unavailable. You can still use Picket on this device.",
