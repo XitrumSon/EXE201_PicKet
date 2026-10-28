@@ -1,4 +1,6 @@
 const labels={
+ "Đổi chiều chuyển":"Swap wallets",
+ "Nội dung và ghi chú (không bắt buộc)":"Description and note (optional)",
  "Bản nháp hóa đơn không còn trên thiết bị.":"The receipt draft is no longer on this device.",
  "Không đọc được bản nháp hóa đơn.":"Could not read the receipt draft.",
  "Yêu cầu cũ đã được khóa an toàn. Bạn có thể sửa thông tin rồi lưu lại; ảnh hóa đơn được giữ nguyên.":"The previous request has been safely closed. You can edit and save again; the receipt image is preserved.",

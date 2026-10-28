@@ -15,7 +15,7 @@ function elements(node: unknown): Element[] {
   const element = node as Element;
   return [element, ...elements(element.props.children)];
 }
-function harness(mode: "light" | "dark", path = "/") {
+function harness(mode: "light" | "dark", path = "/", pendingCapture = false) {
   const calls: string[] = [];
   const colors = mobileThemeColors(mode === "light" ? paperLight : paperDark);
   const jsx = (type: string, props: Record<string, any>) => ({ type, props });
@@ -34,7 +34,7 @@ function harness(mode: "light" | "dark", path = "/") {
     "@/features/profile/profile-context": { useProfile: () => ({ profile: { displayName: "Nguyễn Bảo" } }) },
     "@/core/theme/use-mobile-styles": { useMobileStyles: (factory: (c: typeof colors) => unknown) => ({ colors, styles: factory(colors) }) },
     "@/features/auth/auth-context": { useAuth: () => ({ localMode: true, session: null }) },
-    "@/core/ocr/capture-storage": { captureJournal: { load: async () => null } },
+    "@/core/ocr/capture-storage": { captureJournal: { load: async () => pendingCapture ? { id: "unfinished" } : null } },
     "@/core/local/guest-finance": { guestOwnerId: "guest" },
     "./accessible-pressable": { AccessiblePressable: "Pressable" },
     "./app-icon": { AppIcon: "Icon" },
@@ -68,4 +68,10 @@ test("Budget screen belongs to Plans while detail forms do not display the dock"
   const plans = harness("dark", "/budgets").nodes.find(n => n.props.accessibilityLabel === "Dự định")!;
   assert.equal(plans.props.accessibilityState.selected, true);
   assert.equal(harness("light", "/transactions/new").nodes.length, 0);
+});
+
+test("Spending always opens history even with an unfinished capture", async () => {
+  const {nodes,calls}=harness("light", "/", true);
+  await nodes.find(n=>n.props.accessibilityLabel==="Chi tiêu")!.props.onPress();
+  assert.deepEqual(calls,["/transactions"]);
 });

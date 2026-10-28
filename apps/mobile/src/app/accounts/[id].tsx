@@ -78,6 +78,7 @@ function AccountForm({ account }: { account: FinancialAccount }) {
   return <PicketScreen>
     <TopAppBar illustration="home" title={tx("Chỉnh sửa tài khoản")} backDisabled={busy} />
     <Text style={styles.subtitle}>{tx("Số dư đầu kỳ được giữ nguyên để lịch sử giao dịch luôn nhất quán.")}</Text>
+    {!account.archived && !account.deletedAt && <View style={{ marginBottom: 12 }}><PrimaryAction disabled={busy} label={tx("Thêm tiền vào ví")} onPress={() => router.push({ pathname: "/transactions/new", params: { kind: "income", accountId: account.id, title: tx("Thêm tiền vào ví") } })} /></View>}
     <Surface>
       <FieldLabel>{tx("Tên tài khoản")}</FieldLabel><TextInput accessibilityLabel={tx("Tên tài khoản")} maxLength={80} onChangeText={setName} placeholder={tx("Tên tài khoản")} placeholderTextColor={colors.muted} style={styles.input} value={name} />
       <FieldLabel>{tx("Loại tài khoản")}</FieldLabel><View accessibilityRole="radiogroup" style={styles.choices}>{kinds.map((item) => <ChoiceChip checked={kind === item.value} key={item.value} label={tx(item.label)} onPress={() => setKind(item.value)} />)}</View>

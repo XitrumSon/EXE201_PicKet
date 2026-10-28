@@ -1,4 +1,5 @@
 const labels={
+ "Thêm tiền vào ví":"Add money to wallet",
  "Tiền mặt":"Cash","Ngân hàng":"Bank","Ví điện tử":"E-wallet","Khác":"Other",
  "Hãy nhập tên tài khoản.":"Enter an account name.","Số dư chưa hợp lệ.":"Enter a valid balance.",
  "Mã tiền tệ phải gồm 3 chữ cái.":"The currency code must contain 3 letters.",

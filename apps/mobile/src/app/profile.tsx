@@ -9,7 +9,7 @@ import type { CurrentProfile, Entitlements } from "@picket/domain";
 import { Redirect, router } from "expo-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PicketTextInput as TextInput } from "@/core/ui/picket-text-input";
-import { ActivityIndicator, Alert, Linking, StyleSheet, Switch, View } from "react-native";
+import { ActivityIndicator, Linking, StyleSheet, Switch, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { picketApi } from "@/core/api/client";
@@ -19,7 +19,7 @@ import { exportEncryptedBackup, exportFinanceCsv, exportGuestBackup } from "@/co
 import { useGuestFinance } from "@/core/local/guest-finance-context";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
 import { AppIcon } from "@/core/ui/app-icon";
-import { ChoiceChip, IconButton, MenuRow, SectionTitle, Surface, TopAppBar } from "@/core/ui/picket-ui";
+import { ActionSheet, ChoiceChip, IconButton, MenuRow, SectionTitle, Surface, TopAppBar } from "@/core/ui/picket-ui";
 import { useAuth } from "@/features/auth/auth-context";
 import { AnalyticsConsentControl } from "@/features/settings/analytics-consent";
 import { useProfile } from "@/features/profile/profile-context";
@@ -64,6 +64,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
   const [backupPassword, setBackupPassword] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
   const [showBackup, setShowBackup] = useState(false);
+  const [signOutPrompt, setSignOutPrompt] = useState<{ owner: string | null; copy: string } | null>(null);
   const signOutReading = useRef(false);
   const activeOwner = useRef(session?.user.id);
   useLayoutEffect(() => { activeOwner.current = session?.user.id; return () => { activeOwner.current = undefined; }; }, [session?.user.id]);
@@ -138,10 +139,7 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
   async function confirmSignOut() {
     if (busy || signOutReading.current) return;
     if (localMode) {
-      Alert.alert(t("Thoát chế độ trên thiết bị?"), t("Dữ liệu trên máy được giữ riêng và sẽ hiện lại khi bạn chọn dùng không cần đăng nhập."), [
-        { text: t("Hủy"), style: "cancel" },
-        { text: t("Thoát"), onPress: () => { void leaveLocalMode().then(() => router.replace(routes.login)); } },
-      ]);
+      setSignOutPrompt({ owner: null, copy: "Dữ liệu trên máy được giữ riêng và sẽ hiện lại khi bạn chọn dùng không cần đăng nhập." });
       return;
     }
     const owner = session?.user.id;
@@ -157,27 +155,21 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
       if (activeOwner.current === owner) setMessage("Không kiểm tra được đồng bộ. Hãy thử lại.");
       return;
     } finally { signOutReading.current = false; if (activeOwner.current === owner) setBusy(false); }
-    Alert.alert(t("Đăng xuất?"), t(copy), [
-      { text: t("Hủy"), style: "cancel" },
-      {
-        text: t("Đăng xuất"),
-        onPress: () => {
-          if (activeOwner.current !== owner) return;
-          setBusy(true);
-          setMessage(null);
-          void (async () => {
-            try {
-              await signOut();
-              router.replace(routes.login);
-            } catch {
-              setMessage("Không đăng xuất được. Hãy thử lại.");
-            } finally {
-              setBusy(false);
-            }
-          })();
-        },
-      },
-    ]);
+    setSignOutPrompt({ owner, copy });
+  }
+
+  async function performSignOut() {
+    if (busy || !signOutPrompt) return;
+    const expectedOwner = signOutPrompt.owner;
+    if (expectedOwner !== null && activeOwner.current !== expectedOwner) { setSignOutPrompt(null); return; }
+    setBusy(true); setMessage(null);
+    try {
+      if (expectedOwner === null) await leaveLocalMode();
+      else await signOut();
+      setSignOutPrompt(null);
+      router.replace(routes.login);
+    } catch { setMessage("Không đăng xuất được. Hãy thử lại."); setSignOutPrompt(null); }
+    finally { setBusy(false); }
   }
 
   return (
@@ -226,12 +218,19 @@ function ProfileForm({ profile }: { profile: CurrentProfile }) {
         <Pressable accessibilityRole="button" disabled={busy} onPress={confirmSignOut} style={styles.signOut}><Text style={styles.signOutText}>{localMode ? t("Thoát chế độ trên máy") : t("Đăng xuất")}</Text></Pressable>
         {!localMode && <Pressable accessibilityRole="button" disabled={busy} onPress={() => router.push(routes.deleteAccount)} style={styles.deleteLink}><Text style={styles.deleteText}>{t("Xóa tài khoản")}</Text></Pressable>}
         <Surface>
-          <MenuRow icon="shield-outline" title={t("Chính sách quyền riêng tư")} onPress={() => void Linking.openURL("https://picket.51-79-207-154.sslip.io/privacy.html").catch(() => setMessage("Chưa mở được trang. Hãy kiểm tra kết nối và thử lại."))} />
-          <MenuRow icon="help-circle-outline" title={t("Hỗ trợ và yêu cầu xóa dữ liệu")} onPress={() => void Linking.openURL("https://picket.51-79-207-154.sslip.io/account-deletion.html").catch(() => setMessage("Chưa mở được trang. Hãy kiểm tra kết nối và thử lại."))} />
+          <MenuRow icon="shield-outline" title={t("Chính sách quyền riêng tư")} onPress={() => void Linking.openURL("https://picketfinance.com/privacy.html").catch(() => setMessage("Chưa mở được trang. Hãy kiểm tra kết nối và thử lại."))} />
+          <MenuRow icon="help-circle-outline" title={t("Hỗ trợ và yêu cầu xóa dữ liệu")} onPress={() => void Linking.openURL("https://picketfinance.com/account-deletion.html").catch(() => setMessage("Chưa mở được trang. Hãy kiểm tra kết nối và thử lại."))} />
         </Surface>
         <AnalyticsConsentControl />
         <InstalledVersion />
       </ScrollView>
+      <ActionSheet title={localMode ? t("Thoát chế độ trên thiết bị?") : t("Đăng xuất?")} visible={signOutPrompt !== null} onClose={() => { if (!busy) setSignOutPrompt(null); }}>
+        <Text style={styles.description}>{signOutPrompt ? t(signOutPrompt.copy) : ""}</Text>
+        <View style={styles.confirmActions}>
+          <Pressable disabled={busy} onPress={() => setSignOutPrompt(null)} style={[styles.secondary, styles.confirmButton]}><Text style={styles.secondaryText}>{t("Hủy")}</Text></Pressable>
+          <Pressable disabled={busy} accessibilityState={{ busy, disabled: busy }} onPress={() => void performSignOut()} style={[styles.primary, styles.confirmButton]}>{busy ? <ActivityIndicator accessibilityLabel={t("Đăng xuất")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{localMode ? t("Thoát") : t("Đăng xuất")}</Text>}</Pressable>
+        </View>
+      </ActionSheet>
     </SafeAreaView>
   );
 }
@@ -243,10 +242,12 @@ function ChoiceGroup<T extends string>({ label, options, selected, select }: { l
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
+  confirmActions: { flexDirection: "row", gap: 12, marginTop: 12, alignItems: "stretch" },
+  confirmButton: { flex: 1, marginTop: 0, paddingHorizontal: 12, paddingVertical: 12 },
   fallbackPage: { paddingBottom: 140 },
   fallbackBody: { flex: 1, width: "100%", paddingHorizontal: 20 },
-  profileCard: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12 }, avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.mauve, alignItems: "center", justifyContent: "center" }, profileName: { color: colors.ink, fontSize: 20, lineHeight: 28, fontWeight: "700" }, menuGroup: { paddingVertical: 4 },
+  profileCard: { backgroundColor: colors.peach, borderWidth: 0, borderRadius: 28, minHeight: 100, flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12 }, avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.mauve, alignItems: "center", justifyContent: "center" }, profileName: { color: colors.ink, fontSize: 20, lineHeight: 28, fontWeight: "700" }, menuGroup: { paddingVertical: 4, borderWidth: 0, backgroundColor: colors.surface },
   signOut: { alignItems: "center", borderColor: colors.border, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height },
   signOutText: { color: colors.ink, fontSize: 15, fontWeight: "700" },
-  safeArea: { backgroundColor: colors.cream, flex: 1 }, center: { alignItems: "center", justifyContent: "center" }, content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 8, padding: paperSpace.screen, paddingBottom: 140 }, header: { minHeight: 38 }, back: { color: colors.link, fontSize: 14, fontWeight: "700", paddingVertical: 12 }, title: { color: colors.ink, fontSize: 26, fontWeight: "700", lineHeight: 38 }, description: { color: colors.muted, fontSize: 13, lineHeight: 20 }, label: { color: colors.ink, fontSize: 14, fontWeight: "600", marginTop: 16, marginBottom: 8 }, input: { backgroundColor: colors.cream, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 15 }, choices: { flexDirection: "row", flexWrap: "wrap", gap: 8 }, choice: { backgroundColor: colors.white, borderColor: colors.border, borderRadius: paperShape.chip, borderWidth: 1, minHeight: 48, justifyContent: "center", paddingHorizontal: 15 }, choiceSelected: { backgroundColor: colors.mauve, borderColor: colors.primaryOutline }, choiceText: { color: colors.ink, fontSize: 14, fontWeight: "600" }, choiceTextSelected: { color: colors.onPrimary }, switchRow: { alignItems: "center", backgroundColor: colors.white, borderRadius: paperShape.card, flexDirection: "row", gap: 14, minHeight: 64, padding: 12 }, switchCopy: { flex: 1 }, switchTitle: { color: colors.ink, fontSize: 15, fontWeight: "600" }, switchDescription: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 3 }, planCard: { backgroundColor: colors.white, borderColor: colors.border, borderRadius: paperShape.card, borderWidth: 1, gap: 5, padding: 16 }, planTitle: { color: colors.ink, fontSize: 15, fontWeight: "700" }, planText: { color: colors.muted, fontSize: 13, lineHeight: 19 }, primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", marginTop: 20, minHeight: paperControl.height }, primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" }, secondary: { alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height }, secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" }, sensitive: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 12 }, deleteLink: { alignItems: "center", minHeight: 48, justifyContent: "center" }, deleteText: { color: colors.danger, fontSize: 14, fontWeight: "700" }, error: { color: colors.danger, fontSize: 14 }, success: { color: colors.income, fontSize: 14, fontWeight: "600" },
+  safeArea: { backgroundColor: colors.cream, flex: 1 }, center: { alignItems: "center", justifyContent: "center" }, content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 12, padding: paperSpace.screen, paddingBottom: 140 }, header: { minHeight: 38 }, back: { color: colors.link, fontSize: 14, fontWeight: "700", paddingVertical: 12 }, title: { color: colors.ink, fontSize: 26, fontWeight: "700", lineHeight: 38 }, description: { color: colors.muted, fontSize: 13, lineHeight: 20 }, label: { color: colors.ink, fontSize: 14, fontWeight: "600", marginTop: 16, marginBottom: 8 }, input: { backgroundColor: colors.cream, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 15 }, choices: { flexDirection: "row", flexWrap: "wrap", gap: 8 }, choice: { backgroundColor: colors.white, borderColor: colors.border, borderRadius: paperShape.chip, borderWidth: 1, minHeight: 48, justifyContent: "center", paddingHorizontal: 15 }, choiceSelected: { backgroundColor: colors.mauve, borderColor: colors.primaryOutline }, choiceText: { color: colors.ink, fontSize: 14, fontWeight: "600" }, choiceTextSelected: { color: colors.onPrimary }, switchRow: { alignItems: "center", backgroundColor: colors.pocketLilac, borderRadius: paperShape.card, flexDirection: "row", gap: 14, minHeight: 64, padding: 12 }, switchCopy: { flex: 1 }, switchTitle: { color: colors.ink, fontSize: 15, fontWeight: "600" }, switchDescription: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 3 }, planCard: { backgroundColor: colors.white, borderColor: colors.border, borderRadius: paperShape.card, borderWidth: 1, gap: 5, padding: 16 }, planTitle: { color: colors.ink, fontSize: 15, fontWeight: "700" }, planText: { color: colors.muted, fontSize: 13, lineHeight: 19 }, primary: { alignItems: "center", backgroundColor: colors.mauve, borderRadius: paperShape.button, justifyContent: "center", marginTop: 20, minHeight: paperControl.height }, primaryText: { color: colors.onPrimary, fontSize: 15, fontWeight: "700" }, secondary: { marginTop: 12, alignItems: "center", borderColor: colors.primaryOutline, borderRadius: paperShape.button, borderWidth: 1, justifyContent: "center", minHeight: paperControl.height }, secondaryText: { color: colors.link, fontSize: 15, fontWeight: "700" }, sensitive: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 12 }, deleteLink: { alignItems: "center", minHeight: paperControl.height, justifyContent: "center", borderWidth: 1, borderColor: colors.danger, borderRadius: paperShape.button }, deleteText: { color: colors.danger, fontSize: 14, fontWeight: "700" }, error: { color: colors.danger, fontSize: 14 }, success: { color: colors.income, fontSize: 14, fontWeight: "600" },
 });

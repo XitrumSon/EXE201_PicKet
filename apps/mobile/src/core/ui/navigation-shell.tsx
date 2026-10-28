@@ -6,9 +6,7 @@ import { useMobileStyles } from "@/core/theme/use-mobile-styles";
 import type { MobileThemeColors } from "@/core/theme/mobile-theme-adapter";
 import { router, usePathname, type Href } from "expo-router";
 import { Keyboard, StyleSheet, View } from "react-native";
-import { useEffect, useRef, useState } from "react";
-import { captureJournal } from "@/core/ocr/capture-storage";
-import { guestOwnerId } from "@/core/local/guest-finance";
+import { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/features/auth/auth-context";
 import { AccessiblePressable as Pressable } from "./accessible-pressable";
@@ -29,23 +27,7 @@ export function NavigationShell() {
   const { colors, styles } = useMobileStyles(createStyles);
   const pathname = usePathname().replace(/\/$/, "") || "/";
   const { session, localMode } = useAuth();
-  const owner = session?.user.id ?? (localMode ? guestOwnerId : null);
-  const currentOwner = useRef(owner);
-  useEffect(() => { currentOwner.current = owner; return () => { currentOwner.current = null; }; }, [owner]);
-  async function navigate(path: Href) {
-    if (path === "/transactions" && owner) {
-      try {
-        const draft = await captureJournal.load(owner);
-        if (owner !== currentOwner.current) return;
-        if (draft) { router.navigate("/capture"); return; }
-      } catch {
-        if (owner !== currentOwner.current) return;
-        // The capture screen offers recovery without deleting unreadable data.
-        router.navigate("/capture"); return;
-      }
-    }
-    router.navigate(path);
-  }
+  function navigate(path: Href) { router.navigate(path); }
   const insets = useSafeAreaInsets();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   useEffect(() => {
@@ -59,7 +41,7 @@ export function NavigationShell() {
       const camera = item.path === "/capture";
       const active = pathname === item.path || (item.path === "/planning" && pathname === "/budgets");
       const label = language === "vi" ? (item.path === "/profile" ? profile?.displayName?.trim().split(/\s+/).pop() || item.label : item.label) : item.english;
-      return <Pressable key={item.path} accessibilityRole={camera ? "button" : "tab"} accessibilityLabel={label} accessibilityState={camera ? undefined : { selected: active }} onPress={() => { if (!active) void navigate(item.path as Href); }} hitSlop={camera ? { top: 28, bottom: 4, left: 4, right: 4 } : 4} style={[styles.destination, active && styles.selected]}>
+      return <Pressable clipFeedback={!camera} key={item.path} accessibilityRole={camera ? "button" : "tab"} accessibilityLabel={label} accessibilityState={camera ? undefined : { selected: active }} onPress={() => { if (!active) void navigate(item.path as Href); }} hitSlop={0} style={[styles.destination, active && styles.selected]}>
         <View style={camera ? styles.camera : styles.indicator}><AppIcon name={item.icon} size={camera ? 26 : 23} color={camera ? colors.onCamera : active ? colors.selectedText : colors.muted} /></View>
         <Text style={[styles.label, active && styles.activeLabel]}>{label}</Text>
       </Pressable>;

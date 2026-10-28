@@ -52,6 +52,8 @@ export default function NewTransactionScreen() {
   const { accounts } = useAccounts();
   const { categories, create, refresh, transactions } = useTransactions();
   const params = useLocalSearchParams<{
+    kind?: string;
+    accountId?: string;
     title?: string;
     amount?: string;
     receiptDraftId?: string;
@@ -59,8 +61,8 @@ export default function NewTransactionScreen() {
     fromCapture?: string;
     captureDraftId?: string;
   }>();
-  const [kind, setKind] = useState<BasicTransactionKind>("expense");
-  const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
+  const [kind, setKind] = useState<BasicTransactionKind>(params.kind === "income" ? "income" : "expense");
+  const [accountId, setAccountId] = useState(params.accountId ?? accounts[0]?.id ?? "");
   const [categoryId, setCategoryId] = useState("");
   const [title, setTitle] = useState(params.title ?? "");
   const [amount, setAmount] = useState(params.amount ?? "");
@@ -324,7 +326,7 @@ export default function NewTransactionScreen() {
           <Text style={styles.receiptHint}>{new Date(receiptDraft.transactionRequest.occurredAt).toLocaleString(locale)}</Text>
           {receiptDraft.transactionRequest.note ? <Text style={styles.receiptHint}>{receiptDraft.transactionRequest.note}</Text> : null}
         </View> : <>
-        <FieldLabel>{tx("Số tiền")}</FieldLabel><View style={styles.amountBox}><TextInput money accessibilityLabel={tx("Số tiền giao dịch")} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={amount} onChangeText={setAmount} /><Text style={styles.currency}>VND</Text></View>
+        <FieldLabel>{tx("Số tiền")}</FieldLabel><View style={styles.amountBox}><TextInput money borderless accessibilityLabel={tx("Số tiền giao dịch")} keyboardType="number-pad" placeholder="0" placeholderTextColor={colors.muted} style={styles.amountInput} value={amount} onChangeText={setAmount} /><Text style={styles.currency}>{accounts.find(account => account.id === selectedAccountId)?.currencyCode ?? "VND"}</Text></View>
         <FieldLabel>{tx("Nội dung")}</FieldLabel><TextInput accessibilityLabel={tx("Nội dung giao dịch")} placeholder={tx("Ví dụ: Ăn trưa")} placeholderTextColor={colors.muted} style={styles.input} value={title} onChangeText={setTitle} />
 
         <FieldLabel>{tx("Ví / tài khoản thanh toán")}</FieldLabel>
@@ -370,7 +372,7 @@ const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
   receiptHint: { color: colors.muted, fontSize: 12, lineHeight: 17, marginTop: 3 },
   form: { marginTop: 0 },
   input: { backgroundColor: colors.white, borderColor: colors.controlBorder, borderRadius: paperShape.input, borderWidth: 1, color: colors.ink, fontSize: 16, minHeight: paperControl.height, paddingHorizontal: 16 },
-  amountBox: { alignItems: "center", borderColor: colors.peach, borderRadius: radii.medium, borderWidth: 1, flexDirection: "row", minHeight: 58, paddingHorizontal: 16 },
+  amountBox: { alignItems: "center", borderColor: colors.controlBorder, borderRadius: radii.medium, borderWidth: 1, flexDirection: "row", minHeight: 58, paddingHorizontal: 16 },
   amountInput: { color: colors.link, flex: 1, fontSize: 36, fontWeight: "700", fontVariant: ["tabular-nums"], minHeight: 76 },
   currency: { color: colors.link, fontSize: 14, fontWeight: "700" },
   note: { minHeight: 88, paddingTop: 14, textAlignVertical: "top" },

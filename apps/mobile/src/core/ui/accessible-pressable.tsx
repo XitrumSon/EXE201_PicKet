@@ -8,13 +8,14 @@ import {
 export const minimumTouchTarget = 48;
 
 export function AccessiblePressable({
+  clipFeedback = true,
   accessibilityRole = "button",
   accessibilityState,
   disabled,
   hitSlop = 4,
   style,
   ...props
-}: PressableProps) {
+}: PressableProps & { clipFeedback?: boolean }) {
   const resolvedAccessibilityState =
     disabled == null
       ? accessibilityState
@@ -31,6 +32,7 @@ export function AccessiblePressable({
       style={(state) => [
         typeof style === "function" ? style(state) : style,
         styles.minimumTarget,
+        { overflow: clipFeedback ? "hidden" : "visible" },
       ]}
     />
   );

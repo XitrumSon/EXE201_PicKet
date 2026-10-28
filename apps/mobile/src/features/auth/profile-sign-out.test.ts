@@ -10,9 +10,9 @@ const profileSource = readFileSync(
 
 test("profile offers a confirmed sign-out action", () => {
   assert.match(profileSource, /const \{ session, localMode, leaveLocalMode, signOut \} = useAuth\(\)/);
-  assert.match(profileSource, /Alert\.alert\(t\("Đăng xuất\?"\)/);
-  assert.match(profileSource, /Alert\.alert\(t\("Thoát chế độ trên thiết bị\?"\)/);
-  assert.match(profileSource, /text: t\("Hủy"\), style: "cancel"/);
+  assert.match(profileSource, /<ActionSheet/);
+  assert.doesNotMatch(profileSource, /Alert\.alert/);
+  assert.match(profileSource, /setSignOutPrompt/);
   assert.match(profileSource, /await signOut\(\)/);
   assert.match(profileSource, /leaveLocalMode\(\)/);
   assert.match(profileSource, /localMode \? t\("Thoát chế độ trên máy"\) : t\("Đăng xuất"\)/);

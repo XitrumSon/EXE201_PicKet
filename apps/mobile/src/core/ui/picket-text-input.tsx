@@ -10,7 +10,7 @@ import { editNativeMoneyInput, shouldReleaseMoneySelection } from "./native-mone
 import { DateField } from "./date-field";
 
 /** Shared focus, selection and disabled styling; screen-specific amount layouts stay intact. */
-export function PicketTextInput({ style, onFocus, onBlur, editable, money = false, date = false, ...props }: TextInputProps & { money?: boolean; date?: boolean }) {
+export function PicketTextInput({ style, onFocus, onBlur, editable, money = false, date = false, borderless = false, ...props }: TextInputProps & { money?: boolean; date?: boolean; borderless?: boolean }) {
   const { colors, styles, theme } = useMobileStyles(createStyles);
   const [focused, setFocused] = useState(false);
   const previousDisplay = useRef(formatMoneyInput(props.value ?? ""));
@@ -31,7 +31,7 @@ export function PicketTextInput({ style, onFocus, onBlur, editable, money = fals
     setMoneySelection(next.selection);
     props.onChange?.(event);
     props.onChangeText?.(next.raw);
-  } : props.onChange} onChangeText={money ? undefined : props.onChangeText} accessibilityLabel={props.accessibilityLabel} editable={editable} placeholderTextColor={props.placeholderTextColor ?? colors.muted} selectionColor={props.selectionColor ?? colors.focusRing} onFocus={(event) => { setFocused(true); onFocus?.(event); }} onBlur={(event) => { setFocused(false); onBlur?.(event); }} style={[styles.input, style, focused && styles.focused, editable === false && styles.disabled]} />;
+  } : props.onChange} onChangeText={money ? undefined : props.onChangeText} accessibilityLabel={props.accessibilityLabel} editable={editable} placeholderTextColor={props.placeholderTextColor ?? colors.muted} selectionColor={props.selectionColor ?? colors.focusRing} onFocus={(event) => { setFocused(true); onFocus?.(event); }} onBlur={(event) => { setFocused(false); onBlur?.(event); }} style={[styles.input, style, focused && !borderless && styles.focused, borderless && { borderWidth: 0, backgroundColor: "transparent" }, editable === false && styles.disabled]} />;
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({ input: { fontWeight: "400", fontFamily: isLoaded("PicketDisplay") ? "PicketDisplay" : undefined, borderWidth: 1, borderColor: colors.controlBorder, backgroundColor: colors.surface, minHeight: paperControl.height, paddingHorizontal: 16, paddingVertical: 10, color: colors.ink, fontSize: 16, borderRadius: paperShape.input }, focused: { borderColor: colors.focusRing, borderWidth: 2 }, disabled: { backgroundColor: colors.disabledSurface, color: colors.disabledText } });

@@ -17,7 +17,7 @@ import { isOfflineQueuedError } from "@/core/sync/offline-queued-error";
 import { getGuestReceipt } from "@/core/receipts/guest-receipt-store";
 import type { GuestReceipt } from "@/core/receipts/guest-receipt-model";
 import { AccessiblePressable as Pressable } from "@/core/ui/accessible-pressable";
-import { ChoiceChip, TopAppBar } from "@/core/ui/picket-ui";
+import { Surface, FieldLabel, ChoiceChip, TopAppBar } from "@/core/ui/picket-ui";
 import { useAuth } from "@/features/auth/auth-context";
 import { useTransactions } from "@/features/transactions/transactions-context";
 import { buildTransactionEditRequest } from "@/features/transactions/transaction-edit-request";
@@ -142,13 +142,18 @@ export default function TransactionDetailScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <TopAppBar title={tx("Sửa giao dịch")} backDisabled={busy} />
+        <Surface peach style={styles.editorCard}>
         <Text style={transaction.kind === "income" ? styles.income : styles.expense}>
           {transaction.kind === "income" ? tx("Khoản thu") : tx("Khoản chi")}
         </Text>
+        <FieldLabel>{tx("Nội dung")}</FieldLabel>
         <TextInput accessibilityLabel={tx("Nội dung giao dịch")} editable={editable} placeholder={tx("Nội dung")} placeholderTextColor={colors.muted} style={[styles.input, !editable && styles.readonly]} value={currentTitle} onChangeText={setTitle} />
+        <FieldLabel>{tx("Số tiền")}</FieldLabel>
         <TextInput money accessibilityLabel={tx("Số tiền giao dịch")} editable={editable} keyboardType="number-pad" placeholder={tx("Số tiền (VND)")} placeholderTextColor={colors.muted} style={[styles.input, !editable && styles.readonly]} value={currentAmount} onChangeText={setAmount} />
+        <FieldLabel>{tx("Ghi chú")}</FieldLabel>
         <TextInput accessibilityLabel={tx("Ghi chú giao dịch")} editable={editable} multiline numberOfLines={3} placeholder={tx("Ghi chú")} placeholderTextColor={colors.muted} style={[styles.input, styles.note, !editable && styles.readonly]} value={currentNote} onChangeText={setNote} />
         {editable && <><Text style={styles.label}>{tx("Danh mục")}</Text><ScrollView contentContainerStyle={styles.categoryRow} horizontal showsHorizontalScrollIndicator={false}><ChoiceChip checked={currentCategoryId === null} label={tx("Cần phân loại")} onPress={() => setCategoryId(null)} />{categories.filter((item) => item.kind === transaction.kind || item.kind === "both").map((item) => <ChoiceChip checked={currentCategoryId === item.id} key={item.id} label={item.name} onPress={() => setCategoryId(item.id)} />)}</ScrollView></>}
+        </Surface>
         {message && <Text style={styles.error}>{tx(message)}</Text>}
         {editable && <Pressable disabled={busy} onPress={() => void save()} style={styles.primary}>
           {busy ? <ActivityIndicator accessibilityLabel={tx("Đang lưu giao dịch")} color={colors.onPrimary} /> : <Text style={styles.primaryText}>{tx("Lưu thay đổi")}</Text>}
@@ -169,6 +174,7 @@ export default function TransactionDetailScreen() {
 }
 
 const createStyles = (colors: MobileThemeColors) => StyleSheet.create({
+  editorCard: { padding: 16 },
   safeArea: { backgroundColor: colors.cream, flex: 1 },
   center: { alignItems: "center", justifyContent: "center", padding: 24 },
   content: { maxWidth: 720, width: "100%", alignSelf: "center", gap: 14, padding: paperSpace.screen, paddingBottom: 48 },
