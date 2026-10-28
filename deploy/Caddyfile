@@ -6,7 +6,7 @@
 	root * /srv/picket-landing
 	@revalidated not path /downloads/*.apk
 	header @revalidated Cache-Control "no-cache"
-	header Content-Security-Policy "default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; script-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+	header Content-Security-Policy "default-src 'none'; img-src 'self'; style-src 'self'; font-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
 	@apk path /downloads/*.apk
 	header @apk {
 		Content-Type application/vnd.android.package-archive
@@ -16,6 +16,40 @@
 	file_server
 }
 {$PICKET_LANDING_DOMAIN} {
+	log {
+		output file /var/log/caddy/landing.json {
+			mode 0644
+			roll_size 20MiB
+			roll_keep 10
+			roll_keep_for 336h
+			roll_uncompressed
+		}
+		format filter {
+			wrap json
+			fields {
+				request>headers delete
+				request>remote_ip delete
+				request>client_ip delete
+				request>remote_port delete
+				request>uri delete
+				resp_headers delete
+			}
+		}
+	}
+	map {http.request.header.User-Agent} {analytics_bot} {
+		~(?i)(bot|crawler|spider|headless|uptime|probe) true
+		default false
+	}
+	map {http.request.uri.path} {analytics_path} {
+		~^/downloads/[a-zA-Z0-9_.-]+[.]apk$ "${0}"
+		default /other
+	}
+	log_append path {analytics_path}
+	log_append bot {analytics_bot}
+	handle /events {
+		rewrite * /v1/telemetry
+		reverse_proxy api:8080
+	}
 	encode zstd gzip
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"

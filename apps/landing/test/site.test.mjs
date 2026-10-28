@@ -11,8 +11,9 @@ test('release page is readable without JavaScript and points to one approved APK
   assert.match(html, /<main id="main">/);
   // Content/download remain server-rendered; progressive motion uses local modules only.
   const scripts = html.match(/<script\b[^>]*>[\s\S]*?<\/script>/g) ?? [];
-  assert.equal(scripts.length, 1);
+  assert.equal(scripts.length, 2);
   assert.match(scripts[0], /^<script type="module" src="\/launch-assets\/paper-motion-v1\.js"><\/script>$/);
+  assert.match(scripts[1], /^<script type="module" src="\/launch-assets\/analytics\.js"><\/script>$/);
   assert.ok(!html.includes('{{'));
   assert.equal((html.match(new RegExp('href="/downloads/'+release.filename+'"','g'))||[]).length,2);
   assert.match(html, /Không bắt buộc tạo tài khoản/);
