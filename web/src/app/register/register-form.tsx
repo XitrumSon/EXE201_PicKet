@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 
 import { createClient } from "@/core/supabase/client";
 import { passwordValidationMessage } from "@/core/auth/password";
+import { PasswordField } from "@/features/auth/components/password-field";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export function RegisterForm() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") ?? "")
       .trim()
@@ -30,63 +31,66 @@ export function RegisterForm() {
     setBusy(true);
     setMessage(null);
     const redirectTo = `${window.location.origin}/auth/callback?next=/dashboard`;
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: redirectTo },
-    });
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { emailRedirectTo: redirectTo },
+      });
 
-    if (error) {
-      setMessage(
-        "Không thể tạo tài khoản. Email có thể đã được sử dụng hoặc bạn thao tác quá nhanh.",
-      );
+      if (error) {
+        setMessage(
+          "Không thể tạo tài khoản. Email có thể đã được sử dụng hoặc bạn thao tác quá nhanh.",
+        );
+        setBusy(false);
+        return;
+      }
+      if (data.session) {
+        router.replace("/dashboard");
+        router.refresh();
+        return;
+      }
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+    } catch {
+      setMessage("Không thể kết nối. Kiểm tra mạng rồi thử lại.");
       setBusy(false);
-      return;
     }
-    if (data.session) {
-      router.replace("/dashboard");
-      router.refresh();
-      return;
-    }
-    router.push(`/verify-email?email=${encodeURIComponent(email)}`);
   }
 
   return (
     <div className="auth-card">
-      <Link className="brand auth-brand" href="/">
-        <Image src="/picket-logo.png" alt="" width={48} height={48} />
-        <span>Picket</span>
-      </Link>
-      <p className="eyebrow">Tạo tài khoản</p>
       <h1 className="auth-title">Bắt đầu với Picket</h1>
       <p className="auth-copy">
-        Tài khoản này dùng chung cho web và ứng dụng mobile.
+        Tạo tài khoản để ghi chép và chăm chút kế hoạch của bạn.
       </p>
-      <form className="auth-form" onSubmit={submit}>
+      <form
+        className="auth-form"
+        onSubmit={submit}
+        aria-busy={busy}
+        aria-describedby={message ? "register-message" : undefined}
+      >
         <label>
           Email
-          <input autoComplete="email" name="email" required type="email" />
-        </label>
-        <label>
-          Mật khẩu
           <input
-            autoComplete="new-password"
-            name="password"
+            autoComplete="email"
+            autoCapitalize="none"
+            spellCheck={false}
+            name="email"
             required
-            type="password"
+            type="email"
           />
         </label>
-        <label>
-          Nhập lại mật khẩu
-          <input
-            autoComplete="new-password"
-            name="confirmation"
-            required
-            type="password"
-          />
-        </label>
+        <PasswordField
+          autoComplete="new-password"
+          hint="Ít nhất 12 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt."
+        />
+        <PasswordField
+          label="Nhập lại mật khẩu"
+          name="confirmation"
+          autoComplete="new-password"
+        />
         {message && (
-          <p className="form-message" role="alert">
+          <p className="form-message" id="register-message" role="alert">
             {message}
           </p>
         )}
@@ -94,6 +98,13 @@ export function RegisterForm() {
           {busy ? "Đang tạo..." : "Đăng ký"}
         </button>
       </form>
+      <p className="paper-auth-policy">
+        Tìm hiểu cách Picket xử lý dữ liệu trong{" "}
+        <a href="https://picketfinance.com/privacy.html">
+          Chính sách quyền riêng tư
+        </a>
+        .
+      </p>
       <Link className="back-link" href="/login">
         Đã có tài khoản? Đăng nhập
       </Link>

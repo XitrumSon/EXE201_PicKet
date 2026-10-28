@@ -12,26 +12,50 @@ export function ResetPasswordForm() {
   const supabase = useMemo(() => createClient(), []);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [passwordChanged, setPasswordChanged] = useState(false);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (busy) return;
     const form = new FormData(event.currentTarget);
     const password = String(form.get("password") ?? "");
     const confirmation = String(form.get("confirmation") ?? "");
-    const passwordIssue = passwordValidationMessage(password);
+    const passwordIssue = passwordChanged
+      ? null
+      : passwordValidationMessage(password);
     if (passwordIssue) return setMessage(passwordIssue);
     if (password !== confirmation) return setMessage("Hai mật khẩu chưa khớp.");
 
     setBusy(true);
     setMessage(null);
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) {
-      setMessage("Không cập nhật được mật khẩu. Liên kết có thể đã hết hạn.");
+    try {
+      if (!passwordChanged) {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) {
+          setMessage(
+            "Không cập nhật được mật khẩu. Liên kết có thể đã hết hạn.",
+          );
+          setBusy(false);
+          return;
+        }
+        setPasswordChanged(true);
+      }
+      const { error: logoutError } = await supabase.auth.signOut({
+        scope: "global",
+      });
+      if (logoutError) {
+        setMessage(
+          "Mật khẩu đã cập nhật. Chưa thu hồi được phiên; nhấn lại để thử đăng xuất các phiên.",
+        );
+        return;
+      }
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      setMessage("Không thể kết nối. Kiểm tra mạng rồi thử lại.");
+    } finally {
       setBusy(false);
-      return;
     }
-    router.replace("/session");
-    router.refresh();
   }
 
   return (
@@ -48,7 +72,8 @@ export function ResetPasswordForm() {
           <input
             autoComplete="new-password"
             name="password"
-            required
+            required={!passwordChanged}
+            disabled={passwordChanged}
             type="password"
           />
         </label>
@@ -57,7 +82,8 @@ export function ResetPasswordForm() {
           <input
             autoComplete="new-password"
             name="confirmation"
-            required
+            required={!passwordChanged}
+            disabled={passwordChanged}
             type="password"
           />
         </label>
@@ -67,7 +93,11 @@ export function ResetPasswordForm() {
           </p>
         )}
         <button className="button primary" disabled={busy} type="submit">
-          {busy ? "Đang lưu..." : "Cập nhật mật khẩu"}
+          {busy
+            ? "Đang lưu..."
+            : passwordChanged
+              ? "Thử đăng xuất các phiên"
+              : "Cập nhật mật khẩu"}
         </button>
       </form>
     </div>

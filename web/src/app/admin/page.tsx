@@ -1,9 +1,5 @@
-import { AdminScreen } from "./admin-screen";
-export const metadata = { title: "Quản trị Picket" };
-export default function AdminPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string; error?: string; done?: string }>;
-}) {
-  return <AdminScreen searchParams={searchParams} />;
+import { AdminModule } from "@/features/admin/components/admin-module";
+
+export default function Page({searchParams}:{searchParams:Promise<Record<string,string|undefined>>}) {
+  return <AdminModule section="overview" searchParams={searchParams}/>;
 }

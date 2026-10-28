@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/core/supabase/server";
 
 import { LoginForm } from "./login-form";
+import { AuthShell } from "@/features/auth/components/auth-shell";
 
 interface LoginPageProps {
   searchParams: Promise<{ error?: string }>;
@@ -19,8 +20,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     : undefined;
 
   return (
-    <main className="auth-page">
+    <AuthShell variant="login">
       <LoginForm initialError={initialError} />
-    </main>
+    </AuthShell>
   );
 }

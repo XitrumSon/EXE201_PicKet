@@ -4,6 +4,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
 import { signOut } from "@/app/dashboard/actions";
+import { adminSections, canViewAdminSection, type AdminSection } from "@/features/admin/admin-permissions";
 
 const userLinks = [
   ["/dashboard", "Tổng quan", "home"],
@@ -30,35 +31,15 @@ const accountLinks = [
   ["/sync-conflicts", "Kiểm tra đồng bộ", "transfer"],
   ["/help", "Quyền riêng tư & trợ giúp", "shield"],
 ] as const;
-const adminLinks = [
-  ["/admin", "Tổng quan", "chart"],
-  ["/admin/users", "Người dùng", "person"],
-  ["/admin/ocr", "Nhận diện hóa đơn", "receipt"],
-  ["/admin/partners", "Đối tác", "grid"],
-  ["/admin/settings", "Cấu hình ứng dụng", "shield"],
-  ["/admin/audit", "Nhật ký hoạt động", "calendar"],
-] as const;
-export function Icon({ name }: { name: string }) {
-  const paths: Record<string, string> = {
-    home: "m3 10 9-7 9 7v11h-6v-7H9v7H3Z",
-    receipt: "M5 3h14v18l-3-2-4 2-4-2-3 2Zm3 5h8m-8 4h8m-8 4h5",
-    wallet: "M3 6h17v15H3V3h14v3m3 5h-6v5h6m-3-2h.01",
-    chart: "M4 3v18h17M8 17v-4m5 4V8m5 9V4",
-    person: "M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-3a8 8 0 0 1 16 0v3",
-    bell: "M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4",
-    calendar: "M4 5h16v16H4ZM8 2v6m8-6v6M4 10h16",
-    transfer: "M3 7h17l-4-4m5 14H4l4 4",
-    grid: "M3 3h7v7H3Zm11 0h7v7h-7ZM3 14h7v7H3Zm11 0h7v7h-7Z",
-    shield: "m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6Zm-5 9 3 3 6-6",
-    logout: "M9 3H3v18h6m4-5 5-4-5-4m-5 4h13",
-  };
-  return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name] ?? paths.grid} /></svg>;
-}
+const adminLinks = Object.entries(adminSections).map(([key, item]) => [item.href, item.title, item.icon, key as AdminSection] as const);
+export { Icon } from "./workspace-icon";
+import { Icon } from "./workspace-icon";
+import { AdminWorkspaceShell } from "@/features/admin/components/admin-workspace-shell";
 function NavigationHint() {
   const { pending } = useLinkStatus();
   return <span className="navigation-hint" role="status">{pending ? "Đang mở…" : ""}</span>;
 }
-export function WorkspaceShell({ children, admin = false }: { children: ReactNode; admin?: boolean }) {
+function StandardWorkspaceShell({ children, admin = false, adminRole = null }: { children: ReactNode; admin?: boolean; adminRole?: string | null }) {
   const pathname = usePathname();
   const menuRef = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
@@ -68,8 +49,9 @@ export function WorkspaceShell({ children, admin = false }: { children: ReactNod
     document.addEventListener("pointerdown", close);
     return () => document.removeEventListener("pointerdown", close);
   }, []);
-  const links = admin ? adminLinks : userLinks;
-  const utilities = admin ? adminLinks.slice(4) : accountLinks;
+  const permittedAdminLinks = adminLinks.filter(([, , , section]) => canViewAdminSection(adminRole, section));
+  const links = admin ? permittedAdminLinks : userLinks;
+  const utilities = admin ? permittedAdminLinks.slice(4) : accountLinks;
   const activeHref = links.filter(([href]) => pathname === href || (href !== "/admin" && href !== "/dashboard" && pathname.startsWith(href + "/"))).sort((a, b) => b[0].length - a[0].length)[0]?.[0];
   const navigation = (mobile = false) => (mobile ? links.slice(0, 4) : links).map(([href, label, icon]) => <Link key={href} href={href} prefetch={true} aria-current={activeHref === href ? "page" : undefined} onNavigate={(event) => { if (pathname === href) event.preventDefault(); }}><Icon name={icon} /><span>{label}</span><NavigationHint /></Link>);
   return <div className={`workspace ${admin ? "workspace-admin" : "workspace-user"}`}>
@@ -102,4 +84,8 @@ export function WorkspaceShell({ children, admin = false }: { children: ReactNod
     </div>
     <nav className="workspace-bottom-nav" aria-label={admin ? "Điều hướng quản trị trên điện thoại" : "Điều hướng chính trên điện thoại"}>{navigation(true)}</nav>
   </div>;
+}
+
+export function WorkspaceShell(props: {children:ReactNode;admin?:boolean;adminRole?:string|null}) {
+ return props.admin ? <AdminWorkspaceShell role={props.adminRole??null}>{props.children}</AdminWorkspaceShell> : <StandardWorkspaceShell {...props}/>;
 }

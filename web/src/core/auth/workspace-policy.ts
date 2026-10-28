@@ -9,6 +9,7 @@ export function workspaceRedirect(
       "/forgot-password",
       "/reset-password",
       "/auth/callback",
+      "/auth/reset-password",
     ].includes(pathname)
   )
     return null;

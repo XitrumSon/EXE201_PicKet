@@ -17,9 +17,9 @@ export async function requireApiSession(
   const accessToken = sessionData.session?.access_token;
   if (!accessToken) redirect("/login");
 
-  const { data: staff, error: roleError } = await supabase.rpc("is_staff");
-  if (roleError || typeof staff !== "boolean")
-    throw new Error("Không xác minh được quyền truy cập. Vui lòng thử lại.");
+  const api = new PicketApiClient(apiBaseUrl);
+  const access = await api.accountAccess(accessToken);
+  const staff = access.staff;
   const destination =
     workspace === "either"
       ? null
@@ -31,8 +31,10 @@ export async function requireApiSession(
 
   return {
     accessToken,
-    api: new PicketApiClient(apiBaseUrl),
+    api,
     claims: claimsData.claims,
     staff,
+    role: access.role,
+    mfaVerified: access.mfaVerified,
   };
 }
