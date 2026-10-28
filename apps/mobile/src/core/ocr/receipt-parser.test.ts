@@ -176,3 +176,33 @@ for (const sample of receiptCorpus) {
     assert.equal(result.needsReview, false);
   });
 }
+
+test("rejects malformed grouping and never merges two total columns", () => {
+  for (const value of ["12.34.567", "1,2,3", "100.000 90.000", "-45.000"]) assert.equal(parseReceiptMoney(value), null, value);
+  const result=parseReceiptText("PICKET STORE\n28/10/2026\nTổng thanh toán 100.000 90.000");
+  assert.equal(result.amount,null);
+  assert.equal(result.needsReview,true);
+});
+test("conflicting strong totals always require manual review", () => {
+ const result=parseReceiptText("PICKET STORE\n28/10/2026\nTổng cộng 100.000\nThành tiền thanh toán 90.000");
+ assert.equal(result.needsReview,true);
+});
+
+test("matches a slanted POS payable row without reading an adjacent subtotal",()=>{
+ const draft=parseReceiptLines([
+  {text:"PICKET CAFE",left:10,right:150,top:0,bottom:20},
+  {text:"28/10/2026",left:10,right:120,top:30,bottom:45},
+  {text:"Tống cộng:",left:45,right:87,top:157,bottom:166},
+  {text:"1710 000",left:164,right:203,top:149,bottom:160},
+ ]);
+ assert.equal(draft.amount,1710000);
+});
+test("recognizes OCR total VAT label and excludes item quantity totals",()=>{
+ const draft=parseReceiptText("PICKET STORE\n28/10/2026\nTotal Item(s) Qty: 1\nTota/(VAT): 11,000 VND\nCash: 20,000 VND\nCHANGE DUE: 9,000 VND");
+ assert.equal(draft.amount,11000);
+});
+
+test("receipt metadata phone and document number are never product rows",()=>{
+ const result=parseReceiptLineItems([{text:"ĐT: 0974.300.007 - 0909.191.195"},{text:"Số: 021900003"},{text:"Cà phê đá 10,000"}]);
+ assert.deepEqual(result.map(item=>item.name),["Cà phê đá"]);
+});

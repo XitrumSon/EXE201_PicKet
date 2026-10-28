@@ -79,3 +79,16 @@ describe("server OCR result", () => {
     assert.equal(result.amount, 45_000);
   });
 });
+
+it("preserves provider row geometry when total labels and values are separate", () => {
+ const row=(text:string,left:number,right:number,top:number)=>({text,confidence:.95,box:[[left,top],[right,top],[right,top+12],[left,top+12]]});
+ const result=parseServerOcrResult({rawText:"PICKET STORE\nTổng thanh toán\nCảm ơn\n90.000",confidence:.9,lines:[row("PICKET STORE",0,100,0),row("Tổng thanh toán",0,100,50),row("Cảm ơn",0,90,90),row("90.000",120,180,50)]});
+ assert.equal(result.amount,90000);
+});
+
+it("falls back to all raw text when geometry is partial or invalid",()=>{
+ for (const box of [null, [[0,0],[1,1]], [[0,0],[100,0],[100,20],[0,Infinity]], [[-1,0],[100,0],[100,20],[0,20]]]) {
+  const result=parseServerOcrResult({rawText:"PICKET STORE\n28/10/2026\nTOTAL 45.000", confidence:.9,lines:[{text:"TOTAL 999.000",box,confidence:1}]});
+  assert.equal(result.amount,45000);
+ }
+});

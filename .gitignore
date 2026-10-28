@@ -26,3 +26,6 @@ replay_pid*.log
 .playwright-cli/
 output/playwright/
 deploy/secrets/
+
+# Local receipt corpus used for device OCR testing
+/Bill/

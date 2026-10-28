@@ -24,3 +24,10 @@ test("a single explicit payable label can recover the rest of an unreadable summ
  const region=receiptSummaryCrop([{text:"Tiền thanh toán:",left:10,right:200,top:1000,bottom:1020}],1000,1400);
  assert.ok(region);assert.ok(region.originY<=900);assert.ok(region.originY+region.height>=1120);
 });
+
+test("observed POS total labels authorize one bounded detail crop", () => {
+ for (const text of ["Tổng cộng:","Grand total:","Amount due:"]) {
+  const region=receiptSummaryCrop([{text,left:10,right:150,top:1000,bottom:1020}],1000,1400);
+  assert.ok(region,text); assert.ok(region.height <= 700);
+ }
+});

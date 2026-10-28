@@ -1,4 +1,4 @@
-import { parseReceiptText, type ReceiptDraftLine } from "./receipt-parser";
+import { parseReceiptLines, parseReceiptText, type ReceiptTextLine, type ReceiptDraftLine } from "./receipt-parser";
 
 const maxReceiptAmount = 9_000_000_000_000;
 
@@ -31,7 +31,20 @@ export function parseServerOcrResult(
   result: Record<string, unknown>,
 ): ParsedServerOcrResult {
   const rawText = typeof result.rawText === "string" ? result.rawText : "";
-  const parsed = parseReceiptText(rawText);
+  const providerLines: ReceiptTextLine[] = [];
+  if (Array.isArray(result.lines)) for (const item of result.lines.slice(0,160)) {
+    if (!item || typeof item !== "object" || typeof item.text !== "string" || !item.text.trim() || item.text.length > 500) continue;
+    const box: unknown = item.box;
+    if (!Array.isArray(box) || box.length < 4 || box.length > 8 || !box.every(point => Array.isArray(point) && point.length === 2 && point.every(v => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= 100000))) continue;
+    const points = box as number[][];
+    const left=Math.min(...points.map(p=>p[0])),right=Math.max(...points.map(p=>p[0]));
+    const top=Math.min(...points.map(p=>p[1])),bottom=Math.max(...points.map(p=>p[1]));
+    if (left >= right || top >= bottom) continue;
+    providerLines.push({text:item.text, left,right,top,bottom,confidence:typeof item.confidence === "number" && Number.isFinite(item.confidence) && item.confidence >= 0 && item.confidence <= 1 ? item.confidence : undefined});
+  }
+  // Partial geometry must not silently remove rows present in the original text.
+  const completeGeometry = providerLines.length > 0 && providerLines.map(line=>line.text.trim()).join("\n") === rawText.split(/\r?\n/).map(line=>line.trim()).filter(Boolean).join("\n");
+  const parsed = completeGeometry ? parseReceiptLines(providerLines) : parseReceiptText(rawText);
   const structuredMerchant =
     typeof result.merchant === "string" &&
     result.merchant.trim().length > 0 &&
@@ -62,7 +75,7 @@ export function parseServerOcrResult(
       : null;
 
   return {
-    rawText,
+    rawText: completeGeometry ? parsed.rawText : rawText,
     merchant: structuredMerchant ?? parsedMerchant ?? null,
     amount: structuredAmount ?? parsed.amount,
     date: structuredDate ?? parsed.date,

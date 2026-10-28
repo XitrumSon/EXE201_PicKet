@@ -5,14 +5,14 @@ import hmac
 import logging
 import os
 from contextlib import asynccontextmanager
-from io import BytesIO
 from typing import Annotated, Any
 
 import numpy as np
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile, status
-from PIL import Image, UnidentifiedImageError
+from PIL import UnidentifiedImageError
 
 from .engine import PpOcrEngine
+from .images import decode_receipt_image
 
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 MAX_IMAGE_PIXELS = 20_000_000
@@ -29,15 +29,12 @@ def _provider_token() -> str:
 
 def _decode_image(data: bytes) -> np.ndarray[Any, Any]:
     try:
-        with Image.open(BytesIO(data)) as image:
-            image.load()
-            if image.width * image.height > MAX_IMAGE_PIXELS:
-                raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "IMAGE_TOO_LARGE")
-            rgb = image.convert("RGB")
-            # PaddleOCR accepts OpenCV-style BGR arrays.
-            return np.asarray(rgb)[:, :, ::-1].copy()
+        return decode_receipt_image(data, MAX_IMAGE_PIXELS)
     except (UnidentifiedImageError, OSError, ValueError) as error:
+        if str(error) == "IMAGE_TOO_LARGE":
+            raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "IMAGE_TOO_LARGE") from error
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "INVALID_IMAGE") from error
+
 
 
 @asynccontextmanager

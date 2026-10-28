@@ -36,10 +36,10 @@ export type ReceiptDraftLine = {
   confidence: number;
 };
 
-const totalWords = /tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*thanh\s*toan|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^total\b|^due$/i;
+const totalWords = /^(?:teng cong|tng tien|t[.]tien)\b|^tota[\/l][^a-z]|tong\s*(cong|tien|thanh\s*toan)?|tng\s*cng|cong\s*tien\s*hang|so\s*tien\s*(thanh\s*toan|phai\s*tra)|can\s*thanh\s*toan|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^total\b|^due$/i;
 const strongTotalWords = /tong\s*cong|tng\s*cng|thanh\s*toan|phai\s*tra|grand\s*total|round(?:ed|\s*d)\s*total|total\s*due|amount\s*due|^due$/i;
 const trailingTotalWords = /^(?:total\s*due|amount\s*due|due)$/i;
-const rejectedTotalWords = /hinh\s*thuc|phuong\s*thuc|payment\s*method|\b(?:dt|dien\s*thoai|phone|hotline|tel)\b|subtotal|tam\s*tinh|tien\s*khach|tien\s*thua|change|tendered|cash\s*received|so\s*luong/i;
+const rejectedTotalWords = /hinh\s*thuc|phuong\s*thuc|payment\s*method|\b(?:dt|dien\s*thoai|phone|hotline|tel)\b|subtotal|tam\s*tinh|tien\s*khach|tien\s*thua|change|tendered|cash\s*received|total\s*item|\b(?:qty|0ty)\b|so\s*luong/i;
 const rejectedItemWords = /\b(tong|total|subtotal|tam\s*tinh|thanh\s*toan|phai\s*tra|vat|tax|thue|giam\s*gia|discount|tien\s*thua|tien\s*khach|change|cash|barcode|ma\s*hang|don\s*gia|so\s*luong|so\s*chung\s*tu|qty|ngay|date|gio|time|mst|ma\s*so\s*thue|hoa\s*don|receipt|invoice|dia\s*chi|address|hotline|tel)\b/i;
 
 function normalized(value: string) {
@@ -64,7 +64,7 @@ export function parseReceiptLineItems(
     if (items.length >= 100) break;
     const text = line.text.trim();
     const clean = normalized(text);
-    if (!/[A-Za-zÀ-ỹ]/.test(text) || rejectedItemWords.test(clean)) continue;
+    if (!/[A-Za-zÀ-ỹ]/.test(text) || rejectedItemWords.test(clean) || /^(?:so|so hd|ma|no|dt|sdt)\s*[:.#-]/.test(clean)) continue;
     const priceMatch = text.match(
       /(\d{1,3}(?:[.,\s]\d{3})+(?:[.,]\d{2})?|\d{3,}(?:[.,]\d{2})?|0(?:[.,]0{2})?)(?:\s*(?:vnd|đ|d|₫))?\s*$/i,
     );
@@ -118,7 +118,7 @@ function spatialTotalCandidates(label:ReceiptTextLine,lines:ReceiptTextLine[]):R
     if(line===label||typeof line.top!=="number"||typeof line.bottom!=="number"||typeof line.left!=="number"||
       ![line.top,line.bottom,line.left].every(Number.isFinite)||line.bottom<=line.top||line.left<right)return false;
     const overlap=Math.min(bottom,line.bottom)-Math.max(top,line.top);
-    return overlap>=Math.min(bottom-top,line.bottom-line.top)*0.5&&
+    return overlap>=Math.min(bottom-top,line.bottom-line.top)*0.2&&
       /^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?\s*$/i.test(line.text)&&parseReceiptMoney(line.text)!==null;
   });
 }
@@ -133,7 +133,7 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
   const joinedTotals=new Map<ReceiptTextLine,ReceiptTextLine>();
   for(const line of lines){
     const clean=normalized(line.text);
-    if(!totalWords.test(clean)||rejectedTotalWords.test(clean)||/\d/.test(line.text))continue;
+    if(!totalWords.test(clean)||rejectedTotalWords.test(clean)||/\d/.test(line.text.replace(/^tota[l\/]\s*[-(][^:]*:/i,"Total:")))continue;
     const candidates=spatialTotalCandidates(line,lines);
     if(candidates.length===1)joinedTotals.set(line,candidates[0]);
   }
@@ -148,11 +148,13 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
   lines.forEach((line, index) => {
     const clean = normalized(line.text);
     if (!totalWords.test(clean) || rejectedTotalWords.test(clean)) return;
-    const ownNumbers = [...line.text.matchAll(/\d[\d.,\s]*/g)];
+    const amountText = line.text.replace(/^tota[l\/]\s*[-(][^:]*:/i,"Total:");
+    const ownNumbers = [...amountText.matchAll(/\d[\d.,\s]*/g)];
     const spatial=ownNumbers.length===0?spatialTotalCandidates(line,lines):[];
     // Multiple distinct amounts beside one label require review, not a guess.
     if(new Set(spatial.map(candidate=>parseReceiptMoney(candidate.text))).size>1)return;
-    const next = lines[index + 1];
+    const nextLine = lines[index + 1];
+    const next = nextLine && /^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?\s*$/i.test(nextLine.text) ? nextLine : undefined;
     const previous = lines[index - 1];
     const previousNumbers = previous
       ? [...previous.text.matchAll(/\d[\d.,\s]*/g)]
@@ -160,7 +162,7 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
     const usePrevious =
       ownNumbers.length === 0 &&
       trailingTotalWords.test(clean) &&
-      previousNumbers.length > 0;
+      previousNumbers.length > 0 && /^\s*\d[\d.,\s]*(?:vnd|đ|d|₫)?\s*$/i.test(previous.text);
     const source = ownNumbers.length > 0 ? line : spatial[0]??(usePrevious ? previous : next);
     const numbers = ownNumbers.length > 0
       ? ownNumbers
@@ -179,6 +181,7 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
   });
   totals.sort((left, right) => right.score - left.score);
   const selectedTotal = totals[0] ?? null;
+  const conflictingTotals = selectedTotal !== null && totals.some(candidate => candidate.amount !== selectedTotal.amount && candidate.score >= 0.8 && selectedTotal.score - candidate.score < 0.15);
 
   let date: string | null = null;
   let dateConfidence: number | null = null;
@@ -220,6 +223,8 @@ export function parseReceiptLines(recognizedLines: ReceiptTextLine[]): ReceiptDr
 
   const reviewReason = rawText.length === 0
     ? "Không nhận diện được chữ trong ảnh."
+    : conflictingTotals
+      ? "Các tổng tiền không khớp. Hãy đối chiếu số tiền cần thanh toán trên hóa đơn."
     : lines.some(line => line.reviewIssue === "inconsistent-vat-components")
       ? "Một số ô tiền hàng hoặc thuế chưa khớp. Hãy kiểm tra tổng tiền."
     : lines.some(line => line.reviewIssue === "inconsistent-item")
