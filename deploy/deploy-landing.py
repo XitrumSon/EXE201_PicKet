@@ -75,11 +75,12 @@ def main():
         old = "style-src 'self'; base-uri"
         font_only = "style-src 'self'; font-src 'self'; base-uri"
         new = "style-src 'self'; font-src 'self'; script-src 'self'; base-uri"
+        with_telemetry = "style-src 'self'; font-src 'self'; script-src 'self'; connect-src 'self'; base-uri"
         if old in config:
             caddy.write_text(config.replace(old, new))
         elif font_only in config:
             caddy.write_text(config.replace(font_only, new))
-        elif new not in config:
+        elif new not in config and with_telemetry not in config:
             raise ValueError('Unrecognized landing CSP; review Caddy configuration')
         subprocess.run(['docker', 'exec', 'picket-caddy-1', 'caddy', 'validate', '--config', '/etc/caddy/Caddyfile'], check=True)
         for name in names[:-1]:

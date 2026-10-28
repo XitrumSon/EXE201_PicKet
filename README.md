@@ -1,6 +1,6 @@
 # Picket
 
-Trạng thái chung: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md); [mục lục tài liệu](docs/README.md). Landing phục vụ APK **1.0.10/code 23**; Play Internal vẫn **1.0.9/code 22**. Supabase đã đồng bộ **51 migration**. Admin platform và ba trang xác thực Paper đã triển khai production ngày 28/10; [báo cáo nghiệm thu](docs/migration/ADMIN_PLATFORM_ACCEPTANCE_20261028.md) ghi bằng chứng và các giới hạn còn phụ thuộc nền tảng. Closed test giữ draft.
+Trạng thái chung: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md); [mục lục tài liệu](docs/README.md). Landing phục vụ APK **1.0.11/code 24**; Play Internal đã cập nhật **1.0.11/code 24**. Supabase đã đồng bộ **51 migration**. Admin platform và ba trang xác thực Paper đã triển khai production ngày 28/10; [báo cáo nghiệm thu](docs/migration/ADMIN_PLATFORM_ACCEPTANCE_20261028.md) ghi bằng chứng và các giới hạn còn phụ thuộc nền tảng. Closed test giữ draft.
 
 Picket dùng một kiến trúc thống nhất: Next.js cho web, Expo/React Native cho
 Android và Dart Frog cho toàn bộ backend nghiệp vụ.

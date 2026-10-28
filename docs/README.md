@@ -172,3 +172,5 @@ Cập nhật 28/10/2026. Bắt đầu bằng các nguồn hiện hành dưới �
 - [Owner privacy lifecycle continuation — 25 October 2026](plans/OWNER_PRIVACY_LIFECYCLE_CHECKPOINT_20261025.md)
 - [Pending receipt media retirement — 25 October 2026](plans/RECEIPT_RETIREMENT_CHECKPOINT_20261025.md)
 - [Reminder archive checkpoint — 25 October 2026](plans/REMINDER_ARCHIVE_CHECKPOINT_20261025.md)
+
+- [Mobile bugfix và OCR 28/10/2026](migration/MOBILE_BUGFIX_OCR_20261028.md): source, kiểm thử native guest và giới hạn đo OCR.

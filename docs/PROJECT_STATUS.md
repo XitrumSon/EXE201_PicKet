@@ -6,9 +6,9 @@ Cập nhật **28/10/2026, Asia/Saigon**. Đây là nguồn trạng thái chung 
 
 | Thành phần | Trạng thái đã xác minh |
 | --- | --- |
-| Mobile source/release | 1.0.10/code 23; policy chặn staff trên mobile, analytics opt-in mặc định tắt; build ARM64 ký đúng khóa. Native QA: startup/chế độ trên thiết bị đã kiểm tra, luồng staff online chưa xác nhận end-to-end trên máy ảo. |
-| Landing public | Paper; APK 1.0.10/code 23 ARM64, tải toàn bộ/checksum và HTTP Range PASS ngày 28/10 |
-| Google Play Internal | AAB 1.0.9/code 22 ARM64+x86_64, đọc lại completed; alpha draft không đổi |
+| Mobile source/release | 1.0.11/code 24; sửa navigation Chi tiêu, chuyển tiền, thêm tiền vào ví, hồ sơ, popup ngang và OCR. Redmi 7 QA riêng đã kiểm tra; 935 mobile tests/lint/typecheck đạt. Xem báo cáo mobile bugfix. |
+| Landing public | Paper; APK 1.0.11/code 24 ARM64, tải toàn bộ 82.830.508 bytes và SHA-256 qua trình duyệt PASS ngày 28/10; web/API không restart. |
+| Google Play Internal | AAB 1.0.11/code 24 ARM64+x86_64; upload/validate/commit và đọc lại completed ngày 28/10; các track khác không đổi |
 | Google Play alpha | Code 6 draft; chưa phải thử nghiệm kín đang chạy |
 | Google Play production/beta | Chưa có release |
 | Domain landing | https://picketfinance.com |
