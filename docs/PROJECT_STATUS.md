@@ -18,6 +18,10 @@ Cập nhật **28/10/2026, Asia/Saigon**. Đây là nguồn trạng thái chung 
 
 Thiết kế duy nhất: [PICKET-DESIGN.md](../PICKET-DESIGN.md). Danh sách việc còn mở: [BACKLOG](BACKLOG.md). Không dùng số liệu phiên bản trong báo cáo cũ làm hiện trạng. Bản máy ảo không thay thế nghiệm thu điện thoại ARM64 hoặc Play Billing.
 
+## Mobile structured OCR — QA chưa phát hành
+
+[Báo cáo 28/10](migration/MOBILE_STRUCTURED_OCR_20261028.md): mobile-only, không sửa web/provider. Chặn 15 metadata hard-negative đã gán nhãn (còn 0); tập chẩn đoán 3 ảnh/7 dòng hàng tăng từ 1 lên 6 dòng đúng, tên nguyên văn 5/7. Tổng tiền trên 22 ảnh VND vẫn 15 đúng/1 sai có cảnh báo/6 thiếu. Chạy lại 36 ảnh ML Kit thật trên Redmi, p50/p95 864/1.180 ms cho direction + full-read; UI ba hóa đơn đã xem. 947 mobile tests, 153 OCR tests, lint/typecheck và build QA đạt. Redmi giữ bản Picket QA riêng 1.0.12-ocr-qa/code 25; Play/landing vẫn 1.0.11/code 24. Chưa đạt gate nhận diện chính xác mọi hóa đơn; xem báo cáo về thiếu hàng tặng, sai chữ, subtotal/fee và tập holdout độc lập.
+
 ## Admin/Auth đang triển khai ngày 28/10
 
 - Production có 18 màn admin web, phân quyền owner/operations/support/analyst/content, MFA cho mutation/export; API Dart, migration mới và worker riêng. Đã apply migration và triển khai API/web/worker production ngày 28/10; HTTPS và worker probe sau rollout đã kiểm tra.
