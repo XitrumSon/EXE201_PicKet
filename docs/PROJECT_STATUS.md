@@ -6,17 +6,25 @@ Cập nhật **28/10/2026, Asia/Saigon**. Đây là nguồn trạng thái chung 
 
 | Thành phần | Trạng thái đã xác minh |
 | --- | --- |
-| Mobile source/release | 1.0.9 / code 22; màn gói Paper và foreground purchase recovery; bản APK landing vẫn code 20 |
-| Landing public | Paper; APK 1.0.9/code 22 ARM64, ký đúng khóa, tải toàn bộ/checksum PASS ngày 28/10 |
-| Google Play Internal | AAB 1.0.9/code 22 ARM64+x86_64, đọc lại completed; alpha draft không đổi. Landing vẫn APK code 20 |
+| Mobile source/release | 1.0.10/code 23; policy chặn staff trên mobile, analytics opt-in mặc định tắt; build ARM64 ký đúng khóa. Native QA: startup/chế độ trên thiết bị đã kiểm tra, luồng staff online chưa xác nhận end-to-end trên máy ảo. |
+| Landing public | Paper; APK 1.0.10/code 23 ARM64, tải toàn bộ/checksum và HTTP Range PASS ngày 28/10 |
+| Google Play Internal | AAB 1.0.9/code 22 ARM64+x86_64, đọc lại completed; alpha draft không đổi |
 | Google Play alpha | Code 6 draft; chưa phải thử nghiệm kín đang chạy |
 | Google Play production/beta | Chưa có release |
 | Domain landing | https://picketfinance.com |
 | Domain web | https://app.picketfinance.com |
 | Domain Dart API | https://api.picketfinance.com |
-| Supabase | Project `qyokoyopodjtvfyunyde`; 49 migration sau cập nhật 27/10 |
+| Supabase | Project `qyokoyopodjtvfyunyde`; 51 migration sau cập nhật admin ngày 28/10 |
 
 Thiết kế duy nhất: [PICKET-DESIGN.md](../PICKET-DESIGN.md). Danh sách việc còn mở: [BACKLOG](BACKLOG.md). Không dùng số liệu phiên bản trong báo cáo cũ làm hiện trạng. Bản máy ảo không thay thế nghiệm thu điện thoại ARM64 hoặc Play Billing.
+
+## Admin/Auth đang triển khai ngày 28/10
+
+- Production có 18 màn admin web, phân quyền owner/operations/support/analyst/content, MFA cho mutation/export; API Dart, migration mới và worker riêng. Đã apply migration và triển khai API/web/worker production ngày 28/10; HTTPS và worker probe sau rollout đã kiểm tra.
+- Ba trang login/register/forgot-password dùng Paper và có đường về landing. Mobile chặn staff trước khi mở provider dữ liệu; API kiểm tra vai trò mới cho mọi request nghiệp vụ.
+- Checkpoint mới: 925 mobile, 57 web, 149 API, 13 landing tests; 14 SQL suites và 14 Edge tests (12 Google lifecycle + 2 policy), quota free/plus/pro; worker 10 tests. Build web/API/worker, Hermes và APK ARM64 đều qua. Xem báo cáo nghiệm thu để phân biệt fixture, PostgreSQL cô lập và kiểm tra production.
+- UI admin: 18 màn × 4 độ rộng đã kiểm tra tải trang/tràn ngang; mutation ticket và policy API đã kiểm tra qua database cô lập. Có thêm smoke HTTPS, migration/ACL, collector test tách môi trường và worker production; chưa nghiệm thu bằng phiên owner thật/MFA thật.
+- Google Play không có monthly report; Reporting API chưa bật. Dashboard phải thể hiện N/A; không tạo số lượt cài/doanh thu giả.
 
 ## Các checkpoint kiểm tra ngày 27/10
 

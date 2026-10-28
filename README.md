@@ -1,6 +1,6 @@
 # Picket
 
-Trạng thái chung: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md); [mục lục tài liệu](docs/README.md). Ngày 27/10: landing và Play Internal **1.0.7/code 20** đã phát hành; Play đọc lại completed, rollout 100%. Supabase đã đồng bộ **49 migration**. Thiết bị thật do chủ dự án tự nghiệm thu sau; closed test giữ draft.
+Trạng thái chung: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md); [mục lục tài liệu](docs/README.md). Landing phục vụ APK **1.0.10/code 23**; Play Internal vẫn **1.0.9/code 22**. Supabase đã đồng bộ **51 migration**. Admin platform và ba trang xác thực Paper đã triển khai production ngày 28/10; [báo cáo nghiệm thu](docs/migration/ADMIN_PLATFORM_ACCEPTANCE_20261028.md) ghi bằng chứng và các giới hạn còn phụ thuộc nền tảng. Closed test giữ draft.
 
 Picket dùng một kiến trúc thống nhất: Next.js cho web, Expo/React Native cho
 Android và Dart Frog cho toàn bộ backend nghiệp vụ.

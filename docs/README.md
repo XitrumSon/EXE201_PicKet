@@ -1,9 +1,12 @@
 # Tài liệu Picket
 
-Cập nhật 27/10/2026. Bắt đầu bằng các nguồn hiện hành dưới đây; báo cáo theo ngày giữ bằng chứng lịch sử. Không commit credential, APK/AAB hoặc cache.
+Cập nhật 28/10/2026. Bắt đầu bằng các nguồn hiện hành dưới đây; báo cáo theo ngày giữ bằng chứng lịch sử. Không commit credential, APK/AAB hoặc cache.
 
 - [Trạng thái toàn dự án](PROJECT_STATUS.md)
 - [Việc còn mở và quyết định MVP](BACKLOG.md)
+- [Kế hoạch hậu đài admin, đo lường và xác thực tài khoản](ADMIN_PLATFORM_PLAN_20261028.md)
+- [Vận hành, triển khai và rollback admin](ADMIN_PLATFORM_RUNBOOK.md)
+- [Nghiệm thu admin, Auth và APK 1.0.10](migration/ADMIN_PLATFORM_ACCEPTANCE_20261028.md)
 - [Thiết kế duy nhất — PICKET-DESIGN.md](../PICKET-DESIGN.md)
 - [Kiến trúc](ARCHITECTURE.md)
 - [Release Android 1.0.7/code 20](migration/ANDROID_RELEASE_1_0_7_20261027.md)
