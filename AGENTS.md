@@ -26,4 +26,7 @@ Recent commits use scoped Conventional Commits, such as `fix(learning): ...` and
 
 ## Security & Agent Workflow
 
-Use local `.env` files; never commit secrets, signing keys, APK/AAB backups, or generated caches. Preserve unrelated working-tree edits. Search and read narrowly, reuse one `.artifacts/<task>` directory, and summarize results instead of pasting full logs to limit token use.
+Use local `.env` files; never commit secrets, signing keys, APK/AAB backups, or generated caches. Preserve unrelated working-tree edits. Search and read narrowly, reuse one `.artifacts/features/<feature-slug>` (or `.artifacts/<task>`) directory, and summarize results instead of pasting full logs to limit token use.
+
+- **Multi-Agent Workflow & Effort Rules:** Always follow [`.agents/rules/workflow.md`](.agents/rules/workflow.md) for the 5-step workflow (`PLAN.md` -> `REPORT.md` -> `REVIEW.md`), Dual-Mode model/effort routing (supports both **Hybrid Codex + Antigravity** and **Codex-Only** setups), skill gating (`~/.codex/skills`), and Android real-device guardrails (package `com.picket.mobile.bugqa`).
+- **Project Testing Skills:** Use [`.agents/skills/picket-workflow-testing/SKILL.md`](.agents/skills/picket-workflow-testing/SKILL.md) during Step 3 (`TESTING`) and [`.agents/skills/picket-ocr-testing/SKILL.md`](.agents/skills/picket-ocr-testing/SKILL.md) whenever evaluating receipt images, `/Bill/` corpus, or OCR changes.

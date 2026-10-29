@@ -1,7 +1,7 @@
 # Picket Project Architecture Rules
 
 Tài liệu này chứa các quy tắc kiến trúc và tiêu chuẩn mã hóa (coding standards) BẮT BUỘC cho dự án Picket.
-Tất cả AI Agents khi thao tác trong dự án này PHẢI đọc và tuân thủ các quy tắc này.
+Tất cả AI Agents khi thao tác trong dự án này PHẢI đọc và tuân thủ các quy tắc này cùng với quy trình phối hợp tại [`.agents/rules/workflow.md`](workflow.md).
 
 ## 1. Clean Code Principles
 - **Meaningful Names**: Đặt tên biến, class, hàm rõ nghĩa bằng tiếng Anh.
@@ -20,8 +20,7 @@ Dự án được nhóm theo **Feature (Tính năng)**, không nhóm theo loại
 - Nghiệp vụ tài chính có tính quyết định phải nằm trong Dart backend; client chỉ
   giữ validation phục vụ UX và trạng thái offline/sync.
 
-`mobile/` là Flutter legacy, chỉ được sửa lỗi bảo mật, crash hoặc mất dữ liệu
-trong thời gian chuyển đổi. Không thêm feature hay business rule mới vào đây.
+`mobile/` (Flutter legacy) đã được xóa khỏi nhánh chính theo [`ADR-001`](../../docs/architecture/ADR-001-next-expo-dart.md); Android chỉ được phát triển và phát hành từ `apps/mobile`.
 
 ### B. Web App (Next.js)
 Dùng App Router kết hợp Feature-based. Cấu trúc trong `web/src/`:
@@ -41,3 +40,5 @@ Dùng App Router kết hợp Feature-based. Cấu trúc trong `web/src/`:
   nghiệp vụ phải đi qua REST/OpenAPI của Dart API.
 - Edge Function TypeScript hiện có là legacy và phải được chuyển sang Dart API
   trước khi xóa.
+- `services/ocr-provider` là dịch vụ PaddleOCR nội bộ (CPU) chỉ nhận request từ
+  `ocr-worker` trong mạng Docker backend; không publish trực tiếp ra Internet.
