@@ -1,4 +1,5 @@
 import { parseReceiptLines, parseReceiptText, type ReceiptTextLine, type ReceiptDraftLine } from "./receipt-parser";
+import {isReceiptMetadata,isReceiptDocumentLabel,isReceiptSummary} from "./receipt-semantics";
 
 const maxReceiptAmount = 9_000_000_000_000;
 
@@ -49,6 +50,7 @@ export function parseServerOcrResult(
     typeof result.merchant === "string" &&
     result.merchant.trim().length > 0 &&
     result.merchant.trim().length <= 160
+    && !isReceiptMetadata(result.merchant) && !isReceiptDocumentLabel(result.merchant) && !isReceiptSummary(result.merchant)
       ? result.merchant.trim()
       : null;
   const structuredAmount =
@@ -81,6 +83,7 @@ export function parseServerOcrResult(
     date: structuredDate ?? parsed.date,
     lineItems: parsed.lineItems,
     confidence,
-    needsReview: parsed.needsReview || confidence === null || confidence < 0.7,
+    needsReview: parsed.needsReview || confidence === null || confidence < 0.7 ||
+      (structuredAmount !== null && parsed.amount !== null && structuredAmount !== parsed.amount),
   };
 }

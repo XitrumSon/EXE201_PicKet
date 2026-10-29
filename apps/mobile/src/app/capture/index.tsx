@@ -200,7 +200,7 @@ export default function CaptureReceiptScreen() {
       if (draft.amount) setAmount(String(draft.amount));
       setMessage(result.budgetExceeded ? "Chưa đọc hết ảnh. Hãy kiểm tra hoặc chụp lại."
         : draft.amount === null ? "Chưa đọc được tổng tiền."
-        : draft.needsReview ? "Có thông tin cần kiểm tra."
+        : draft.needsReview ? draft.reviewReason ?? "Có thông tin cần kiểm tra."
         : !draft.date ? "Chưa đọc được ngày hóa đơn." : null);
     } catch (error) {
       if (!mounted.current || activeOwner.current !== ownerId || generation !== imageGeneration.current) return;
@@ -525,7 +525,7 @@ export default function CaptureReceiptScreen() {
           <View key={`${index}-${item.name}`}>
             <Text style={styles.label}>{item.name}</Text>
             <Text style={styles.metric}>Số lượng: {item.quantity} · Đơn giá: {formatMoney(item.unitPrice, "vi", "VND")} · Thành tiền: {formatMoney(item.total, "vi", "VND")}</Text>
-            {item.confidence < 0.7 && <Text style={styles.message}>Cần kiểm tra giá</Text>}
+            {item.confidence < 0.7 && <Text style={styles.message}>Số lượng hoặc đơn giá chưa chắc chắn. Hãy đối chiếu ảnh.</Text>}
           </View>
         ))}
         {lineItems.length === 0 && <Text style={styles.metric}>Chưa đọc được chi tiết sản phẩm.</Text>}

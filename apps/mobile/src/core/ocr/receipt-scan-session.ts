@@ -4,6 +4,7 @@ import {receiptTableCrop} from "./receipt-table-crop";
 import {receiptVatSummaryRows} from "./receipt-vat-summary";
 import {inferReceiptRotation,orientReceiptLines} from "./receipt-direction";
 import {receiptSummaryCrop} from "./receipt-summary-crop";
+import {offsetReceiptCropLines} from "./receipt-crop-coordinates";
 export type OcrSample={lines:ReceiptTextLine[];width:number;height:number;durationMs?:number};
 export type OcrRegion={originX:number;originY:number;width:number;height:number};
 export type ReceiptOcrSession={
@@ -43,12 +44,12 @@ export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now
    stats.fullReads++;sample=await native.inspect(opened.id,remaining());stats.nativeMs+=sample.durationMs??0;ensureCurrent();
    fullDirection=inferReceiptRotation(sample.lines);
   }
-  const rawDraft=parseReceiptLines(sample.lines);
+  let lines=orientReceiptLines(sample.lines,sample.width,sample.height,0);
+  const rawDraft=parseReceiptLines(lines);
   if(!rawDraft.rawText)return finish(rawDraft);
   if(fullDirection!==null&&fullDirection!==0)throw new Error("OCR_ORIENTATION_UNCERTAIN");
   if(angle===null&&fullDirection!==0&&!verifiedUpright(sample,rawDraft))throw new Error("OCR_ORIENTATION_UNCERTAIN");
-  let lines=orientReceiptLines(sample.lines,sample.width,sample.height,0);
-  let draft=parseReceiptLines(lines);
+  let draft=rawDraft;
   if(remaining()<=0){budgetExceeded=true;return finish(draft);}
   const summary=draft.amount===null?receiptSummaryCrop(lines,selectedDimensions.width,selectedDimensions.height):null;
   if(summary){
@@ -56,13 +57,16 @@ export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now
     ensureCurrent();stats.summaryReads++;
     const detail=await native.crop(opened.id,summary,remaining());stats.nativeMs+=detail.durationMs??0;ensureCurrent();
     const outside=lines.filter(line=>{const y=(line.top!+line.bottom!)/2;return y<summary.originY||y>=summary.originY+summary.height;});
-    const merged=orientReceiptLines([...outside,...detail.lines.map(line=>({...line,top:line.top!+summary.originY,bottom:line.bottom!+summary.originY}))],selectedDimensions.width,selectedDimensions.height,0);
+    const merged=orientReceiptLines([...outside,...offsetReceiptCropLines(detail.lines,summary.originX,summary.originY)],selectedDimensions.width,selectedDimensions.height,0);
     const refined=parseReceiptLines(merged);
     if(refined.amount!==null){lines=merged;draft=refined;}
    }catch{ensureCurrent();budgetExceeded=remaining()<=0;}
   }
   if(remaining()<=0){budgetExceeded=true;return finish(draft);}
-  const region=receiptTableCrop(lines);
+  const itemSum=draft.lineItems.reduce((sum,item)=>sum+item.total,0);
+  const completeObservedTable=draft.amount!==null&&draft.lineItems.length>0&&!draft.needsReview&&
+   draft.lineItems.every(item=>item.confidence>=0.7)&&Math.abs(itemSum-draft.amount)<=1;
+  const region=completeObservedTable?null:receiptTableCrop(lines);
   if(!region)return finish(draft);
   ensureCurrent();const dimensions=selectedDimensions;ensureCurrent();
   if(remaining()<=0){budgetExceeded=true;return finish(draft);}
@@ -71,7 +75,7 @@ export async function scanReceiptSession(uri:string,native:ReceiptOcrSession,now
    try {
     stats.cropReads++;const detail=await native.crop(opened.id,crop,remaining());stats.nativeMs+=detail.durationMs??0;ensureCurrent();
     const outside=lines.filter(line=>{const y=(line.top!+line.bottom!)/2;return y<crop.originY||y>=crop.originY+crop.height;});
-    const detailLines=detail.lines.map(line=>({...line,top:line.top!+crop.originY,bottom:line.bottom!+crop.originY}));
+    const detailLines=offsetReceiptCropLines(detail.lines,crop.originX,crop.originY);
     const refined=parseReceiptLines([...outside,...detailLines]);
     if(refined.amount===draft.amount&&refined.lineItems.length>draft.lineItems.length)draft=refined;
    }catch{ensureCurrent();budgetExceeded=remaining()<=0;}

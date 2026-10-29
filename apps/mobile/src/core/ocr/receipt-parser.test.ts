@@ -140,7 +140,7 @@ test("extracts simple and quantity-based receipt line items", () => {
     { text: "VAT 8% 6.800", confidence: 0.95 },
   ]);
   assert.deepEqual(result, [
-    { name: "Ca phe sua", quantity: 1, unitPrice: 45000, total: 45000, confidence: 0.91 },
+    { name: "Ca phe sua", quantity: 1, unitPrice: 45000, total: 45000, confidence: 0.65 },
     { name: "Banh mi", quantity: 2, unitPrice: 20000, total: 40000, confidence: 0.88 },
   ]);
 });
@@ -173,7 +173,7 @@ for (const sample of receiptCorpus) {
       result.lineItems.map((item) => item.name),
       sample.expected.lineItemNames,
     );
-    assert.equal(result.needsReview, false);
+    assert.equal(result.needsReview, true, "unprinted quantities require review");
   });
 }
 

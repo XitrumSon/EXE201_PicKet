@@ -51,6 +51,7 @@ Cập nhật 28/10/2026. Bắt đầu bằng các nguồn hiện hành dưới �
 - [Android network-pool recovery — 2026-10-21](migration/ANDROID_NETWORK_RECONNECT_TDD_20261021.md)
 - [Automatic OCR orientation and retry UI — Android code 11](migration/ANDROID_OCR_CODE11_20261026.md)
 - [Receipt detail and orientation follow-up — Android code 12](migration/ANDROID_OCR_CODE12_20261026.md)
+- [Mobile structured OCR: research, fixes, Redmi testing and remaining gates](migration/MOBILE_STRUCTURED_OCR_20261028.md)
 - [Receipt OCR performance — Android code 13](migration/ANDROID_OCR_CODE13_PERFORMANCE_20261026.md)
 - [Receipt total guards — Android code 14](migration/ANDROID_OCR_CODE14_TOTAL_GUARDS_20261026.md)
 - [Camera-first capture and splash — Android code 15](migration/ANDROID_OCR_CODE15_CAMERA_ENTRY_20261026.md)
